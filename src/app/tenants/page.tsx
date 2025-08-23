@@ -31,13 +31,9 @@ import { useRouter } from 'next/navigation';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
-const initialTenants: Tenant[] = [
-    { id: '1', firstName: 'John', secondName: 'Doe', thirdName: 'M', idNumber: '12345678', phone: '0712345678', email: 'john.doe@email.com', maritalStatus: 'Single', gender: 'Male' },
-    { id: '2', firstName: 'Jane', secondName: 'Smith', thirdName: 'F', idNumber: '87654321', phone: '0787654321', email: 'jane.smith@email.com', maritalStatus: 'Married', gender: 'Female' },
-];
 
 export default function TenantsPage() {
-    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -54,10 +50,10 @@ export default function TenantsPage() {
         }
     })
 
-    const handleAddTenant = async (data: TenantFormValues) => {
+    const handleAddTenant = (data: TenantFormValues) => {
         try {
             const newTenant = { ...data, id: new Date().getTime().toString() };
-            setTenants(prev => [...prev, newTenant]);
+            setTenants(prev => [...prev, newTenant as Tenant]);
 
             toast({
                 title: "Tenant Registered",
@@ -65,6 +61,7 @@ export default function TenantsPage() {
             });
             form.reset();
             setIsDialogOpen(false);
+            router.refresh();
         } catch (error) {
             toast({
                 variant: 'destructive',
@@ -236,8 +233,7 @@ export default function TenantsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {!tenants ? <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow> : 
-                                tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
+                                {tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
                                 tenants.map(tenant => (
                                     <TableRow key={tenant.id}>
                                         <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>

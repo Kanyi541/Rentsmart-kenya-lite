@@ -4,14 +4,9 @@ import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
 
-// Mock data to avoid database dependency
-const totalRentals = 2;
-const totalTenants = 5;
-const totalRooms = 15;
-const occupiedRooms = 9;
-
 
 export default async function Home() {
+  const stats = { totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 };
 
   return (
     <AppLayout>
@@ -29,7 +24,7 @@ export default async function Home() {
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{totalRentals}</div>
+                    <div className="text-2xl font-bold">{stats.totalRentals}</div>
                     <p className="text-xs text-muted-foreground">
                         properties being managed
                     </p>
@@ -43,7 +38,7 @@ export default async function Home() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{totalTenants}</div>
+                    <div className="text-2xl font-bold">{stats.totalTenants}</div>
                      <p className="text-xs text-muted-foreground">
                         tenants registered
                     </p>
@@ -57,7 +52,7 @@ export default async function Home() {
                     <BedDouble className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{occupiedRooms} / {totalRooms}</div>
+                    <div className="text-2xl font-bold">{stats.occupiedRooms} / {stats.totalRooms}</div>
                      <p className="text-xs text-muted-foreground">
                         rooms currently occupied
                     </p>

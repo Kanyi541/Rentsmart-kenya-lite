@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,47 +13,15 @@ import { z } from 'zod';
 import { assignmentSchema } from '@/lib/schemas';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { assignRoomToTenant } from '@/lib/api/rentals';
 import { useRouter } from 'next/navigation';
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
-// Mock Data
-const mockTenants: Tenant[] = [
-    { id: '1', firstName: 'John', secondName: 'Doe', thirdName: 'M', idNumber: '12345678', phone: '0712345678', email: 'john.doe@email.com', maritalStatus: 'Single', gender: 'Male' },
-    { id: '2', firstName: 'Jane', secondName: 'Smith', thirdName: 'F', idNumber: '87654321', phone: '0787654321', email: 'jane.smith@email.com', maritalStatus: 'Married', gender: 'Female' },
-];
-
-const mockRentals: Rental[] = [
-    { 
-        id: '1', 
-        name: 'Green Valley Apartments', 
-        location: 'Kilimani, Nairobi', 
-        ownerName: 'Peter Pan', 
-        ownerNumber: '0711223344', 
-        rooms: [
-            { id: '101', roomNumber: 'A101', roomType: '1 Bedroom', rent: 25000, isOccupied: false },
-            { id: '102', roomNumber: 'A102', roomType: 'Bedsitter', rent: 15000, isOccupied: true },
-        ] 
-    },
-    { 
-        id: '2', 
-        name: 'Sunrise Towers', 
-        location: 'Westlands, Nairobi', 
-        ownerName: 'Wendy Darling', 
-        ownerNumber: '0755667788', 
-        rooms: [
-            { id: '201', roomNumber: 'B201', roomType: '2 Bedroom', rent: 40000, isOccupied: false },
-        ] 
-    },
-];
-
-
 export default function AssignmentsPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const [tenants] = useState<Tenant[]>(mockTenants);
-    const [rentals] = useState<Rental[]>(mockRentals);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [rentals, setRentals] = useState<Rental[]>([]);
 
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
@@ -62,7 +30,7 @@ export default function AssignmentsPage() {
             rentalId: '',
             roomId: ''
         }
-    })
+    });
 
     const selectedRentalId = form.watch('rentalId');
 
@@ -72,14 +40,27 @@ export default function AssignmentsPage() {
         return rental ? rental.rooms.filter(room => !room.isOccupied) : [];
     }, [selectedRentalId, rentals]);
 
-    const handleAssignRoom = async (data: AssignmentFormValues) => {
+    const handleAssignRoom = (data: AssignmentFormValues) => {
         try {
-            // In a real app, you'd call an API function here.
-            // await assignRoomToTenant(data.roomId, data.tenantId);
-            console.log("Assigning room:", data);
+            setRentals(prevRentals => {
+                return prevRentals.map(r => {
+                    if (r.id.toString() === data.rentalId) {
+                        return {
+                            ...r,
+                            rooms: r.rooms.map(room => {
+                                if(room.id.toString() === data.roomId) {
+                                    return {...room, isOccupied: true }
+                                }
+                                return room;
+                            })
+                        }
+                    }
+                    return r;
+                })
+            })
             toast({
                 title: "Room Assigned!",
-                description: `Room has been successfully assigned (simulation).`
+                description: `Room has been successfully assigned.`
             });
             form.reset();
             router.refresh();
@@ -149,7 +130,7 @@ export default function AssignmentsPage() {
                                             <FormLabel>Available Room</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedRentalId || availableRooms.length === 0}>
                                                 <FormControl>
-                                                    <SelectTrigger><SelectValue placeholder="Select a room" /></SelectValue>
+                                                    <SelectTrigger><SelectValue placeholder="Select a room" /></SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     {availableRooms.map(room => (

@@ -28,47 +28,27 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 
-const initialRentals: Rental[] = [
-    { 
-        id: '1', 
-        name: 'Green Valley Apartments', 
-        location: 'Kilimani, Nairobi', 
-        ownerName: 'Peter Pan', 
-        ownerNumber: '0711223344', 
-        rooms: [
-            { id: '101', roomNumber: 'A101', roomType: '1 Bedroom', rent: 25000, isOccupied: false },
-            { id: '102', roomNumber: 'A102', roomType: 'Bedsitter', rent: 15000, isOccupied: true },
-        ] 
-    },
-    { 
-        id: '2', 
-        name: 'Sunrise Towers', 
-        location: 'Westlands, Nairobi', 
-        ownerName: 'Wendy Darling', 
-        ownerNumber: '0755667788', 
-        rooms: [
-            { id: '201', roomNumber: 'B201', roomType: '2 Bedroom', rent: 40000, isOccupied: false },
-        ] 
-    },
-];
-
-
 export default function RentalsPage() {
-  const [rentals, setRentals] = useState(initialRentals);
+  const [rentals, setRentals] = useState<Rental[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
 
-  const handleAddRental = async (data: Omit<Rental, 'id'>) => {
+  const handleAddRental = (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
     try {
-        const newRental = { ...data, id: new Date().getTime().toString() }
-        setRentals(prev => [...prev, newRental]);
+        const newRental = {
+            ...data,
+            id: new Date().getTime().toString(),
+            rooms: data.rooms.map(r => ({...r, id: new Date().getTime().toString()}))
+        }
+        setRentals(prev => [...prev, newRental as Rental]);
         toast({
           title: 'Rental Added!',
           description: `${data.name} in ${data.location} has been successfully added.`,
         });
         setIsDialogOpen(false);
+        router.refresh();
     } catch (error) {
         console.error(error);
         toast({
@@ -124,8 +104,7 @@ export default function RentalsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {!rentals ? <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow> :
-                        rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
+                        {rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
                         rentals.map(rental => (
                             <TableRow key={rental.id}>
                                 <TableCell className="font-medium">{rental.name}</TableCell>
