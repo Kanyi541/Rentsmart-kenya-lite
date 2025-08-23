@@ -26,6 +26,7 @@ export async function getRentals(): Promise<Rental[]> {
 
 export async function addRental(rentalData: RentalData) {
     try {
+        // 1. Add the main rental document
         const rentalCol = collection(db, 'rentals');
         const rentalDocRef = await addDoc(rentalCol, {
             name: rentalData.name,
@@ -34,18 +35,25 @@ export async function addRental(rentalData: RentalData) {
             ownerNumber: rentalData.ownerNumber,
         });
 
+        // 2. Create a batch to add all the rooms in a subcollection
         const batch = writeBatch(db);
+        const roomsColRef = collection(db, `rentals/${rentalDocRef.id}/rooms`);
+
         rentalData.rooms.forEach(room => {
-            const roomRef = doc(collection(db, `rentals/${rentalDocRef.id}/rooms`));
+            const roomRef = doc(roomsColRef); // Create a new doc with auto-ID in the subcollection
             batch.set(roomRef, {
                 ...room,
                 isOccupied: false
             });
         });
 
+        // 3. Commit the batch
         await batch.commit();
+
         revalidatePath('/rentals');
+        revalidatePath('/'); // Revalidate dashboard stats as well
         return { success: true, id: rentalDocRef.id };
+
     } catch (error: any) {
         console.error("Error adding rental:", error);
         return { error: "Failed to add rental due to a database error." };
