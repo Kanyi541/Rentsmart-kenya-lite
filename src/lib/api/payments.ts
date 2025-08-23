@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, getDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, getDoc, Timestamp } from "firebase/firestore";
 import type { Payment, Tenant } from "@/lib/types";
 import { z } from "zod";
 import { paymentSchema } from "../schemas";
@@ -29,7 +29,7 @@ export async function getPayments(): Promise<Payment[]> {
     const paymentSnapshot = await getDocs(q);
     
     const paymentsList = await Promise.all(paymentSnapshot.docs.map(async (paymentDoc) => {
-        const paymentData = paymentDoc.data() as Payment;
+        const paymentData = paymentDoc.data()
 
         // Fetch tenant details
         const tenantRef = doc(db, 'tenants', paymentData.tenantId);
@@ -46,10 +46,13 @@ export async function getPayments(): Promise<Payment[]> {
         const roomSnap = await getDoc(roomRef);
         const roomNumber = roomSnap.exists() ? roomSnap.data().roomNumber : 'N/A';
 
+        // Convert Firestore Timestamp to a serializable format (ISO string)
+        const createdAt = (paymentData.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString();
 
         return {
             id: paymentDoc.id,
             ...paymentData,
+            createdAt,
             tenant: tenant ? { firstName: tenant.firstName, secondName: tenant.secondName } : undefined,
             rental: { name: rentalName },
             room: { roomNumber: roomNumber }

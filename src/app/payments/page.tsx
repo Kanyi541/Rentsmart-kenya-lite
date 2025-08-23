@@ -47,16 +47,12 @@ export default function PaymentsPage() {
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return 'N/A';
-        // Firestore Timestamps have a toDate() method, but serialized ones might not.
-        if (timestamp.toDate) {
-            return format(timestamp.toDate(), 'PPpp');
+        try {
+            return format(new Date(timestamp), 'PPpp');
+        } catch (error) {
+            console.error("Failed to format date:", timestamp, error);
+            return "Invalid Date";
         }
-        // Handle serialized timestamps (which might be objects with seconds/nanoseconds)
-        if (timestamp.seconds) {
-            return format(new Date(timestamp.seconds * 1000), 'PPpp');
-        }
-        // Fallback for string or number timestamps
-        return format(new Date(timestamp), 'PPpp');
     }
 
     return (
