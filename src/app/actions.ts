@@ -39,15 +39,22 @@ export async function addRental(data: unknown) {
     const parsedData = rentalSchema.safeParse(data);
 
     if(!parsedData.success) {
-        return { error: 'Invalid rental data.' };
+        let errorMessage = 'Invalid rental data.';
+        try {
+            errorMessage = JSON.parse(parsedData.error.message)[0].message;
+        } catch (e) {}
+        return { error: errorMessage };
     }
 
     try {
-        await dbAddRental(parsedData.data);
+        const result = await dbAddRental(parsedData.data);
+         if (result.error) {
+            return { error: result.error };
+        }
         revalidatePath('/rentals');
         return { success: true };
-    } catch (error) {
-        console.error(error);
+    } catch (error: any) {
+        console.error('Database error in addRental action:', error);
         return { error: 'Database error: Failed to add rental.'}
     }
 }

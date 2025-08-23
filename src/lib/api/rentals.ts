@@ -21,21 +21,26 @@ export async function getRentals(): Promise<Rental[]> {
 }
 
 export async function addRental(rentalData: RentalData) {
-    const rentalResult: any = await query(
-        'INSERT INTO rentals (name, location, ownerName, ownerNumber) VALUES (?, ?, ?, ?)',
+    try {
+        // Insert rental
+        const rentalResult: any = await query(
+        `INSERT INTO rentals (name, location, ownerName, ownerNumber) VALUES (?, ?, ?, ?)`,
         [rentalData.name, rentalData.location, rentalData.ownerName, rentalData.ownerNumber]
-    );
-
-    const rentalId = rentalResult.insertId;
-
-    const roomPromises = rentalData.rooms.map(room => {
-        return query(
-            'INSERT INTO rooms (rentalId, roomNumber, roomType, rent, isOccupied) VALUES (?, ?, ?, ?, ?)',
-            [rentalId, room.roomNumber, room.roomType, room.rent, room.isOccupied]
         );
-    });
 
-    await Promise.all(roomPromises);
+        const rentalId = rentalResult.insertId;
 
-    return { id: rentalId };
+        // Insert rooms
+        for (const room of rentalData.rooms) {
+            await query(
+                `INSERT INTO rooms (rentalId, roomNumber, roomType, rent, isOccupied) VALUES (?, ?, ?, ?, ?)`,
+                [rentalId, room.roomNumber, room.roomType, room.rent, room.isOccupied || false]
+            );
+        }
+
+        return { success: true, id: rentalId };
+    } catch (error: any) {
+        console.error('Database error in addRental:', error);
+        return { error: error.message };
+    }
 }
