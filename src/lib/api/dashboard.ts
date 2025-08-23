@@ -1,16 +1,24 @@
 
 'use server'
 
-import { mockRentals, mockTenants } from "@/lib/mock-data";
+import { collection, getDocs, collectionGroup, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export async function getDashboardStats() {
-    const totalRentals = mockRentals.length;
-    const totalTenants = mockTenants.length;
+    const rentalsCol = collection(db, 'rentals');
+    const tenantsCol = collection(db, 'tenants');
+
+    const rentalSnapshot = await getDocs(rentalsCol);
+    const tenantSnapshot = await getDocs(tenantsCol);
+
+    const totalRentals = rentalSnapshot.size;
+    const totalTenants = tenantSnapshot.size;
+
+    const roomsQuery = query(collectionGroup(db, 'rooms'));
+    const roomsSnapshot = await getDocs(roomsQuery);
     
-    const totalRooms = mockRentals.reduce((acc, rental) => acc + rental.rooms.length, 0);
-    const occupiedRooms = mockRentals.reduce((acc, rental) => {
-        return acc + rental.rooms.filter(room => room.isOccupied).length;
-    }, 0);
+    const totalRooms = roomsSnapshot.size;
+    const occupiedRooms = roomsSnapshot.docs.filter(doc => doc.data().isOccupied).length;
 
     return {
         totalRentals,

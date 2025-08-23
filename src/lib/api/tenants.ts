@@ -1,7 +1,8 @@
 
 'use server'
 
-import { mockTenants } from "@/lib/mock-data";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, addDoc } from "firebase/firestore";
 import type { Tenant } from "@/lib/types";
 import { tenantSchema } from "@/lib/schemas";
 import { z } from "zod";
@@ -10,16 +11,14 @@ import { revalidatePath } from "next/cache";
 type TenantData = z.infer<typeof tenantSchema>;
 
 export async function getTenants(): Promise<Tenant[]> {
-    return Promise.resolve(mockTenants);
+    const tenantsCol = collection(db, 'tenants');
+    const tenantSnapshot = await getDocs(tenantsCol);
+    return tenantSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tenant));
 }
 
 export async function addTenant(tenantData: TenantData) {
-    const newId = new Date().getTime();
-    const newTenant: Tenant = {
-        ...tenantData,
-        id: newId,
-    };
-    mockTenants.push(newTenant);
+    const tenantsCol = collection(db, 'tenants');
+    const docRef = await addDoc(tenantsCol, tenantData);
     revalidatePath('/tenants');
-    return { id: newId };
+    return { id: docRef.id };
 }

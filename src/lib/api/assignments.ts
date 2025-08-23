@@ -3,29 +3,30 @@
 
 import { z } from 'zod';
 import { assignmentSchema } from '../schemas';
-import { mockAssignments, mockRentals, mockTenants } from '@/lib/mock-data';
+import { db } from "@/lib/firebase";
+import { collection, addDoc, doc, updateDoc, runTransaction } from "firebase/firestore";
 import { revalidatePath } from 'next/cache';
 
 type AssignmentData = z.infer<typeof assignmentSchema>;
 
 export async function assignRoomToTenant(data: AssignmentData) {
-    const newId = new Date().getTime();
     
-    mockAssignments.push({
-        ...data,
-        id: newId,
-    });
+    const roomRef = doc(db, `rentals/${data.rentalId}/rooms/${data.roomId}`);
     
-    const rental = mockRentals.find(r => r.id.toString() === data.rentalId);
-    if(rental) {
-        const room = rental.rooms.find(room => room.id.toString() === data.roomId);
-        if (room) {
-            room.isOccupied = true;
+    await runTransaction(db, async (transaction) => {
+        const roomDoc = await transaction.get(roomRef);
+        if (!roomDoc.exists() || roomDoc.data().isOccupied) {
+            throw new Error("Room is already occupied or does not exist.");
         }
-    }
+        
+        transaction.update(roomRef, { isOccupied: true });
+        
+        const assignmentRef = doc(collection(db, 'assignments'));
+        transaction.set(assignmentRef, data);
+    });
 
     revalidatePath('/assignments');
     revalidatePath('/');
     
-    return { id: newId };
+    return { success: true };
 }

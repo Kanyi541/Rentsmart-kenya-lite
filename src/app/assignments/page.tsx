@@ -29,15 +29,24 @@ export default function AssignmentsPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const [fetchedTenants, fetchedRentals] = await Promise.all([
-                getTenants(),
-                getRentals()
-            ]);
-            setTenants(fetchedTenants);
-            setRentals(fetchedRentals);
+            try {
+                const [fetchedTenants, fetchedRentals] = await Promise.all([
+                    getTenants(),
+                    getRentals()
+                ]);
+                setTenants(fetchedTenants);
+                setRentals(fetchedRentals);
+            } catch (error) {
+                console.error("Failed to fetch initial data", error);
+                toast({
+                    variant: 'destructive',
+                    title: "Error",
+                    description: "Failed to load rentals and tenants."
+                });
+            }
         }
         fetchData();
-    }, []);
+    }, [toast]);
     
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
@@ -68,12 +77,9 @@ export default function AssignmentsPage() {
             });
             form.reset();
             
-            const [updatedTenants, updatedRentals] = await Promise.all([
-                getTenants(),
-                getRentals()
-            ]);
-            setTenants(updatedTenants);
+            const updatedRentals = await getRentals();
             setRentals(updatedRentals);
+
             router.refresh();
 
         } catch (error: any) {
