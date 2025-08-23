@@ -90,13 +90,13 @@ export async function addTenant(data: unknown) {
 }
 
 // This is a simulated payment initiation function.
-async function initiateMpesaStkPush(phone: string, amount: number, transactionId: string) {
-    console.log(`Simulating STK Push to ${phone} for KSh ${amount} with transaction ID: ${transactionId}`);
-    // In a real application, this would be an API call to Safaricom's M-Pesa API.
-    // We simulate a delay for the user to "enter their PIN".
+// In a real application, this is where you would add your Paystack or other payment provider's API calls.
+async function initiatePayment(phone: string, amount: number, transactionId: string) {
+    console.log(`Simulating payment for ${phone} for KSh ${amount} with transaction ID: ${transactionId}`);
+    // We simulate a delay for the payment to be processed.
     await new Promise(resolve => setTimeout(resolve, 5000));
     // We simulate a successful payment callback.
-    console.log(`Simulating successful M-Pesa callback for transaction ID: ${transactionId}`);
+    console.log(`Simulating successful payment callback for transaction ID: ${transactionId}`);
     return { success: true };
 }
 
@@ -126,16 +126,16 @@ export async function processPaymentAndAssign(data: unknown) {
     // Invalidate payments page cache
     revalidatePath('/payments');
 
-    // 2. Simulate M-Pesa STK Push
+    // 2. Initiate payment with the chosen provider (e.g., Paystack)
     const totalAmount = rentAmount + depositAmount;
-    const mpesaResult = await initiateMpesaStkPush(phone, totalAmount, `${rentTransactionId}_${depositTransactionId}`);
+    const paymentResult = await initiatePayment(phone, totalAmount, `${rentTransactionId}_${depositTransactionId}`);
 
-    if (!mpesaResult.success) {
+    if (!paymentResult.success) {
         await Promise.all([
             updatePaymentStatus(rentPaymentId, 'Failed'),
             updatePaymentStatus(depositPaymentId, 'Failed')
         ]);
-        return { error: 'M-Pesa payment failed or was cancelled.' };
+        return { error: 'Payment failed or was cancelled.' };
     }
 
     // 3. Update payment statuses to 'Completed'

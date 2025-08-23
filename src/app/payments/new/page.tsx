@@ -139,7 +139,7 @@ function NewPaymentPage() {
                                     name="phone"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>M-Pesa Phone Number</FormLabel>
+                                            <FormLabel>Payment Phone Number</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="e.g 254712345678" {...field} />
                                             </FormControl>
@@ -151,7 +151,7 @@ function NewPaymentPage() {
                                      <div className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg text-center">
                                         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                                         <p className="font-semibold text-blue-700 dark:text-blue-300">Processing Payment...</p>
-                                        <p className="text-sm text-muted-foreground">A prompt has been sent to your phone. Please enter your M-Pesa PIN to authorize the payment of KSh {total.toLocaleString()}.</p>
+                                        <p className="text-sm text-muted-foreground">Please wait while we confirm your payment of KSh {total.toLocaleString()}.</p>
                                     </div>
                                 )}
                             </CardContent>
