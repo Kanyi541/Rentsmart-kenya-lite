@@ -17,8 +17,14 @@ export async function getTenants(): Promise<Tenant[]> {
 }
 
 export async function addTenant(tenantData: TenantData) {
-    const tenantsCol = collection(db, 'tenants');
-    const docRef = await addDoc(tenantsCol, tenantData);
-    revalidatePath('/tenants');
-    return { id: docRef.id };
+    try {
+        const tenantsCol = collection(db, 'tenants');
+        const docRef = await addDoc(tenantsCol, tenantData);
+        revalidatePath('/tenants');
+        revalidatePath('/');
+        return { success: true, id: docRef.id };
+    } catch (error: any) {
+        console.error("Error adding tenant to Firestore:", error);
+        return { error: "Failed to add tenant due to a database error." };
+    }
 }

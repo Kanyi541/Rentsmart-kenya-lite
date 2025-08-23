@@ -63,7 +63,13 @@ export async function addTenant(data: unknown) {
     const parsedData = tenantSchema.safeParse(data);
 
     if(!parsedData.success) {
-        return { error: 'Invalid tenant data.' };
+        let errorMessage = 'Invalid tenant data.';
+        try {
+            errorMessage = JSON.parse(parsedData.error.message)[0].message;
+        } catch (e) {
+            console.error("Error parsing validation error message:", parsedData.error);
+        }
+        return { error: errorMessage };
     }
 
     try {
@@ -71,7 +77,7 @@ export async function addTenant(data: unknown) {
         revalidatePath('/tenants');
         return { success: true };
     } catch (error) {
-        console.error(error);
+        console.error('Database error in addTenant action:', error);
         return { error: 'Database error: Failed to add tenant.'}
     }
 }
