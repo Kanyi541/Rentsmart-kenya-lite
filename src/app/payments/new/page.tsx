@@ -94,6 +94,7 @@ function NewPaymentPage() {
             key: paystackKey,
             email: data.email,
             amount: total * 100, // Paystack amount is in kobo (or cents)
+            currency: 'KES', // Add the currency here
             phone: data.phone,
             ref: '' + Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference.
             onClose: function(){
