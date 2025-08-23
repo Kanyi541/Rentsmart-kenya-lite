@@ -53,7 +53,7 @@ export async function getPayments(): Promise<Payment[]> {
             id: paymentDoc.id,
             ...paymentData,
             createdAt,
-            tenant: tenant ? { firstName: tenant.firstName, secondName: tenant.secondName } : undefined,
+            tenant: tenant ? { firstName: tenant.firstName, secondName: tenant.secondName, email: tenant.email } : undefined,
             rental: { name: rentalName },
             room: { roomNumber: roomNumber }
         } as Payment;

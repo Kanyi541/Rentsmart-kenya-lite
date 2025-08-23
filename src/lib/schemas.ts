@@ -46,6 +46,7 @@ export const paymentSchema = z.object({
   status: z.enum(['Pending', 'Completed', 'Failed']),
   transactionId: z.string(),
   phone: z.string(),
+  email: z.string().optional(),
   createdAt: z.any(),
 });
 
@@ -56,4 +57,6 @@ export const initiatePaymentSchema = z.object({
   rentAmount: z.coerce.number(),
   depositAmount: z.coerce.number(),
   phone: z.string().min(10, "A valid phone number is required"),
+  email: z.string().email("Email is required for payment"),
+  transactionRef: z.string(),
 });

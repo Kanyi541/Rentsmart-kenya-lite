@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
           {children}
         <Toaster />
+        <Script src="https://js.paystack.co/v1/inline.js" />
       </body>
     </html>
   );

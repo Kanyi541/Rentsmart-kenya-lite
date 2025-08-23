@@ -89,16 +89,15 @@ export async function addTenant(data: unknown) {
     }
 }
 
-// This is a simulated payment initiation function.
-// In a real application, this is where you would add your Paystack or other payment provider's API calls.
-async function initiatePayment(phone: string, amount: number, transactionId: string) {
-    console.log(`Simulating payment for ${phone} for KSh ${amount} with transaction ID: ${transactionId}`);
-    // We simulate a delay for the payment to be processed.
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    // We simulate a successful payment callback.
-    console.log(`Simulating successful payment callback for transaction ID: ${transactionId}`);
+// In a real application, you would verify the payment transaction reference with Paystack's API here
+// before creating payment records and assigning the room. This function simulates that process.
+async function verifyPayment(transactionRef: string) {
+    console.log(`Simulating verification for transaction ref: ${transactionRef}`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(`Verification successful for ${transactionRef}`);
     return { success: true };
 }
+
 
 export async function processPaymentAndAssign(data: unknown) {
     const parsedData = initiatePaymentSchema.safeParse(data);
@@ -107,53 +106,40 @@ export async function processPaymentAndAssign(data: unknown) {
         return { error: 'Invalid payment data.' };
     }
     
-    const { tenantId, rentalId, roomId, rentAmount, depositAmount, phone } = parsedData.data;
+    const { tenantId, rentalId, roomId, rentAmount, depositAmount, phone, email, transactionRef } = parsedData.data;
+
+    // In a production app, this is where you would call the Paystack API to verify the transaction `transactionRef`.
+    // We are simulating a successful verification here.
+    const verification = await verifyPayment(transactionRef);
+    if (!verification.success) {
+        return { error: 'Payment verification failed. Please contact support.'}
+    }
 
     // 1. Create payment records for rent and deposit
-    const rentTransactionId = `RENT_${Date.now()}`;
-    const depositTransactionId = `DEP_${Date.now()}`;
-
     const rentPaymentId = await createPayment({
         tenantId, rentalId, roomId, amount: rentAmount, type: 'Rent',
-        status: 'Pending', transactionId: rentTransactionId, phone
+        status: 'Completed', transactionId: transactionRef, phone, email
     });
 
     const depositPaymentId = await createPayment({
         tenantId, rentalId, roomId, amount: depositAmount, type: 'Deposit',
-        status: 'Pending', transactionId: depositTransactionId, phone
+        status: 'Completed', transactionId: transactionRef, phone, email
     });
     
     // Invalidate payments page cache
     revalidatePath('/payments');
-
-    // 2. Initiate payment with the chosen provider (e.g., Paystack)
-    const totalAmount = rentAmount + depositAmount;
-    const paymentResult = await initiatePayment(phone, totalAmount, `${rentTransactionId}_${depositTransactionId}`);
-
-    if (!paymentResult.success) {
-        await Promise.all([
-            updatePaymentStatus(rentPaymentId, 'Failed'),
-            updatePaymentStatus(depositPaymentId, 'Failed')
-        ]);
-        return { error: 'Payment failed or was cancelled.' };
-    }
-
-    // 3. Update payment statuses to 'Completed'
-    await Promise.all([
-        updatePaymentStatus(rentPaymentId, 'Completed'),
-        updatePaymentStatus(depositPaymentId, 'Completed')
-    ]);
     
-    revalidatePath('/payments');
-    
-    // 4. Assign the room
+    // 2. Assign the room
     try {
         await dbAssignRoom({ tenantId, rentalId, roomId });
     } catch (error) {
         console.error(error);
+        // If room assignment fails, we should ideally refund the payment or flag for manual intervention.
+        await updatePaymentStatus(rentPaymentId, 'Failed');
+        await updatePaymentStatus(depositPaymentId, 'Failed');
         return { error: 'Payment was successful, but failed to assign the room. Please contact support.' };
     }
     
-    // 5. Redirect to assignments page
+    // 3. Redirect to assignments page
     redirect('/assignments?status=success');
 }

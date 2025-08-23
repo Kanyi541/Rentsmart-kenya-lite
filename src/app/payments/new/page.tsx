@@ -17,8 +17,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
+declare global {
+    interface Window {
+        PaystackPop: any;
+    }
+}
+
 const paymentFormSchema = z.object({
   phone: z.string().min(10, "A valid phone number is required e.g 254..."),
+  email: z.string().email("A valid email is required to receive receipts"),
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
@@ -41,11 +48,13 @@ function NewPaymentPage() {
     // For this example, deposit is one month's rent
     const deposit = rent; 
     const total = rent + deposit;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
     const form = useForm<PaymentFormValues>({
         resolver: zodResolver(paymentFormSchema),
         defaultValues: {
-            phone: initialPhone
+            phone: initialPhone,
+            email: ''
         }
     });
     
@@ -66,29 +75,65 @@ function NewPaymentPage() {
             </AppLayout>
         )
     }
+
+    if (!paystackKey) {
+        return (
+             <AppLayout>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Configuration Error</CardTitle>
+                        <CardDescription>Paystack public key is not configured. Please contact support.</CardDescription>
+                    </CardHeader>
+                </Card>
+            </AppLayout>
+        )
+    }
     
     const handlePayment = async (data: PaymentFormValues) => {
-        try {
-            const result = await processPaymentAndAssign({
-                tenantId,
-                rentalId,
-                roomId,
-                rentAmount: rent,
-                depositAmount: deposit,
-                phone: data.phone
-            });
+        const handler = window.PaystackPop.setup({
+            key: paystackKey,
+            email: data.email,
+            amount: total * 100, // Paystack amount is in kobo (or cents)
+            phone: data.phone,
+            ref: '' + Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference.
+            onClose: function(){
+                toast({
+                    variant: 'destructive',
+                    title: 'Payment Incomplete',
+                    description: "You closed the payment popup. Please try again."
+                });
+            },
+            callback: function(response: any){
+                // This callback is where you would ideally verify the transaction on your server.
+                // For now, we will optimistically proceed.
+                form.control.handleSubmit(async () => {
+                     try {
+                        const result = await processPaymentAndAssign({
+                            tenantId,
+                            rentalId,
+                            roomId,
+                            rentAmount: rent,
+                            depositAmount: deposit,
+                            phone: data.phone,
+                            email: data.email,
+                            transactionRef: response.reference
+                        });
 
-            if (result?.error) {
-                throw new Error(result.error);
+                        if (result?.error) {
+                            throw new Error(result.error);
+                        }
+                        // Redirect is handled by the server action
+                    } catch (error: any) {
+                         toast({
+                            variant: 'destructive',
+                            title: 'Assignment Failed',
+                            description: error.message || "An unexpected error occurred after payment."
+                        })
+                    }
+                })();
             }
-            // Redirect will be handled by the server action
-        } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: 'Payment Failed',
-                description: error.message || "An unexpected error occurred."
-            })
-        }
+        });
+        handler.openIframe();
     };
 
 
@@ -133,20 +178,34 @@ function NewPaymentPage() {
                                         </div>
                                     </div>
                                 </div>
-                               
-                                <FormField
-                                    control={form.control}
-                                    name="phone"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Payment Phone Number</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g 254712345678" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email for Receipt</FormLabel>
+                                                <FormControl>
+                                                    <Input type="email" placeholder="e.g. tenant@example.com" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Payment Phone Number</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g 254712345678" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 {isSubmitting && (
                                      <div className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg text-center">
                                         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
