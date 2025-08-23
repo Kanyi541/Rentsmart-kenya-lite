@@ -1,7 +1,8 @@
+
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,6 +14,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/rentals', label: 'Rentals', icon: Building },
         { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
+        { href: '/payments', label: 'Payments', icon: CreditCard },
     ]
 
     return (
@@ -32,7 +34,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             <SidebarMenuItem key={item.label}>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={pathname === item.href}
+                                    isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
                                     >
                                     <Link href={item.href}>
                                         <item.icon />

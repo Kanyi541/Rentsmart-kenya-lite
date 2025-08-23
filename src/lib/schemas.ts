@@ -34,4 +34,26 @@ export const assignmentSchema = z.object({
     tenantId: z.string().min(1, "Tenant is required"),
     rentalId: z.string().min(1, "Rental is required"),
     roomId: z.string().min(1, "Room is required")
-})
+});
+
+export const paymentSchema = z.object({
+  id: z.string().optional(),
+  tenantId: z.string(),
+  rentalId: z.string(),
+  roomId: z.string(),
+  amount: z.coerce.number(),
+  type: z.enum(['Deposit', 'Rent']),
+  status: z.enum(['Pending', 'Completed', 'Failed']),
+  transactionId: z.string(),
+  phone: z.string(),
+  createdAt: z.any(),
+});
+
+export const initiatePaymentSchema = z.object({
+  tenantId: z.string(),
+  rentalId: z.string(),
+  roomId: z.string(),
+  rentAmount: z.coerce.number(),
+  depositAmount: z.coerce.number(),
+  phone: z.string().min(10, "A valid phone number is required"),
+});
