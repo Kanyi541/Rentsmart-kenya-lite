@@ -77,7 +77,7 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
 
       if (result.suggestion) {
         setSuggestion(result.suggestion);
-        form.setValue(`rooms.${roomIndex}.rent`, result.suggestion.rent, { shouldValidate: true });
+        form.setValue(`rooms.${index}.rent`, result.suggestion.rent, { shouldValidate: true });
         toast({
             title: "AI Suggestion Ready!",
             description: `We've suggested a monthly rent of KSh ${result.suggestion.rent.toLocaleString()}.`
@@ -196,7 +196,7 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormItem>
                         <FormLabel>Number of Rooms</FormLabel>
-                        <Input type="number" value={bulkCount} onChange={e => setBulkCount(parseInt(e.target.value, 10))} />
+                        <Input type="number" value={bulkCount} onChange={e => setBulkCount(parseInt(e.target.value, 10) || 0)} />
                     </FormItem>
                     <FormItem>
                         <FormLabel>Room Number Prefix</FormLabel>
@@ -224,7 +224,7 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
                     </FormItem>
                     <FormItem>
                          <FormLabel>Monthly Rent (KSh)</FormLabel>
-                         <Input type="number" min="0" value={bulkRent} onChange={e => setBulkRent(parseInt(e.target.value, 10))}/>
+                         <Input type="number" min="0" value={bulkRent} onChange={e => setBulkRent(parseInt(e.target.value, 10) || 0)}/>
                     </FormItem>
                  </div>
                  <Button type="button" onClick={handleBulkAdd} className="w-full">
