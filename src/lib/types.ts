@@ -1,4 +1,5 @@
 import { type z } from 'zod';
-import { type propertySchema } from './schemas';
+import { type rentalSchema, type roomSchema } from './schemas';
 
-export type Property = z.infer<typeof propertySchema> & { id: string, imageUrl: string };
+export type Room = z.infer<typeof roomSchema>;
+export type Rental = z.infer<typeof rentalSchema> & { id: string };

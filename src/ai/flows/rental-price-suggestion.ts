@@ -13,17 +13,13 @@ import {z} from 'genkit';
 
 const RentalPriceSuggestionInputSchema = z.object({
   location: z.string().describe('The location of the property.'),
-  propertyType: z.string().describe('The type of property (e.g., apartment, house).'),
-  bedrooms: z.number().describe('The number of bedrooms in the property.'),
-  bathrooms: z.number().describe('The number of bathrooms in the property.'),
-  squareFootage: z.number().describe('The square footage of the property.'),
-  amenities: z.string().describe('A description of the amenities offered by the property.'),
-  comparableRentals: z.string().optional().describe('Optional details of comparable rentals in the area.'),
+  propertyType: z.string().describe('The name of the rental property or apartment building.'),
+  roomType: z.string().describe('The type of room (e.g., Bedsitter, 2 Bedroom).'),
 });
 export type RentalPriceSuggestionInput = z.infer<typeof RentalPriceSuggestionInputSchema>;
 
 const RentalPriceSuggestionOutputSchema = z.object({
-  suggestedPrice: z.number().describe('The suggested monthly rental price for the property.'),
+  rent: z.number().describe('The suggested monthly rental price for the room.'),
   reasoning: z.string().describe('The reasoning behind the suggested price.'),
 });
 export type RentalPriceSuggestionOutput = z.infer<typeof RentalPriceSuggestionOutputSchema>;
@@ -36,23 +32,18 @@ const prompt = ai.definePrompt({
   name: 'rentalPriceSuggestionPrompt',
   input: {schema: RentalPriceSuggestionInputSchema},
   output: {schema: RentalPriceSuggestionOutputSchema},
-  prompt: `You are an expert real estate analyst specializing in rental pricing.
+  prompt: `You are an expert real estate analyst specializing in rental pricing in Kenya.
 
-  Based on the following property details, suggest a competitive monthly rental price.
+  Based on the following property details, suggest a competitive monthly rental price for a single room/unit.
 
   Location: {{{location}}}
-  Property Type: {{{propertyType}}}
-  Bedrooms: {{{bedrooms}}}
-  Bathrooms: {{{bathrooms}}}
-  Square Footage: {{{squareFootage}}}
-  Amenities: {{{amenities}}}
-  {{~#if comparableRentals}}
-  Comparable Rentals: {{{comparableRentals}}}
-  {{~/if}}
+  Rental Property Name: {{{propertyType}}}
+  Room Type: {{{roomType}}}
 
-  Provide a suggested monthly rental price and explain your reasoning.
-  Be sure to output the price as a number, without any currency symbols.  The suggestedPrice must be a number. Do not use a currency symbol.
-  Make sure to set the suggestedPrice and reasoning appropriately.`, 
+  Provide a suggested monthly rental price (in KSh) and a brief explanation for your reasoning.
+  Your reasoning should consider the location and room type to justify the price.
+  Be sure to output the price as a number, without any currency symbols. The rent must be a number. Do not use a currency symbol.
+  Make sure to set the rent and reasoning appropriately.`, 
 });
 
 const rentalPriceSuggestionFlow = ai.defineFlow(

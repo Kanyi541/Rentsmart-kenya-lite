@@ -2,29 +2,24 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/header';
-import { PropertyForm } from '@/components/property-form';
-import { PropertyListings } from '@/components/property-listings';
+import { RentalForm } from '@/components/rental-form';
+import { RentalListings } from '@/components/rental-listings';
 import { useToast } from '@/hooks/use-toast';
-import type { Property } from '@/lib/types';
-import type { z } from 'zod';
-import { type propertySchema } from '@/lib/schemas';
-
-type PropertyFormData = z.infer<typeof propertySchema>;
+import type { Rental } from '@/lib/types';
 
 export default function Home() {
-  const [newProperty, setNewProperty] = useState<Property | null>(null);
+  const [newRental, setNewRental] = useState<Rental | null>(null);
   const { toast } = useToast();
 
-  const handleAddProperty = (data: PropertyFormData) => {
-    const property: Property = {
+  const handleAddRental = (data: Omit<Rental, 'id'>) => {
+    const rental: Rental = {
       ...data,
       id: new Date().getTime().toString(),
-      imageUrl: 'https://placehold.co/600x400.png',
     };
-    setNewProperty(property);
+    setNewRental(rental);
     toast({
-      title: 'Property Listed!',
-      description: `${data.propertyType} in ${data.location} has been successfully listed.`,
+      title: 'Rental Added!',
+      description: `${data.name} in ${data.location} has been successfully added.`,
     });
   };
 
@@ -35,11 +30,11 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-2">
             <div className="sticky top-24">
-              <PropertyForm onAddProperty={handleAddProperty} />
+              <RentalForm onAddRental={handleAddRental} />
             </div>
           </div>
           <div className="lg:col-span-3">
-            <PropertyListings newProperty={newProperty} />
+            <RentalListings newRental={newRental} />
           </div>
         </div>
       </main>
