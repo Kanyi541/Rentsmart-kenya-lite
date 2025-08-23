@@ -1,30 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
 import { AppLayout } from '@/components/app-layout';
-import { RentalForm } from '@/components/rental-form';
-import { RentalListings } from '@/components/rental-listings';
-import { useToast } from '@/hooks/use-toast';
-import type { Rental } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
 
 export default function Home() {
-  const [newRental, setNewRental] = useState<Rental | null>(null);
-  const { toast } = useToast();
-
-  const handleAddRental = (data: Omit<Rental, 'id'>) => {
-    const rental: Rental = {
-      ...data,
-      id: new Date().getTime().toString(),
-    };
-    setNewRental(rental);
-    toast({
-      title: 'Rental Added!',
-      description: `${data.name} in ${data.location} has been successfully added.`,
-    });
-  };
 
   return (
     <AppLayout>
@@ -76,10 +57,6 @@ export default function Home() {
                     </p>
                 </CardContent>
             </Card>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight mb-4">Recent Rentals</h2>
-          <RentalListings newRental={newRental} />
         </div>
       </div>
     </AppLayout>
