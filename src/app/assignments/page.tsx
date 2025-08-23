@@ -14,15 +14,14 @@ import { assignmentSchema } from '@/lib/schemas';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { assignRoomToTenant } from '@/app/actions';
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
-export default function AssignmentsPage() {
+export default function AssignmentsPage({ tenants, rentals }: { tenants: Tenant[], rentals: Rental[] }) {
     const { toast } = useToast();
     const router = useRouter();
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [rentals, setRentals] = useState<Rental[]>([]);
-
+    
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
         defaultValues: {
@@ -39,25 +38,13 @@ export default function AssignmentsPage() {
         const rental = rentals.find(r => r.id.toString() === selectedRentalId);
         return rental ? rental.rooms.filter(room => !room.isOccupied) : [];
     }, [selectedRentalId, rentals]);
-
-    const handleAssignRoom = (data: AssignmentFormValues) => {
+    
+    const handleAssignRoom = async (data: AssignmentFormValues) => {
         try {
-            setRentals(prevRentals => {
-                return prevRentals.map(r => {
-                    if (r.id.toString() === data.rentalId) {
-                        return {
-                            ...r,
-                            rooms: r.rooms.map(room => {
-                                if(room.id.toString() === data.roomId) {
-                                    return {...room, isOccupied: true }
-                                }
-                                return room;
-                            })
-                        }
-                    }
-                    return r;
-                })
-            })
+            const result = await assignRoomToTenant(data);
+            if (result.error) {
+                throw new Error(result.error);
+            }
             toast({
                 title: "Room Assigned!",
                 description: `Room has been successfully assigned.`
@@ -92,7 +79,7 @@ export default function AssignmentsPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Tenant</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger><SelectValue placeholder="Select a tenant" /></SelectTrigger>
                                                 </FormControl>
@@ -110,7 +97,7 @@ export default function AssignmentsPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Rental Property</FormLabel>
-                                            <Select onValueChange={(value) => { field.onChange(value); form.setValue('roomId', ''); }} defaultValue={field.value}>
+                                            <Select onValueChange={(value) => { field.onChange(value); form.setValue('roomId', ''); }} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger><SelectValue placeholder="Select a rental" /></SelectTrigger>
                                                 </FormControl>
@@ -128,7 +115,7 @@ export default function AssignmentsPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Available Room</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedRentalId || availableRooms.length === 0}>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedRentalId || availableRooms.length === 0}>
                                                 <FormControl>
                                                     <SelectTrigger><SelectValue placeholder="Select a room" /></SelectTrigger>
                                                 </FormControl>

@@ -28,12 +28,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { addTenant } from '@/app/actions';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
 
-export default function TenantsPage() {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
+export default function TenantsPage({ tenants }: { tenants: Tenant[] }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -50,10 +50,12 @@ export default function TenantsPage() {
         }
     })
 
-    const handleAddTenant = (data: TenantFormValues) => {
+    const handleAddTenant = async (data: TenantFormValues) => {
         try {
-            const newTenant = { ...data, id: new Date().getTime().toString() };
-            setTenants(prev => [...prev, newTenant as Tenant]);
+            const result = await addTenant(data);
+            if (result.error) {
+                throw new Error(result.error);
+            }
 
             toast({
                 title: "Tenant Registered",
@@ -233,8 +235,8 @@ export default function TenantsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
-                                tenants.map(tenant => (
+                                {tenants && tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
+                                tenants && tenants.map(tenant => (
                                     <TableRow key={tenant.id}>
                                         <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
                                         <TableCell>{tenant.idNumber}</TableCell>

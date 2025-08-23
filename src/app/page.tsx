@@ -1,12 +1,12 @@
 
-
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
+import { getDashboardStats } from '@/lib/api/dashboard';
 
 
 export default async function Home() {
-  const stats = { totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 };
+  const stats = await getDashboardStats();
 
   return (
     <AppLayout>

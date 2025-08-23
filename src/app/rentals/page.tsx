@@ -27,22 +27,21 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { addRental } from '@/app/actions';
 
-export default function RentalsPage() {
-  const [rentals, setRentals] = useState<Rental[]>([]);
+export default function RentalsPage({ rentals }: { rentals: Rental[] }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
 
-  const handleAddRental = (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
+  const handleAddRental = async (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
     try {
-        const newRental = {
-            ...data,
-            id: new Date().getTime().toString(),
-            rooms: data.rooms.map(r => ({...r, id: new Date().getTime().toString()}))
+        const result = await addRental(data);
+        if (result.error) {
+            throw new Error(result.error);
         }
-        setRentals(prev => [...prev, newRental as Rental]);
+        
         toast({
           title: 'Rental Added!',
           description: `${data.name} in ${data.location} has been successfully added.`,
@@ -104,8 +103,8 @@ export default function RentalsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
-                        rentals.map(rental => (
+                        {rentals && rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
+                        rentals && rentals.map(rental => (
                             <TableRow key={rental.id}>
                                 <TableCell className="font-medium">{rental.name}</TableCell>
                                 <TableCell>{rental.ownerName}</TableCell>
