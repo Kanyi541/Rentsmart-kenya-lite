@@ -65,17 +65,22 @@ export async function addTenant(data: unknown) {
     if(!parsedData.success) {
         let errorMessage = 'Invalid tenant data.';
         try {
-            errorMessage = JSON.parse(parsedData.error.message)[0].message;
+            // Zod errors are an array of issues. We'll format them.
+            errorMessage = parsedData.error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ');
         } catch (e) {
-            console.error("Error parsing validation error message:", parsedData.error);
+             errorMessage = 'A validation error occurred.';
         }
         return { error: errorMessage };
     }
 
     try {
-        await dbAddTenant(parsedData.data);
+        const result = await dbAddTenant(parsedData.data);
+        if (result.error) {
+            return { error: result.error };
+        }
         revalidatePath('/tenants');
-        return { success: true };
+        revalidatePath('/');
+        return { success: true, id: result.id };
     } catch (error) {
         console.error('Database error in addTenant action:', error);
         return { error: 'Database error: Failed to add tenant.'}
