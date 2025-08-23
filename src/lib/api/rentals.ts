@@ -1,5 +1,8 @@
 'use server'
 
+// This file is currently not used due to mock data in rentals/page.tsx
+// It remains for future database integration.
+
 import { query } from '@/lib/db';
 import { rentalSchema } from '@/lib/schemas';
 import type { Rental, Room } from '@/lib/types';

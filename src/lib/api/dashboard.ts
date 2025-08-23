@@ -1,5 +1,8 @@
 'use server'
 
+// This file is currently not used due to mock data in page.tsx
+// It remains for future database integration.
+
 import { query } from '@/lib/db';
 
 export async function getDashboardStats() {

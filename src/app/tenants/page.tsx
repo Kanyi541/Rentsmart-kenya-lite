@@ -1,6 +1,7 @@
+
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,17 +27,20 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
-export default function TenantsPage({ tenants: initialTenants, onAddTenant }: { tenants: Tenant[], onAddTenant: (tenant: Omit<Tenant, 'id'>) => void }) {
+const initialTenants: Tenant[] = [
+    { id: '1', firstName: 'John', secondName: 'Doe', thirdName: 'M', idNumber: '12345678', phone: '0712345678', email: 'john.doe@email.com', maritalStatus: 'Single', gender: 'Male' },
+    { id: '2', firstName: 'Jane', secondName: 'Smith', thirdName: 'F', idNumber: '87654321', phone: '0787654321', email: 'jane.smith@email.com', maritalStatus: 'Married', gender: 'Female' },
+];
+
+export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
-
-    useEffect(() => {
-        setTenants(initialTenants);
-    }, [initialTenants])
+    const router = useRouter();
 
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
@@ -50,9 +54,11 @@ export default function TenantsPage({ tenants: initialTenants, onAddTenant }: { 
         }
     })
 
-    const handleAddTenant = (data: TenantFormValues) => {
+    const handleAddTenant = async (data: TenantFormValues) => {
         try {
-            onAddTenant(data);
+            const newTenant = { ...data, id: new Date().getTime().toString() };
+            setTenants(prev => [...prev, newTenant]);
+
             toast({
                 title: "Tenant Registered",
                 description: `${data.firstName} ${data.secondName} has been added to the tenant list.`

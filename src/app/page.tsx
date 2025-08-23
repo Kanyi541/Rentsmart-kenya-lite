@@ -1,14 +1,17 @@
+
+
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
-import type { Rental, Tenant } from '@/lib/types';
 
-export default function Home({ rentals, tenants }: { rentals: Rental[], tenants: Tenant[] }) {
-    const totalRentals = rentals?.length || 0;
-    const totalTenants = tenants?.length || 0;
+// Mock data to avoid database dependency
+const totalRentals = 2;
+const totalTenants = 5;
+const totalRooms = 15;
+const occupiedRooms = 9;
 
-    const totalRooms = rentals?.reduce((acc, rental) => acc + (rental.rooms?.length || 0), 0) || 0;
-    const occupiedRooms = rentals?.reduce((acc, rental) => acc + (rental.rooms?.filter(room => room.isOccupied).length || 0), 0) || 0;
+
+export default async function Home() {
 
   return (
     <AppLayout>

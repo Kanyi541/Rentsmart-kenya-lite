@@ -1,4 +1,8 @@
 'use server'
+
+// This file is currently not used due to mock data in tenants/page.tsx
+// It remains for future database integration.
+
 import { query } from '@/lib/db';
 import { tenantSchema } from '@/lib/schemas';
 import type { Tenant } from '@/lib/types';

@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { RentalForm } from '@/components/rental-form';
 import type { Rental } from '@/lib/types';
@@ -26,26 +26,51 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
+
+const initialRentals: Rental[] = [
+    { 
+        id: '1', 
+        name: 'Green Valley Apartments', 
+        location: 'Kilimani, Nairobi', 
+        ownerName: 'Peter Pan', 
+        ownerNumber: '0711223344', 
+        rooms: [
+            { id: '101', roomNumber: 'A101', roomType: '1 Bedroom', rent: 25000, isOccupied: false },
+            { id: '102', roomNumber: 'A102', roomType: 'Bedsitter', rent: 15000, isOccupied: true },
+        ] 
+    },
+    { 
+        id: '2', 
+        name: 'Sunrise Towers', 
+        location: 'Westlands, Nairobi', 
+        ownerName: 'Wendy Darling', 
+        ownerNumber: '0755667788', 
+        rooms: [
+            { id: '201', roomNumber: 'B201', roomType: '2 Bedroom', rent: 40000, isOccupied: false },
+        ] 
+    },
+];
 
 
-export default function RentalsPage({ rentals: initialRentals, onAddRental }: { rentals: Rental[], onAddRental: (rental: Omit<Rental, 'id'>) => void }) {
+export default function RentalsPage() {
   const [rentals, setRentals] = useState(initialRentals);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-    useEffect(() => {
-        setRentals(initialRentals);
-    }, [initialRentals])
 
-  const handleAddRental = (data: Omit<Rental, 'id'>) => {
+  const handleAddRental = async (data: Omit<Rental, 'id'>) => {
     try {
-        onAddRental(data);
+        const newRental = { ...data, id: new Date().getTime().toString() }
+        setRentals(prev => [...prev, newRental]);
         toast({
           title: 'Rental Added!',
           description: `${data.name} in ${data.location} has been successfully added.`,
         });
         setIsDialogOpen(false);
     } catch (error) {
+        console.error(error);
         toast({
             variant: 'destructive',
             title: 'Error',

@@ -1,6 +1,10 @@
 import mysql from 'mysql2/promise';
 import 'dotenv/config';
 
+// This file is currently not used due to the app using mock data.
+// It remains for future database integration.
+
+
 // Create a connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
