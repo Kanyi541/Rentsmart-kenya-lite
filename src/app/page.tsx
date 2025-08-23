@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
 import { getDashboardStats } from '@/lib/api/dashboard';
+import { getRentals } from '@/lib/api/rentals';
+import { getTenants } from '@/lib/api/tenants';
 
 
 export default async function Home() {

@@ -1,19 +1,31 @@
 
-import { query } from '@/lib/db';
+'use server'
+
 import { z } from 'zod';
 import { assignmentSchema } from '../schemas';
+import { mockAssignments, mockRentals, mockTenants } from '@/lib/mock-data';
+import { revalidatePath } from 'next/cache';
 
 type AssignmentData = z.infer<typeof assignmentSchema>;
 
 export async function assignRoomToTenant(data: AssignmentData) {
-    // First, create the assignment record
-    const assignmentResult: any = await query(
-        'INSERT INTO assignments ("tenantId", "rentalId", "roomId") VALUES ($1, $2, $3) RETURNING id',
-        [data.tenantId, data.rentalId, data.roomId]
-    );
+    const newId = new Date().getTime();
+    
+    mockAssignments.push({
+        ...data,
+        id: newId,
+    });
+    
+    const rental = mockRentals.find(r => r.id.toString() === data.rentalId);
+    if(rental) {
+        const room = rental.rooms.find(room => room.id.toString() === data.roomId);
+        if (room) {
+            room.isOccupied = true;
+        }
+    }
 
-    // Then, update the room's status to occupied
-    await query('UPDATE rooms SET "isOccupied" = $1 WHERE id = $2', [true, data.roomId]);
-
-    return { id: assignmentResult[0].id };
+    revalidatePath('/assignments');
+    revalidatePath('/');
+    
+    return { id: newId };
 }

@@ -1,27 +1,21 @@
 
-import { query } from '@/lib/db';
+'use server'
+
+import { mockRentals, mockTenants } from "@/lib/mock-data";
 
 export async function getDashboardStats() {
-    try {
-        const totalRentalsResult: any = await query('SELECT COUNT(*) as count FROM rentals', []);
-        const totalTenantsResult: any = await query('SELECT COUNT(*) as count FROM tenants', []);
-        const totalRoomsResult: any = await query('SELECT COUNT(*) as count FROM rooms', []);
-        const occupiedRoomsResult: any = await query('SELECT COUNT(*) as count FROM rooms WHERE "isOccupied" = $1', [true]);
+    const totalRentals = mockRentals.length;
+    const totalTenants = mockTenants.length;
+    
+    const totalRooms = mockRentals.reduce((acc, rental) => acc + rental.rooms.length, 0);
+    const occupiedRooms = mockRentals.reduce((acc, rental) => {
+        return acc + rental.rooms.filter(room => room.isOccupied).length;
+    }, 0);
 
-        return {
-            totalRentals: totalRentalsResult[0].count,
-            totalTenants: totalTenantsResult[0].count,
-            totalRooms: totalRoomsResult[0].count,
-            occupiedRooms: occupiedRoomsResult[0].count,
-        };
-    } catch (error) {
-        console.error('Failed to fetch dashboard stats:', error);
-        // Return zeroed stats on error to prevent page crash
-        return {
-            totalRentals: 0,
-            totalTenants: 0,
-            totalRooms: 0,
-            occupiedRooms: 0,
-        };
-    }
+    return {
+        totalRentals,
+        totalTenants,
+        totalRooms,
+        occupiedRooms,
+    };
 }

@@ -21,11 +21,23 @@ import { getRentals } from '@/lib/api/rentals';
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
-export default function AssignmentsPage({ tenants: initialTenants, rentals: initialRentals }: { tenants: Tenant[], rentals: Rental[] }) {
-    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
-    const [rentals, setRentals] = useState<Rental[]>(initialRentals);
+export default function AssignmentsPage() {
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [rentals, setRentals] = useState<Rental[]>([]);
     const { toast } = useToast();
     const router = useRouter();
+
+    useEffect(() => {
+        async function fetchData() {
+            const [fetchedTenants, fetchedRentals] = await Promise.all([
+                getTenants(),
+                getRentals()
+            ]);
+            setTenants(fetchedTenants);
+            setRentals(fetchedRentals);
+        }
+        fetchData();
+    }, []);
     
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
@@ -55,13 +67,14 @@ export default function AssignmentsPage({ tenants: initialTenants, rentals: init
                 description: `Room has been successfully assigned.`
             });
             form.reset();
-            router.refresh();
-
-            // Refresh data
-            const updatedRentals = await getRentals();
-            setRentals(updatedRentals);
-            const updatedTenants = await getTenants();
+            
+            const [updatedTenants, updatedRentals] = await Promise.all([
+                getTenants(),
+                getRentals()
+            ]);
             setTenants(updatedTenants);
+            setRentals(updatedRentals);
+            router.refresh();
 
         } catch (error: any) {
             console.error(error);

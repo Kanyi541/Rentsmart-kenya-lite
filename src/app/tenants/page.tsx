@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,11 +34,19 @@ import { getTenants } from '@/lib/api/tenants';
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
 
-export default function TenantsPage({ tenants: initialTenants }: { tenants: Tenant[] }) {
-    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
+export default function TenantsPage() {
+    const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+
+    useEffect(() => {
+        async function fetchData() {
+            const fetchedTenants = await getTenants();
+            setTenants(fetchedTenants);
+        }
+        fetchData();
+    }, []);
 
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
@@ -65,9 +73,9 @@ export default function TenantsPage({ tenants: initialTenants }: { tenants: Tena
             });
             form.reset();
             setIsDialogOpen(false);
-            router.refresh();
             const updatedTenants = await getTenants();
             setTenants(updatedTenants);
+            router.refresh();
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -249,7 +257,7 @@ export default function TenantsPage({ tenants: initialTenants }: { tenants: Tena
                                         <TableCell><Badge variant="secondary">{tenant.maritalStatus}</Badge></TableCell>
                                     </TableRow>
                                 ))}
-                            </TableBody>
+                            </Body>
                        </Table>
                     </CardContent>
                 </Card>

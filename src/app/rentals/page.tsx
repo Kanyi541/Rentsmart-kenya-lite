@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { RentalForm } from '@/components/rental-form';
 import type { Rental } from '@/lib/types';
@@ -30,12 +30,19 @@ import { useRouter } from 'next/navigation';
 import { addRental } from '@/app/actions';
 import { getRentals } from '@/lib/api/rentals';
 
-export default function RentalsPage({ rentals: initialRentals }: { rentals: Rental[] }) {
-  const [rentals, setRentals] = useState<Rental[]>(initialRentals);
+export default function RentalsPage() {
+  const [rentals, setRentals] = useState<Rental[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
+  useEffect(() => {
+    async function fetchData() {
+        const fetchedRentals = await getRentals();
+        setRentals(fetchedRentals);
+    }
+    fetchData();
+  }, []);
 
   const handleAddRental = async (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
     try {
@@ -49,9 +56,9 @@ export default function RentalsPage({ rentals: initialRentals }: { rentals: Rent
           description: `${data.name} in ${data.location} has been successfully added.`,
         });
         setIsDialogOpen(false);
-        router.refresh();
         const updatedRentals = await getRentals();
         setRentals(updatedRentals);
+        router.refresh();
     } catch (error: any) {
         console.error(error);
         toast({
