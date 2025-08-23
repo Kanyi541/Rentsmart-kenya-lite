@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const roomSchema = z.object({
@@ -17,15 +18,15 @@ export const rentalSchema = z.object({
   rooms: z.array(roomSchema).min(1, 'At least one room is required.'),
 });
 
-export const clientSchema = z.object({
+export const tenantSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(3, "Client name is required"),
+    name: z.string().min(3, "Tenant name is required"),
     phone: z.string().min(10, "A valid phone number is required"),
     email: z.string().email("A valid email is required")
 });
 
 export const assignmentSchema = z.object({
-    clientId: z.string().min(1, "Client is required"),
+    tenantId: z.string().min(1, "Tenant is required"),
     rentalId: z.string().min(1, "Rental is required"),
     roomId: z.string().min(1, "Room is required")
 })

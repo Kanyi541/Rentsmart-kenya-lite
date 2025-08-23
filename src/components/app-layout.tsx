@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "./ui/sidebar";
@@ -12,7 +13,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const menuItems = [
         { href: '/', label: 'Dashboard', icon: Home },
         { href: '/rentals', label: 'Rentals', icon: Building },
-        { href: '/clients', label: 'Clients', icon: Users },
+        { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
     ]
 
