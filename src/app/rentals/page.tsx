@@ -28,8 +28,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addRental } from '@/app/actions';
+import { getRentals } from '@/lib/api/rentals';
 
-export default function RentalsPage({ rentals }: { rentals: Rental[] }) {
+export default function RentalsPage({ rentals: initialRentals }: { rentals: Rental[] }) {
+  const [rentals, setRentals] = useState<Rental[]>(initialRentals);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -48,12 +50,14 @@ export default function RentalsPage({ rentals }: { rentals: Rental[] }) {
         });
         setIsDialogOpen(false);
         router.refresh();
-    } catch (error) {
+        const updatedRentals = await getRentals();
+        setRentals(updatedRentals);
+    } catch (error: any) {
         console.error(error);
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Failed to add rental.'
+            description: error.message || 'Failed to add rental.'
         })
     }
   };

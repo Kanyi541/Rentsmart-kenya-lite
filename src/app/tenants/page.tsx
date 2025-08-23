@@ -29,11 +29,13 @@ import { PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addTenant } from '@/app/actions';
+import { getTenants } from '@/lib/api/tenants';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
 
-export default function TenantsPage({ tenants }: { tenants: Tenant[] }) {
+export default function TenantsPage({ tenants: initialTenants }: { tenants: Tenant[] }) {
+    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -64,11 +66,13 @@ export default function TenantsPage({ tenants }: { tenants: Tenant[] }) {
             form.reset();
             setIsDialogOpen(false);
             router.refresh();
-        } catch (error) {
+            const updatedTenants = await getTenants();
+            setTenants(updatedTenants);
+        } catch (error: any) {
             toast({
                 variant: 'destructive',
                 title: "Error",
-                description: "Failed to add tenant."
+                description: error.message || "Failed to add tenant."
             })
         }
     }

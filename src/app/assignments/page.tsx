@@ -15,10 +15,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { assignRoomToTenant } from '@/app/actions';
+import { getTenants } from '@/lib/api/tenants';
+import { getRentals } from '@/lib/api/rentals';
+
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
-export default function AssignmentsPage({ tenants, rentals }: { tenants: Tenant[], rentals: Rental[] }) {
+export default function AssignmentsPage({ tenants: initialTenants, rentals: initialRentals }: { tenants: Tenant[], rentals: Rental[] }) {
+    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
+    const [rentals, setRentals] = useState<Rental[]>(initialRentals);
     const { toast } = useToast();
     const router = useRouter();
     
@@ -52,12 +57,18 @@ export default function AssignmentsPage({ tenants, rentals }: { tenants: Tenant[
             form.reset();
             router.refresh();
 
-        } catch (error) {
+            // Refresh data
+            const updatedRentals = await getRentals();
+            setRentals(updatedRentals);
+            const updatedTenants = await getTenants();
+            setTenants(updatedTenants);
+
+        } catch (error: any) {
             console.error(error);
             toast({
                 variant: 'destructive',
                 title: "Error",
-                description: `Failed to assign room.`
+                description: error.message || `Failed to assign room.`
             });
         }
     }
