@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -98,8 +99,9 @@ export default function RentalsPage({ rentals: initialRentals, onAddRental }: { 
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rentals.length === 0 && <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow>}
-                        {rentals.map(rental => (
+                        {!rentals ? <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow> :
+                        rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
+                        rentals.map(rental => (
                             <TableRow key={rental.id}>
                                 <TableCell className="font-medium">{rental.name}</TableCell>
                                 <TableCell>{rental.ownerName}</TableCell>
