@@ -25,26 +25,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { addRental, getRentals } from '@/lib/api/rentals';
 
 
-export default function RentalsPage() {
-  const [rentals, setRentals] = useState<Rental[]>([]);
+export default function RentalsPage({ rentals: initialRentals, onAddRental }: { rentals: Rental[], onAddRental: (rental: Omit<Rental, 'id'>) => void }) {
+  const [rentals, setRentals] = useState(initialRentals);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchRentals = async () => {
-        const fetchedRentals = await getRentals();
-        setRentals(fetchedRentals);
-    }
-    fetchRentals();
-  }, [])
+    useEffect(() => {
+        setRentals(initialRentals);
+    }, [initialRentals])
 
-  const handleAddRental = async (data: Omit<Rental, 'id'>) => {
+  const handleAddRental = (data: Omit<Rental, 'id'>) => {
     try {
-        const newRental = await addRental(data);
-        setRentals(prev => [newRental, ...prev]);
+        onAddRental(data);
         toast({
           title: 'Rental Added!',
           description: `${data.name} in ${data.location} has been successfully added.`,

@@ -26,22 +26,17 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { addTenant, getTenants } from '@/lib/api/tenants';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
-export default function TenantsPage() {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
+export default function TenantsPage({ tenants: initialTenants, onAddTenant }: { tenants: Tenant[], onAddTenant: (tenant: Omit<Tenant, 'id'>) => void }) {
+    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
-        const fetchTenants = async () => {
-            const fetchedTenants = await getTenants();
-            setTenants(fetchedTenants);
-        }
-        fetchTenants();
-    }, [])
+        setTenants(initialTenants);
+    }, [initialTenants])
 
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
@@ -55,13 +50,12 @@ export default function TenantsPage() {
         }
     })
 
-    const handleAddTenant = async (data: TenantFormValues) => {
+    const handleAddTenant = (data: TenantFormValues) => {
         try {
-            const newTenant = await addTenant(data);
-            setTenants(prev => [...prev, newTenant]);
+            onAddTenant(data);
             toast({
                 title: "Tenant Registered",
-                description: `${newTenant.firstName} ${newTenant.secondName} has been added to the tenant list.`
+                description: `${data.firstName} ${data.secondName} has been added to the tenant list.`
             });
             form.reset();
             setIsDialogOpen(false);

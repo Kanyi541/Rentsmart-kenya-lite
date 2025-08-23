@@ -1,10 +1,14 @@
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
-import { getDashboardStats } from '@/lib/api/dashboard';
+import type { Rental, Tenant } from '@/lib/types';
 
-export default async function Home() {
-  const stats = await getDashboardStats();
+export default function Home({ rentals, tenants }: { rentals: Rental[], tenants: Tenant[] }) {
+    const totalRentals = rentals?.length || 0;
+    const totalTenants = tenants?.length || 0;
+
+    const totalRooms = rentals?.reduce((acc, rental) => acc + (rental.rooms?.length || 0), 0) || 0;
+    const occupiedRooms = rentals?.reduce((acc, rental) => acc + (rental.rooms?.filter(room => room.isOccupied).length || 0), 0) || 0;
 
   return (
     <AppLayout>
@@ -22,7 +26,7 @@ export default async function Home() {
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalRentals}</div>
+                    <div className="text-2xl font-bold">{totalRentals}</div>
                     <p className="text-xs text-muted-foreground">
                         properties being managed
                     </p>
@@ -36,7 +40,7 @@ export default async function Home() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalTenants}</div>
+                    <div className="text-2xl font-bold">{totalTenants}</div>
                      <p className="text-xs text-muted-foreground">
                         tenants registered
                     </p>
@@ -50,7 +54,7 @@ export default async function Home() {
                     <BedDouble className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.occupiedRooms} / {stats.totalRooms}</div>
+                    <div className="text-2xl font-bold">{occupiedRooms} / {totalRooms}</div>
                      <p className="text-xs text-muted-foreground">
                         rooms currently occupied
                     </p>

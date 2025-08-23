@@ -12,28 +12,22 @@ import { z } from 'zod';
 import { assignmentSchema } from '@/lib/schemas';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getTenants } from '@/lib/api/tenants';
-import { getRentals, assignRoomToTenant } from '@/lib/api/rentals';
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
-export default function AssignmentsPage() {
+export default function AssignmentsPage({ rentals: initialRentals, tenants: initialTenants, onAssignRoom }: { rentals: Rental[], tenants: Tenant[], onAssignRoom: (roomId: string, rentalId: string) => void }) {
     const [assignments, setAssignments] = useState<Assignment[]>([]);
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [rentals, setRentals] = useState<Rental[]>([]);
+    const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
+    const [rentals, setRentals] = useState<Rental[]>(initialRentals);
     const { toast } = useToast();
 
     useEffect(() => {
-        const fetchData = async () => {
-            const [fetchedTenants, fetchedRentals] = await Promise.all([
-                getTenants(),
-                getRentals()
-            ]);
-            setTenants(fetchedTenants);
-            setRentals(fetchedRentals);
-        }
-        fetchData();
-    }, [])
+        setRentals(initialRentals);
+    }, [initialRentals]);
+
+    useEffect(() => {
+        setTenants(initialTenants);
+    }, [initialTenants]);
 
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
@@ -52,27 +46,9 @@ export default function AssignmentsPage() {
         return rental ? rental.rooms.filter(room => !room.isOccupied) : [];
     }, [selectedRentalId, rentals]);
 
-    const handleAssignRoom = async (data: AssignmentFormValues) => {
+    const handleAssignRoom = (data: AssignmentFormValues) => {
         try {
-            await assignRoomToTenant(data.roomId, data.tenantId);
-             // Update room status locally
-            setRentals(prevRentals => {
-                return prevRentals.map(rental => {
-                    if (rental.id === data.rentalId) {
-                        return {
-                            ...rental,
-                            rooms: rental.rooms.map(room => {
-                                if (room.id === data.roomId) {
-                                    return { ...room, isOccupied: true };
-                                }
-                                return room;
-                            })
-                        }
-                    }
-                    return rental;
-                })
-            })
-
+            onAssignRoom(data.roomId, data.rentalId);
             toast({
                 title: "Room Assigned!",
                 description: `Room has been successfully assigned.`
