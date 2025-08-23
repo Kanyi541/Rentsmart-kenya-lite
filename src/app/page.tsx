@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Header } from '@/components/header';
+import { AppLayout } from '@/components/app-layout';
 import { RentalForm } from '@/components/rental-form';
 import { RentalListings } from '@/components/rental-listings';
 import { useToast } from '@/hooks/use-toast';
 import type { Rental } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building, Users, BedDouble } from 'lucide-react';
 
 export default function Home() {
   const [newRental, setNewRental] = useState<Rental | null>(null);
@@ -24,20 +26,61 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
-          <div className="lg:col-span-2">
-            <div className="sticky top-24">
-              <RentalForm onAddRental={handleAddRental} />
-            </div>
-          </div>
-          <div className="lg:col-span-3">
-            <RentalListings newRental={newRental} />
-          </div>
+    <AppLayout>
+      <div className="space-y-8">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome to your RentSmart dashboard.</p>
         </div>
-      </main>
-    </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Total Rentals
+                    </CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">3</div>
+                    <p className="text-xs text-muted-foreground">
+                        properties being managed
+                    </p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Total Clients
+                    </CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">0</div>
+                     <p className="text-xs text-muted-foreground">
+                        clients registered
+                    </p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Occupied Rooms
+                    </CardTitle>
+                    <BedDouble className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">0 / 8</div>
+                     <p className="text-xs text-muted-foreground">
+                        rooms currently occupied
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">Recent Rentals</h2>
+          <RentalListings newRental={newRental} />
+        </div>
+      </div>
+    </AppLayout>
   );
 }
