@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Wand2, Loader2, DollarSign, PlusCircle, X } from 'lucide-react';
+import { Wand2, Loader2, DollarSign, PlusCircle, X, ChevronsDownUp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ import { rentalSchema, roomSchema } from '@/lib/schemas';
 import type { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 type RentalFormValues = z.infer<typeof rentalSchema>;
 
@@ -40,6 +42,12 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
   const [isPending, startTransition] = useTransition();
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const { toast } = useToast();
+
+  const [bulkCount, setBulkCount] = useState(10);
+  const [bulkPrefix, setBulkPrefix] = useState('A');
+  const [bulkRoomType, setBulkRoomType] = useState('Single Room');
+  const [bulkRent, setBulkRent] = useState(10000);
+
 
   const form = useForm<RentalFormValues>({
     resolver: zodResolver(rentalSchema),
@@ -83,6 +91,34 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
       }
     });
   };
+
+  const handleBulkAdd = () => {
+    const roomsToAdd = [];
+    // Find the highest existing number for the prefix to avoid duplicates
+    const existingNumbers = fields
+        .map(field => {
+            if(field.roomNumber.startsWith(bulkPrefix)) {
+                return parseInt(field.roomNumber.substring(bulkPrefix.length), 10);
+            }
+            return 0;
+        })
+        .filter(num => !isNaN(num));
+
+    const startNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+    for(let i = 0; i < bulkCount; i++) {
+        roomsToAdd.push({
+            roomNumber: `${bulkPrefix}${startNumber + i}`,
+            roomType: bulkRoomType as any,
+            rent: bulkRent
+        });
+    }
+    append(roomsToAdd);
+    toast({
+        title: "Rooms Generated!",
+        description: `${bulkCount} rooms have been added to the list below.`
+    })
+  }
 
   function onSubmit(data: RentalFormValues) {
     onAddRental(data);
@@ -152,9 +188,67 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
         
         <Separator />
 
-        <div>
-            <h3 className="text-lg font-medium">Rooms</h3>
+        <Card>
+            <CardHeader>
+                <CardTitle>Bulk Add Rooms</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormItem>
+                        <FormLabel>Number of Rooms</FormLabel>
+                        <Input type="number" value={bulkCount} onChange={e => setBulkCount(parseInt(e.target.value, 10))} />
+                    </FormItem>
+                    <FormItem>
+                        <FormLabel>Room Number Prefix</FormLabel>
+                        <Input placeholder="e.g., A, B, G" value={bulkPrefix} onChange={e => setBulkPrefix(e.target.value)} />
+                    </FormItem>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormItem>
+                        <FormLabel>Room Type</FormLabel>
+                        <Select onValueChange={setBulkRoomType} value={bulkRoomType}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select room type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="Single Room">Single Room</SelectItem>
+                            <SelectItem value="Bedsitter">Bedsitter</SelectItem>
+                            <SelectItem value="1 Bedroom">1 Bedroom</SelectItem>
+                            <SelectItem value="2 Bedroom">2 Bedroom</SelectItem>
+                            <SelectItem value="3 Bedroom">3 Bedroom</SelectItem>
+                            <SelectItem value="4 Bedroom">4 Bedroom</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </FormItem>
+                    <FormItem>
+                         <FormLabel>Monthly Rent (KSh)</FormLabel>
+                         <Input type="number" min="0" value={bulkRent} onChange={e => setBulkRent(parseInt(e.target.value, 10))}/>
+                    </FormItem>
+                 </div>
+                 <Button type="button" onClick={handleBulkAdd} className="w-full">
+                     <ChevronsDownUp className="mr-2 h-4 w-4" />
+                     Generate and Add Rooms to List
+                 </Button>
+            </CardContent>
+        </Card>
+
+        <Separator />
+
+
+        <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Room List ({fields.length} rooms)</h3>
+             <Button
+                type="button"
+                variant="outline"
+                onClick={() => append({ roomNumber: '', roomType: '1 Bedroom', rent: 0 })}
+            >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Manually
+            </Button>
         </div>
+
 
         {fields.map((field, index) => (
             <div key={field.id} className="space-y-4 rounded-lg border p-4 relative">
@@ -249,16 +343,6 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
             </div>
         ))}
         
-        <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => append({ roomNumber: '', roomType: '1 Bedroom', rent: 0 })}
-        >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Another Room
-        </Button>
-        
         <Separator />
 
         <Button type="submit" size="lg" className="w-full">Save Rental Property</Button>
@@ -266,3 +350,4 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
     </Form>
   );
 }
+
