@@ -45,6 +45,20 @@ export default function PaymentsPage() {
         }
     }
 
+    const formatDate = (timestamp: any) => {
+        if (!timestamp) return 'N/A';
+        // Firestore Timestamps have a toDate() method, but serialized ones might not.
+        if (timestamp.toDate) {
+            return format(timestamp.toDate(), 'PPpp');
+        }
+        // Handle serialized timestamps (which might be objects with seconds/nanoseconds)
+        if (timestamp.seconds) {
+            return format(new Date(timestamp.seconds * 1000), 'PPpp');
+        }
+        // Fallback for string or number timestamps
+        return format(new Date(timestamp), 'PPpp');
+    }
+
     return (
         <AppLayout>
             <div className="grid flex-1 items-start gap-4 md:gap-8">
@@ -74,7 +88,7 @@ export default function PaymentsPage() {
                                     payments.map(payment => (
                                         <TableRow key={payment.id}>
                                             <TableCell className="font-medium">
-                                                {payment.createdAt ? format(payment.createdAt.toDate(), 'PPpp') : 'N/A'}
+                                                {formatDate(payment.createdAt)}
                                             </TableCell>
                                             <TableCell>
                                                 {payment.tenant ? `${payment.tenant.firstName} ${payment.tenant.secondName}` : 'N/A'}
