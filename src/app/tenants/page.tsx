@@ -257,7 +257,7 @@ export default function TenantsPage() {
                                         <TableCell><Badge variant="secondary">{tenant.maritalStatus}</Badge></TableCell>
                                     </TableRow>
                                 ))}
-                            </Body>
+                            </TableBody>
                        </Table>
                     </CardContent>
                 </Card>
@@ -265,3 +265,6 @@ export default function TenantsPage() {
         </AppLayout>
     )
 }
+
+
+    
