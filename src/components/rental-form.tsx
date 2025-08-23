@@ -4,7 +4,7 @@
 import { useState, useTransition } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Wand2, Loader2, DollarSign, PlusCircle, X, ChevronsDownUp } from 'lucide-react';
+import { Wand2, Loader2, DollarSign, PlusCircle, X, ChevronsDownUp, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -41,12 +41,14 @@ interface Suggestion {
 export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormValues) => void }) {
   const [isPending, startTransition] = useTransition();
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [indexForSuggestion, setIndexForSuggestion] = useState<number | null>(null);
   const { toast } = useToast();
 
   const [bulkCount, setBulkCount] = useState(10);
   const [bulkPrefix, setBulkPrefix] = useState('A');
   const [bulkRoomType, setBulkRoomType] = useState('Single Room');
   const [bulkRent, setBulkRent] = useState(10000);
+  const [showRooms, setShowRooms] = useState(true);
 
 
   const form = useForm<RentalFormValues>({
@@ -67,28 +69,29 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
 
   const handleSuggestion = (roomIndex: number) => {
     startTransition(async () => {
-      const rentalValues = form.getValues();
-      const roomValues = rentalValues.rooms[roomIndex];
-      const result = await getRentalSuggestion({
-        location: rentalValues.location,
-        propertyType: rentalValues.name,
-        roomType: roomValues.roomType,
-      });
-
-      if (result.suggestion) {
-        setSuggestion(result.suggestion);
-        form.setValue(`rooms.${index}.rent`, result.suggestion.rent, { shouldValidate: true });
-        toast({
-            title: "AI Suggestion Ready!",
-            description: `We've suggested a monthly rent of KSh ${result.suggestion.rent.toLocaleString()}.`
-        })
-      } else {
-        toast({
-            variant: "destructive",
-            title: "AI Suggestion Error",
-            description: result.error || 'An unknown error occurred.',
+        setIndexForSuggestion(roomIndex);
+        const rentalValues = form.getValues();
+        const roomValues = rentalValues.rooms[roomIndex];
+        const result = await getRentalSuggestion({
+            location: rentalValues.location,
+            propertyType: rentalValues.name,
+            roomType: roomValues.roomType,
         });
-      }
+
+        if (result.suggestion) {
+            setSuggestion(result.suggestion);
+            form.setValue(`rooms.${roomIndex}.rent`, result.suggestion.rent, { shouldValidate: true });
+            toast({
+                title: "AI Suggestion Ready!",
+                description: `We've suggested a monthly rent of KSh ${result.suggestion.rent.toLocaleString()}.`
+            })
+        } else {
+            toast({
+                variant: "destructive",
+                title: "AI Suggestion Error",
+                description: result.error || 'An unknown error occurred.',
+            });
+        }
     });
   };
 
@@ -98,11 +101,14 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
     const existingNumbers = fields
         .map(field => {
             if(field.roomNumber.startsWith(bulkPrefix)) {
-                return parseInt(field.roomNumber.substring(bulkPrefix.length), 10);
+                const numberPart = field.roomNumber.substring(bulkPrefix.length);
+                if (numberPart) {
+                    return parseInt(numberPart, 10);
+                }
             }
             return 0;
         })
-        .filter(num => !isNaN(num));
+        .filter(num => !isNaN(num) && num !== null);
 
     const startNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
 
@@ -110,14 +116,16 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
         roomsToAdd.push({
             roomNumber: `${bulkPrefix}${startNumber + i}`,
             roomType: bulkRoomType as any,
-            rent: bulkRent
+            rent: bulkRent,
+            isOccupied: false
         });
     }
     append(roomsToAdd);
     toast({
         title: "Rooms Generated!",
-        description: `${bulkCount} rooms have been added to the list below.`
+        description: `${bulkCount} rooms have been added to the list.`
     })
+    setShowRooms(false);
   }
 
   function onSubmit(data: RentalFormValues) {
@@ -239,18 +247,31 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
 
         <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Room List ({fields.length} rooms)</h3>
-             <Button
-                type="button"
-                variant="outline"
-                onClick={() => append({ roomNumber: '', roomType: '1 Bedroom', rent: 0 })}
-            >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Manually
-            </Button>
+            <div className="flex items-center gap-2">
+                 <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowRooms(!showRooms)}
+                    disabled={fields.length === 0}
+                >
+                    {showRooms ? <EyeOff className="mr-2" /> : <Eye className="mr-2" />}
+                    {showRooms ? 'Hide' : 'Show'} Room List
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                        append({ roomNumber: '', roomType: '1 Bedroom', rent: 0, isOccupied: false });
+                        setShowRooms(true);
+                    }}
+                >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Manually
+                </Button>
+            </div>
         </div>
 
-
-        {fields.map((field, index) => (
+        {showRooms && fields.map((field, index) => (
             <div key={field.id} className="space-y-4 rounded-lg border p-4 relative">
             <Button
                 type="button"
@@ -309,7 +330,9 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
                     <FormItem>
                     <FormLabel>Monthly Rent (KSh)</FormLabel>
                     <FormControl>
-                        <Input type="number" min="0" placeholder="Enter rent amount or use AI" {...field} />
+                        <Input type="number" min="0" placeholder="Enter rent amount or use AI" {...field} 
+                         onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                        />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -319,7 +342,7 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <p className="text-sm font-medium text-muted-foreground">Get AI price suggestion for this room</p>
                 <Button type="button" variant="outline" onClick={() => handleSuggestion(index)} disabled={isPending}>
-                {isPending ? (
+                {isPending && indexForSuggestion === index ? (
                     <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analyzing...
@@ -333,7 +356,7 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
                 </Button>
             </div>
 
-            {suggestion && (
+            {suggestion && indexForSuggestion === index && (
                 <Alert className="bg-accent/20 border-accent/50">
                     <DollarSign className="h-4 w-4 !text-accent-foreground" />
                     <AlertTitle className="font-bold text-accent-foreground">AI Suggestion: KSh {suggestion.rent.toLocaleString()}</AlertTitle>
@@ -350,4 +373,3 @@ export function RentalForm({ onAddRental }: { onAddRental: (rental: RentalFormVa
     </Form>
   );
 }
-
