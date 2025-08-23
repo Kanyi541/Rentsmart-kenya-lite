@@ -20,9 +20,14 @@ export const rentalSchema = z.object({
 
 export const tenantSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(3, "Tenant name is required"),
+    firstName: z.string().min(2, "First name is required"),
+    secondName: z.string().min(2, "Second name is required"),
+    thirdName: z.string().optional(),
+    idNumber: z.string().min(5, "A valid ID or Passport Number is required"),
     phone: z.string().min(10, "A valid phone number is required"),
-    email: z.string().email("A valid email is required")
+    email: z.string().email("A valid email is required"),
+    maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
+    gender: z.enum(['Male', 'Female']),
 });
 
 export const assignmentSchema = z.object({

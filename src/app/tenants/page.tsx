@@ -24,7 +24,9 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
@@ -36,7 +38,10 @@ export default function TenantsPage() {
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
         defaultValues: {
-            name: '',
+            firstName: '',
+            secondName: '',
+            thirdName: '',
+            idNumber: '',
             phone: '',
             email: ''
         }
@@ -50,7 +55,7 @@ export default function TenantsPage() {
         setTenants(prev => [...prev, newTenant]);
         toast({
             title: "Tenant Registered",
-            description: `${newTenant.name} has been added to the tenant list.`
+            description: `${newTenant.firstName} ${newTenant.secondName} has been added to the tenant list.`
         });
         form.reset();
         setIsDialogOpen(false);
@@ -73,7 +78,7 @@ export default function TenantsPage() {
                                         Add New Tenant
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
+                                <DialogContent className="sm:max-w-xl">
                                      <DialogHeader>
                                         <DialogTitle>Register New Tenant</DialogTitle>
                                         <DialogDescription>
@@ -82,39 +87,118 @@ export default function TenantsPage() {
                                     </DialogHeader>
                                     <Form {...form}>
                                         <form onSubmit={form.handleSubmit(handleAddTenant)} className="space-y-4 py-4">
-                                            <FormField
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="firstName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>First Name</FormLabel>
+                                                            <FormControl><Input placeholder="e.g. John" {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="secondName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Second Name</FormLabel>
+                                                            <FormControl><Input placeholder="e.g. Doe" {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="thirdName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Third Name (Optional)</FormLabel>
+                                                            <FormControl><Input placeholder="e.g. Smith" {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                             <FormField
                                                 control={form.control}
-                                                name="name"
+                                                name="idNumber"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Full Name</FormLabel>
-                                                        <FormControl><Input placeholder="e.g. Jane Smith" {...field} /></FormControl>
+                                                        <FormLabel>ID / Passport Number</FormLabel>
+                                                        <FormControl><Input placeholder="e.g. 12345678" {...field} /></FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
-                                            <FormField
-                                                control={form.control}
-                                                name="phone"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Phone Number</FormLabel>
-                                                        <FormControl><Input placeholder="e.g. 0798765432" {...field} /></FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="email"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Email Address</FormLabel>
-                                                        <FormControl><Input type="email" placeholder="e.g. user@example.com" {...field} /></FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="phone"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Phone Number</FormLabel>
+                                                            <FormControl><Input placeholder="e.g. 0798765432" {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="email"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Email Address</FormLabel>
+                                                            <FormControl><Input type="email" placeholder="e.g. user@example.com" {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="maritalStatus"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Marital Status</FormLabel>
+                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="Single">Single</SelectItem>
+                                                                    <SelectItem value="Married">Married</SelectItem>
+                                                                    <SelectItem value="Divorced">Divorced</SelectItem>
+                                                                    <SelectItem value="Widowed">Widowed</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="gender"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Gender</FormLabel>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="Male">Male</SelectItem>
+                                                                    <SelectItem value="Female">Female</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
                                             <DialogFooter>
                                                 <DialogClose asChild>
                                                     <Button type="button" variant="secondary">Cancel</Button>
@@ -131,18 +215,22 @@ export default function TenantsPage() {
                        <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
+                                    <TableHead>Full Name</TableHead>
+                                    <TableHead>ID Number</TableHead>
                                     <TableHead>Phone</TableHead>
-                                    <TableHead>Email</TableHead>
+                                    <TableHead>Gender</TableHead>
+                                    <TableHead>Marital Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenants.length === 0 && <TableRow><TableCell colSpan={3} className="text-center">No tenants registered yet.</TableCell></TableRow>}
+                                {tenants.length === 0 && <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow>}
                                 {tenants.map(tenant => (
                                     <TableRow key={tenant.id}>
-                                        <TableCell className="font-medium">{tenant.name}</TableCell>
+                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`}</TableCell>
+                                        <TableCell>{tenant.idNumber}</TableCell>
                                         <TableCell>{tenant.phone}</TableCell>
-                                        <TableCell>{tenant.email}</TableCell>
+                                        <TableCell><Badge variant="outline">{tenant.gender}</Badge></TableCell>
+                                        <TableCell><Badge variant="secondary">{tenant.maritalStatus}</Badge></TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
