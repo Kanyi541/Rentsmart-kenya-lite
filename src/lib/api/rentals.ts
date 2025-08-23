@@ -7,7 +7,6 @@ import { rentalSchema } from '../schemas';
 type RentalData = z.infer<typeof rentalSchema>;
 
 export async function getRentals(): Promise<Rental[]> {
-    // The rentals table in Postgres has a rental_id column instead of rentalId
     const rentalsResult: any = await query('SELECT id, name, location, "ownerName", "ownerNumber" FROM rentals', []);
     
     const rentals = await Promise.all(rentalsResult.map(async (rental: any) => {
