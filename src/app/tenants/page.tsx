@@ -56,7 +56,9 @@ export default function TenantsPage() {
             thirdName: '',
             idNumber: '',
             phone: '',
-            email: ''
+            email: '',
+            maritalStatus: 'Single',
+            gender: 'Male',
         }
     })
 
@@ -265,6 +267,3 @@ export default function TenantsPage() {
         </AppLayout>
     )
 }
-
-
-    
