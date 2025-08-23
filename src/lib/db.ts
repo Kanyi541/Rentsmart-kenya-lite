@@ -1,21 +1,22 @@
-
 'use server';
 
-import mysql from 'mysql2/promise';
+import { Pool } from 'pg';
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set in the environment variables.');
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
 });
 
 // Function to execute a query
 export async function query(sql: string, params: any[]) {
-  const [results, ] = await pool.execute(sql, params);
-  return results;
+    const client = await pool.connect();
+    try {
+        const { rows } = await client.query(sql, params);
+        return rows;
+    } finally {
+        client.release();
+    }
 }

@@ -6,7 +6,7 @@ export async function getDashboardStats() {
         const totalRentalsResult: any = await query('SELECT COUNT(*) as count FROM rentals', []);
         const totalTenantsResult: any = await query('SELECT COUNT(*) as count FROM tenants', []);
         const totalRoomsResult: any = await query('SELECT COUNT(*) as count FROM rooms', []);
-        const occupiedRoomsResult: any = await query('SELECT COUNT(*) as count FROM rooms WHERE isOccupied = ?', [true]);
+        const occupiedRoomsResult: any = await query('SELECT COUNT(*) as count FROM rooms WHERE "isOccupied" = $1', [true]);
 
         return {
             totalRentals: totalRentalsResult[0].count,
