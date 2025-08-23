@@ -1,7 +1,6 @@
-
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +26,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { addTenant, getTenants } from '@/lib/api/tenants';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
@@ -34,6 +34,14 @@ export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchTenants = async () => {
+            const fetchedTenants = await getTenants();
+            setTenants(fetchedTenants);
+        }
+        fetchTenants();
+    }, [])
 
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
@@ -47,18 +55,23 @@ export default function TenantsPage() {
         }
     })
 
-    const handleAddTenant = (data: TenantFormValues) => {
-        const newTenant: Tenant = {
-            ...data,
-            id: new Date().getTime().toString(),
+    const handleAddTenant = async (data: TenantFormValues) => {
+        try {
+            const newTenant = await addTenant(data);
+            setTenants(prev => [...prev, newTenant]);
+            toast({
+                title: "Tenant Registered",
+                description: `${newTenant.firstName} ${newTenant.secondName} has been added to the tenant list.`
+            });
+            form.reset();
+            setIsDialogOpen(false);
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Failed to add tenant."
+            })
         }
-        setTenants(prev => [...prev, newTenant]);
-        toast({
-            title: "Tenant Registered",
-            description: `${newTenant.firstName} ${newTenant.secondName} has been added to the tenant list.`
-        });
-        form.reset();
-        setIsDialogOpen(false);
     }
 
     return (
@@ -223,10 +236,11 @@ export default function TenantsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenants.length === 0 && <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow>}
-                                {tenants.map(tenant => (
+                                {!tenants ? <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow> : 
+                                tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
+                                tenants.map(tenant => (
                                     <TableRow key={tenant.id}>
-                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`}</TableCell>
+                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
                                         <TableCell>{tenant.idNumber}</TableCell>
                                         <TableCell>{tenant.phone}</TableCell>
                                         <TableCell><Badge variant="outline">{tenant.gender}</Badge></TableCell>

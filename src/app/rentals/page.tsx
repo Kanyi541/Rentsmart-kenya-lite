@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { RentalForm } from '@/components/rental-form';
 import type { Rental } from '@/lib/types';
@@ -25,65 +25,42 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-
-const initialRentals: Rental[] = [
-  {
-    id: '1',
-    name: 'Sunset Apartments',
-    location: 'Westlands, Nairobi',
-    ownerName: 'Alice Mwangi',
-    ownerNumber: '0711223344',
-    rooms: [
-      { id: '101', roomNumber: 'A101', roomType: '2 Bedroom', rent: 85000, isOccupied: false },
-      { id: '102', roomNumber: 'A102', roomType: '3 Bedroom', rent: 120000, isOccupied: true },
-      { id: '103', roomNumber: 'B201', roomType: '1 Bedroom', rent: 60000, isOccupied: false },
-    ]
-  },
-  {
-    id: '2',
-    name: 'Karen Luxury Homes',
-    location: 'Karen, Nairobi',
-    ownerName: 'Bob Chege',
-    ownerNumber: '0722334455',
-    rooms: [
-        { id: '201', roomNumber: 'H1', roomType: '4 Bedroom', rent: 250000, isOccupied: true },
-        { id: '202', roomNumber: 'H2', roomType: '4 Bedroom', rent: 260000, isOccupied: true },
-    ]
-  },
-  {
-    id: '3',
-    name: 'Kileleshwa Studios',
-    location: 'Kileleshwa, Nairobi',
-    ownerName: 'Charles Odira',
-    ownerNumber: '0733445566',
-    rooms: [
-        { id: '301', roomNumber: 'S1', roomType: 'Bedsitter', rent: 45000, isOccupied: false },
-        { id: '302', roomNumber: 'S2', roomType: 'Bedsitter', rent: 45000, isOccupied: false },
-        { id: '303', roomNumber: 'S3', roomType: 'Single Room', rent: 25000, isOccupied: true },
-    ]
-  },
-];
+import { addRental, getRentals } from '@/lib/api/rentals';
 
 
 export default function RentalsPage() {
-  const [rentals, setRentals] = useState<Rental[]>(initialRentals);
+  const [rentals, setRentals] = useState<Rental[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleAddRental = (data: Omit<Rental, 'id'>) => {
-    const rental: Rental = {
-      ...data,
-      id: new Date().getTime().toString(),
-    };
-    setRentals(prev => [rental, ...prev]);
-    toast({
-      title: 'Rental Added!',
-      description: `${data.name} in ${data.location} has been successfully added.`,
-    });
-    setIsDialogOpen(false);
+  useEffect(() => {
+    const fetchRentals = async () => {
+        const fetchedRentals = await getRentals();
+        setRentals(fetchedRentals);
+    }
+    fetchRentals();
+  }, [])
+
+  const handleAddRental = async (data: Omit<Rental, 'id'>) => {
+    try {
+        const newRental = await addRental(data);
+        setRentals(prev => [newRental, ...prev]);
+        toast({
+          title: 'Rental Added!',
+          description: `${data.name} in ${data.location} has been successfully added.`,
+        });
+        setIsDialogOpen(false);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to add rental.'
+        })
+    }
   };
 
   const getUnoccupiedRooms = (rental: Rental) => {
+    if (!rental.rooms) return 0;
     return rental.rooms.filter(room => !room.isOccupied).length;
   }
 
@@ -133,7 +110,7 @@ export default function RentalsPage() {
                                 <TableCell className="font-medium">{rental.name}</TableCell>
                                 <TableCell>{rental.ownerName}</TableCell>
                                 <TableCell className="text-center">
-                                    <Badge variant="secondary">{rental.rooms.length}</Badge>
+                                    <Badge variant="secondary">{rental.rooms?.length ?? 0}</Badge>
                                 </TableCell>
                                 <TableCell className="text-center">
                                      <Badge variant={getUnoccupiedRooms(rental) > 0 ? 'default' : 'destructive'} className="text-white">

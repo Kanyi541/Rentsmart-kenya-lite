@@ -1,8 +1,6 @@
-
-
 'use client'
 
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "./ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
 import { Home, Building, Users, BedDouble } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,7 +16,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     ]
 
     return (
-        <>
+        <SidebarProvider>
             <Sidebar>
                 <SidebarHeader>
                     <div className="flex items-center gap-2">
@@ -54,6 +52,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
             </SidebarInset>
-        </>
+        </SidebarProvider>
     )
 }

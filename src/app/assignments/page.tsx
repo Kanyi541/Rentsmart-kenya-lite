@@ -1,7 +1,6 @@
-
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,43 +12,28 @@ import { z } from 'zod';
 import { assignmentSchema } from '@/lib/schemas';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Mock data - in a real app, this would come from a database
-const mockTenants: Tenant[] = [
-    { id: 'c1', name: 'John Doe', phone: '0712345678', email: 'john@test.com'},
-    { id: 'c2', name: 'Jane Smith', phone: '0787654321', email: 'jane@test.com'}
-];
-const mockRentals: Rental[] = [
-  {
-    id: '1',
-    name: 'Sunset Apartments',
-    location: 'Westlands, Nairobi',
-    ownerName: 'Alice Mwangi',
-    ownerNumber: '0711223344',
-    rooms: [
-      { id: '101', roomNumber: 'A101', roomType: '2 Bedroom', rent: 85000, isOccupied: false },
-      { id: '102', roomNumber: 'A102', roomType: '3 Bedroom', rent: 120000, isOccupied: true },
-    ]
-  },
-   {
-    id: '3',
-    name: 'Kileleshwa Studios',
-    location: 'Kileleshwa, Nairobi',
-    ownerName: 'Charles Odira',
-    ownerNumber: '0733445566',
-    rooms: [
-        { id: '301', roomNumber: 'S1', roomType: 'Bedsitter', rent: 45000, isOccupied: false },
-    ]
-  },
-];
-
+import { getTenants } from '@/lib/api/tenants';
+import { getRentals, assignRoomToTenant } from '@/lib/api/rentals';
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
 export default function AssignmentsPage() {
     const [assignments, setAssignments] = useState<Assignment[]>([]);
-    const [rentals, setRentals] = useState<Rental[]>(mockRentals);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [rentals, setRentals] = useState<Rental[]>([]);
     const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [fetchedTenants, fetchedRentals] = await Promise.all([
+                getTenants(),
+                getRentals()
+            ]);
+            setTenants(fetchedTenants);
+            setRentals(fetchedRentals);
+        }
+        fetchData();
+    }, [])
 
     const form = useForm<AssignmentFormValues>({
         resolver: zodResolver(assignmentSchema),
@@ -68,37 +52,40 @@ export default function AssignmentsPage() {
         return rental ? rental.rooms.filter(room => !room.isOccupied) : [];
     }, [selectedRentalId, rentals]);
 
-    const handleAssignRoom = (data: AssignmentFormValues) => {
-        // Create new assignment
-        const newAssignment: Assignment = {
-            ...data,
-            id: new Date().getTime().toString()
-        }
-        setAssignments(prev => [...prev, newAssignment]);
-
-        // Update room status
-        setRentals(prevRentals => {
-            return prevRentals.map(rental => {
-                if (rental.id === data.rentalId) {
-                    return {
-                        ...rental,
-                        rooms: rental.rooms.map(room => {
-                            if (room.id === data.roomId) {
-                                return { ...room, isOccupied: true };
-                            }
-                            return room;
-                        })
+    const handleAssignRoom = async (data: AssignmentFormValues) => {
+        try {
+            await assignRoomToTenant(data.roomId, data.tenantId);
+             // Update room status locally
+            setRentals(prevRentals => {
+                return prevRentals.map(rental => {
+                    if (rental.id === data.rentalId) {
+                        return {
+                            ...rental,
+                            rooms: rental.rooms.map(room => {
+                                if (room.id === data.roomId) {
+                                    return { ...room, isOccupied: true };
+                                }
+                                return room;
+                            })
+                        }
                     }
-                }
-                return rental;
+                    return rental;
+                })
             })
-        })
 
-        toast({
-            title: "Room Assigned!",
-            description: `Room has been successfully assigned.`
-        });
-        form.reset();
+            toast({
+                title: "Room Assigned!",
+                description: `Room has been successfully assigned.`
+            });
+            form.reset();
+
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: `Failed to assign room.`
+            });
+        }
     }
 
     return (
@@ -123,7 +110,8 @@ export default function AssignmentsPage() {
                                                     <SelectTrigger><SelectValue placeholder="Select a tenant" /></SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {mockTenants.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                                    {!tenants ? <SelectItem value="loading" disabled>Loading...</SelectItem> :
+                                                     tenants.map(c => <SelectItem key={c.id} value={c.id.toString()}>{`${c.firstName} ${c.secondName}`}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -141,7 +129,8 @@ export default function AssignmentsPage() {
                                                     <SelectTrigger><SelectValue placeholder="Select a rental" /></SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {rentals.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                                                    {!rentals ? <SelectItem value="loading" disabled>Loading...</SelectItem> :
+                                                     rentals.map(r => <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -160,7 +149,7 @@ export default function AssignmentsPage() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     {availableRooms.map(room => (
-                                                        <SelectItem key={room.id} value={room.id!}>{room.roomNumber} ({room.roomType})</SelectItem>
+                                                        <SelectItem key={room.id} value={room.id!.toString()}>{room.roomNumber} ({room.roomType})</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>

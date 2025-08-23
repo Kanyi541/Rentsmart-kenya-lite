@@ -1,11 +1,10 @@
-
-'use client';
-
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble } from 'lucide-react';
+import { getDashboardStats } from '@/lib/api/dashboard';
 
-export default function Home() {
+export default async function Home() {
+  const stats = await getDashboardStats();
 
   return (
     <AppLayout>
@@ -23,7 +22,7 @@ export default function Home() {
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">3</div>
+                    <div className="text-2xl font-bold">{stats.totalRentals}</div>
                     <p className="text-xs text-muted-foreground">
                         properties being managed
                     </p>
@@ -37,7 +36,7 @@ export default function Home() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{stats.totalTenants}</div>
                      <p className="text-xs text-muted-foreground">
                         tenants registered
                     </p>
@@ -51,7 +50,7 @@ export default function Home() {
                     <BedDouble className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0 / 8</div>
+                    <div className="text-2xl font-bold">{stats.occupiedRooms} / {stats.totalRooms}</div>
                      <p className="text-xs text-muted-foreground">
                         rooms currently occupied
                     </p>
