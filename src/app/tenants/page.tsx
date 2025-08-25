@@ -94,7 +94,7 @@ export default function TenantsPage() {
                     <CardHeader className="flex flex-row items-center">
                         <div className="grid gap-2">
                             <CardTitle>Tenant List</CardTitle>
-                            <CardDescription>View and manage all registered tenants.</CardDescription>
+                            <CardDescription>View and manage all registered tenants and their assignments.</CardDescription>
                         </div>
                         <div className="ml-auto flex items-center gap-2">
                             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -242,21 +242,28 @@ export default function TenantsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Full Name</TableHead>
-                                    <TableHead>ID Number</TableHead>
                                     <TableHead>Phone</TableHead>
-                                    <TableHead>Gender</TableHead>
-                                    <TableHead>Marital Status</TableHead>
+                                    <TableHead>Assigned Property</TableHead>
+                                    <TableHead>Room & Rent</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenants && tenants.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No tenants registered yet.</TableCell></TableRow> :
+                                {tenants && tenants.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No tenants registered yet.</TableCell></TableRow> :
                                 tenants && tenants.map(tenant => (
                                     <TableRow key={tenant.id}>
                                         <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                        <TableCell>{tenant.idNumber}</TableCell>
                                         <TableCell>{tenant.phone}</TableCell>
-                                        <TableCell><Badge variant="outline">{tenant.gender}</Badge></TableCell>
-                                        <TableCell><Badge variant="secondary">{tenant.maritalStatus}</Badge></TableCell>
+                                        <TableCell>{tenant.rentalName || <Badge variant="secondary">Unassigned</Badge>}</TableCell>
+                                        <TableCell>
+                                            {tenant.roomNumber ? (
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{tenant.roomNumber}</span>
+                                                    <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
+                                                </div>
+                                            ) : (
+                                                '---'
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
