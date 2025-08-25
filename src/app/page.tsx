@@ -1,14 +1,33 @@
 
+'use client'
+
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, BedDouble, PlusCircle } from 'lucide-react';
-import { getDashboardStats } from '@/lib/api/dashboard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import withAuth from '@/components/auth/with-auth';
+import { useEffect, useState } from 'react';
+import { getDashboardStats } from '@/lib/api/dashboard';
 
+interface DashboardStats {
+    totalRentals: number;
+    totalTenants: number;
+    totalRooms: number;
+    occupiedRooms: number;
+}
 
-export default async function Home() {
-  const stats = await getDashboardStats();
+function Home() {
+  const [stats, setStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
+
+  useEffect(() => {
+    async function fetchStats() {
+        const dashboardStats = await getDashboardStats();
+        setStats(dashboardStats);
+    }
+    fetchStats();
+  }, []);
+
 
   return (
     <AppLayout>
@@ -81,3 +100,5 @@ export default async function Home() {
     </AppLayout>
   );
 }
+
+export default withAuth(Home);
