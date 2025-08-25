@@ -53,10 +53,7 @@ function Home() {
             ]);
             setGlobalStats(dashboardStats);
             setRentals(fetchedRentals);
-            if (fetchedRentals.length > 0) {
-                const firstRentalId = fetchedRentals[0].id;
-                setSelectedRentalId(firstRentalId);
-            }
+            // We are no longer selecting the first rental by default
         } catch (error) {
             console.error("Failed to fetch initial data", error);
             // Handle error with a toast or message
@@ -69,7 +66,11 @@ function Home() {
 
   useEffect(() => {
       async function fetchRentalDetails() {
-          if (!selectedRentalId) return;
+          if (!selectedRentalId) {
+            setRentalStats(null);
+            setOccupancyDetails([]);
+            return;
+          };
           setRentalDetailsLoading(true);
           try {
               const [stats, details] = await Promise.all([
@@ -196,72 +197,74 @@ function Home() {
                  </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
-                    <CardDescription>
-                        {rentalDetailsLoading ? 'Loading details...' : `Showing ${filteredOccupancyDetails.length} of ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <div className="mb-4">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder="Search by room number or tenant name..."
-                                className="w-full rounded-lg bg-background pl-8"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+            {selectedRentalId && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
+                        <CardDescription>
+                            {rentalDetailsLoading ? 'Loading details...' : `Showing ${filteredOccupancyDetails.length} of ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mb-4">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search by room number or tenant name..."
+                                    className="w-full rounded-lg bg-background pl-8"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Room No.</TableHead>
-                                <TableHead>Room Type</TableHead>
-                                <TableHead>Tenant Name</TableHead>
-                                <TableHead>Next Payment Due</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {rentalDetailsLoading ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                        <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : filteredOccupancyDetails.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
-                            ) : (
-                                filteredOccupancyDetails.map(room => (
-                                    <TableRow key={room.id}>
-                                        <TableCell className="font-medium">{room.roomNumber}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{room.roomType}</Badge>
-                                        </TableCell>
-                                        <TableCell>{room.tenantName || '---'}</TableCell>
-                                        <TableCell>
-                                            {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <Badge variant={getStatusVariant(room.isOccupied)}>
-                                                {room.isOccupied ? 'Occupied' : 'Vacant'}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Room No.</TableHead>
+                                    <TableHead>Room Type</TableHead>
+                                    <TableHead>Tenant Name</TableHead>
+                                    <TableHead>Next Payment Due</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {rentalDetailsLoading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                            <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : filteredOccupancyDetails.length === 0 ? (
+                                    <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
+                                ) : (
+                                    filteredOccupancyDetails.map(room => (
+                                        <TableRow key={room.id}>
+                                            <TableCell className="font-medium">{room.roomNumber}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{room.roomType}</Badge>
+                                            </TableCell>
+                                            <TableCell>{room.tenantName || '---'}</TableCell>
+                                            <TableCell>
+                                                {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant={getStatusVariant(room.isOccupied)}>
+                                                    {room.isOccupied ? 'Occupied' : 'Vacant'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            )}
         </div>
 
       </div>
