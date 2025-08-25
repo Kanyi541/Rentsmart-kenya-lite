@@ -3,11 +3,11 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle, CalendarClock } from 'lucide-react';
+import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import withAuth from '@/components/auth/with-auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getDashboardStats, getStatsForRental } from '@/lib/api/dashboard';
 import { getRentals } from '@/lib/api/rentals';
 import type { Rental } from '@/lib/types';
@@ -17,6 +17,7 @@ import { getOccupancyDetailsForRental, type OccupancyDetails } from '@/lib/api/o
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
 
 interface DashboardStats {
     totalRentals: number;
@@ -39,6 +40,7 @@ function Home() {
   const [occupancyDetails, setOccupancyDetails] = useState<OccupancyDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
 
   useEffect(() => {
@@ -86,6 +88,16 @@ function Home() {
       }
       fetchRentalDetails();
   }, [selectedRentalId]);
+
+  const filteredOccupancyDetails = useMemo(() => {
+    if (!searchQuery) {
+        return occupancyDetails;
+    }
+    return occupancyDetails.filter(room => 
+        room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        room.tenantName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [occupancyDetails, searchQuery]);
 
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
 
@@ -188,10 +200,22 @@ function Home() {
                 <CardHeader>
                     <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
                     <CardDescription>
-                        {rentalDetailsLoading ? 'Loading details...' : `Showing ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
+                        {rentalDetailsLoading ? 'Loading details...' : `Showing ${filteredOccupancyDetails.length} of ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                     <div className="mb-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Search by room number or tenant name..."
+                                className="w-full rounded-lg bg-background pl-8"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -213,10 +237,10 @@ function Home() {
                                         <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                     </TableRow>
                                 ))
-                            ) : occupancyDetails.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center h-24">No rooms found for this property.</TableCell></TableRow>
+                            ) : filteredOccupancyDetails.length === 0 ? (
+                                <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
                             ) : (
-                                occupancyDetails.map(room => (
+                                filteredOccupancyDetails.map(room => (
                                     <TableRow key={room.id}>
                                         <TableCell className="font-medium">{room.roomNumber}</TableCell>
                                         <TableCell>
