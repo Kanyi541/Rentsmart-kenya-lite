@@ -1,3 +1,4 @@
+
 'use server'
 
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -32,11 +33,15 @@ export async function getOccupancyDetailsForRental(rentalId: string): Promise<Oc
     });
     
     if (assignmentsSnapshot.empty) {
-        return rooms; // Return rooms as is if no one is assigned
+        // Still sort vacant rooms by room number
+        return rooms.sort((a, b) => a.roomNumber.localeCompare(b.roomNumber));
     }
 
     // 3. Fetch all tenant details for this rental
     const tenantIds = Array.from(tenantIdToRoomIdMap.keys());
+    if(tenantIds.length === 0) {
+        return rooms.sort((a, b) => a.roomNumber.localeCompare(b.roomNumber));
+    }
     const tenantsCol = collection(db, 'tenants');
     const tenantsQuery = query(tenantsCol, where("__name__", "in", tenantIds));
     const tenantsSnapshot = await getDocs(tenantsQuery);
@@ -65,7 +70,7 @@ export async function getOccupancyDetailsForRental(rentalId: string): Promise<Oc
     });
 
     // 5. Combine all data
-    const occupancyDetails: OccupancyDetails[] = rooms.map(room => {
+    let occupancyDetails: OccupancyDetails[] = rooms.map(room => {
         const tenantId = roomIdToTenantIdMap.get(room.id);
         if (room.isOccupied && tenantId) {
             const lastPaymentDate = tenantIdToLastPaymentMap.get(tenantId);
@@ -87,6 +92,17 @@ export async function getOccupancyDetailsForRental(rentalId: string): Promise<Oc
         }
         return room;
     });
+
+    // 6. Sort the results
+    occupancyDetails.sort((a, b) => {
+        // Sort by isOccupied (true comes first)
+        if (a.isOccupied !== b.isOccupied) {
+            return a.isOccupied ? -1 : 1;
+        }
+        // Then sort by roomNumber alphabetically
+        return a.roomNumber.localeCompare(b.roomNumber);
+    });
+
 
     return occupancyDetails;
 }
