@@ -103,7 +103,7 @@ export default function TenantsPage() {
 
     return (
         <AppLayout>
-             <div className="grid flex-1 items-start gap-4 md:gap-8">
+             <div className="space-y-4 md:space-y-8">
                 <div className="flex items-center justify-between">
                     <div className="grid gap-2">
                         <CardTitle className="text-3xl font-bold tracking-tight">Tenants</CardTitle>
@@ -249,85 +249,89 @@ export default function TenantsPage() {
                     </Dialog>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assigned Tenants</CardTitle>
-                        <CardDescription>Tenants who are currently occupying a room.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Full Name</TableHead>
-                                    <TableHead>Phone</TableHead>
-                                    <TableHead>Assigned Property</TableHead>
-                                    <TableHead>Room & Rent</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {assignedTenants.length === 0 ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants have been assigned rooms yet.</TableCell></TableRow>
-                                 ) : (
-                                    assignedTenants.map(tenant => (
-                                        <TableRow key={tenant.id}>
-                                            <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                            <TableCell>{tenant.phone}</TableCell>
-                                            <TableCell>{tenant.rentalName}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium">{tenant.roomNumber}</span>
-                                                    <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                       </Table>
-                    </CardContent>
-                </Card>
+                <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Assigned Tenants</CardTitle>
+                            <CardDescription>Tenants who are currently occupying a room.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Full Name</TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Assigned Property</TableHead>
+                                        <TableHead>Room & Rent</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {assignedTenants.length === 0 ? (
+                                        <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants have been assigned rooms yet.</TableCell></TableRow>
+                                     ) : (
+                                        assignedTenants.map(tenant => (
+                                            <TableRow key={tenant.id}>
+                                                <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
+                                                <TableCell>{tenant.phone}</TableCell>
+                                                <TableCell>{tenant.rentalName}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">{tenant.roomNumber}</span>
+                                                        <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                           </Table>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Unassigned Tenants</CardTitle>
-                        <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Full Name</TableHead>
-                                    <TableHead>Phone</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                 {unassignedTenants.length === 0 ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center h-24">All tenants are assigned to rooms.</TableCell></TableRow>
-                                 ) : (
-                                    unassignedTenants.map(tenant => (
-                                        <TableRow key={tenant.id}>
-                                            <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                            <TableCell>{tenant.phone}</TableCell>
-                                            <TableCell>{tenant.email}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link href="/assignments">
-                                                        <BedDouble className="mr-2 h-4 w-4" />
-                                                        Assign a Room
-                                                    </Link>
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                 )}
-                            </TableBody>
-                       </Table>
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Unassigned Tenants</CardTitle>
+                            <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Full Name</TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                     {unassignedTenants.length === 0 ? (
+                                        <TableRow><TableCell colSpan={4} className="text-center h-24">All tenants are assigned to rooms.</TableCell></TableRow>
+                                     ) : (
+                                        unassignedTenants.map(tenant => (
+                                            <TableRow key={tenant.id}>
+                                                <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
+                                                <TableCell>{tenant.phone}</TableCell>
+                                                <TableCell>{tenant.email}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <Link href="/assignments">
+                                                            <BedDouble className="mr-2 h-4 w-4" />
+                                                            Assign a Room
+                                                        </Link>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                     )}
+                                </TableBody>
+                           </Table>
+                        </CardContent>
+                    </Card>
+                </div>
              </div>
         </AppLayout>
     )
+
+    
 
     
