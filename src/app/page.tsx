@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle } from 'lucide-react';
+import { Building, Users, BedDouble, PlusCircle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import withAuth from '@/components/auth/with-auth';
@@ -13,6 +13,10 @@ import { getRentals } from '@/lib/api/rentals';
 import type { Rental } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getOccupancyDetailsForRental, type OccupancyDetails } from '@/lib/api/occupancy';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 interface DashboardStats {
     totalRentals: number;
@@ -32,8 +36,9 @@ function Home() {
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
   const [rentalStats, setRentalStats] = useState<RentalStats | null>(null);
+  const [occupancyDetails, setOccupancyDetails] = useState<OccupancyDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rentalStatsLoading, setRentalStatsLoading] = useState(false);
+  const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
 
 
   useEffect(() => {
@@ -61,23 +66,32 @@ function Home() {
   }, []);
 
   useEffect(() => {
-      async function fetchRentalStats() {
+      async function fetchRentalDetails() {
           if (!selectedRentalId) return;
-          setRentalStatsLoading(true);
+          setRentalDetailsLoading(true);
           try {
-              const stats = await getStatsForRental(selectedRentalId);
+              const [stats, details] = await Promise.all([
+                getStatsForRental(selectedRentalId),
+                getOccupancyDetailsForRental(selectedRentalId)
+              ]);
               setRentalStats(stats);
+              setOccupancyDetails(details);
           } catch (error) {
-              console.error(`Failed to fetch stats for rental ${selectedRentalId}`, error);
+              console.error(`Failed to fetch details for rental ${selectedRentalId}`, error);
               setRentalStats(null);
+              setOccupancyDetails([]);
           } finally {
-              setRentalStatsLoading(false);
+              setRentalDetailsLoading(false);
           }
       }
-      fetchRentalStats();
+      fetchRentalDetails();
   }, [selectedRentalId]);
 
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
+
+  const getStatusVariant = (isOccupied: boolean) => {
+    return isOccupied ? 'default' : 'secondary';
+  }
 
 
   return (
@@ -90,13 +104,13 @@ function Home() {
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
                 <Button asChild className="flex-1 sm:flex-initial">
-                    <Link href="/rentals/new">
+                    <Link href="/rentals">
                         <PlusCircle className="mr-2" />
                         Add Rental
                     </Link>
                 </Button>
                 <Button asChild variant="outline" className="flex-1 sm:flex-initial">
-                     <Link href="/tenants/new">
+                     <Link href="/tenants">
                         <PlusCircle className="mr-2" />
                         Add Tenant
                     </Link>
@@ -105,7 +119,7 @@ function Home() {
         </div>
 
         {/* Global Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Rentals</CardTitle>
@@ -136,13 +150,23 @@ function Home() {
                      <p className="text-xs text-muted-foreground">rooms currently occupied</p>
                 </CardContent>
             </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Next Payment Due</CardTitle>
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    {rentalDetailsLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">-</div>}
+                    <p className="text-xs text-muted-foreground">coming soon</p>
+                </CardContent>
+            </Card>
         </div>
 
         <div className="border-t pt-8">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Property-Specific Stats</h2>
-                    <p className="text-muted-foreground">Select a property to view its details.</p>
+                    <h2 className="text-2xl font-bold tracking-tight">Property-Specific Details</h2>
+                    <p className="text-muted-foreground">Select a property to view its occupancy and payment details.</p>
                 </div>
                  <div className="w-full sm:w-64">
                     {loading ? <Skeleton className="h-10 w-full" /> : (
@@ -160,38 +184,55 @@ function Home() {
                  </div>
             </div>
 
-             <div className="grid gap-4 md:grid-cols-3">
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Tenants in Property</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {rentalStatsLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{rentalStats?.tenantCount ?? 0}</div>}
-                        <p className="text-xs text-muted-foreground">tenants in {selectedRental?.name || 'this property'}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Property Occupancy</CardTitle>
-                        <BedDouble className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {rentalStatsLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{rentalStats?.occupiedRooms ?? 0} / {rentalStats?.totalRooms ?? 0}</div>}
-                        <p className="text-xs text-muted-foreground">rooms occupied in {selectedRental?.name || 'this property'}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
-                         <Building className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                       {rentalStatsLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{rentalStats?.totalRooms ?? 0}</div>}
-                        <p className="text-xs text-muted-foreground">total rooms in {selectedRental?.name || 'this property'}</p>
-                    </CardContent>
-                </Card>
-             </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
+                    <CardDescription>
+                        {rentalDetailsLoading ? 'Loading details...' : `Showing ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Room No.</TableHead>
+                                <TableHead>Tenant Name</TableHead>
+                                <TableHead>Next Payment Due</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {rentalDetailsLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                        <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : occupancyDetails.length === 0 ? (
+                                <TableRow><TableCell colSpan={4} className="text-center h-24">No rooms found for this property.</TableCell></TableRow>
+                            ) : (
+                                occupancyDetails.map(room => (
+                                    <TableRow key={room.id}>
+                                        <TableCell className="font-medium">{room.roomNumber}</TableCell>
+                                        <TableCell>{room.tenantName || '---'}</TableCell>
+                                        <TableCell>
+                                            {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant={getStatusVariant(room.isOccupied)}>
+                                                {room.isOccupied ? 'Occupied' : 'Vacant'}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
 
       </div>

@@ -108,7 +108,7 @@ export default function RentalsPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Rental Name</TableHead>
-                            <TableHead>Owner's Name</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead className="text-center">Total Rooms</TableHead>
                             <TableHead className="text-center">Unoccupied Rooms</TableHead>
                         </TableRow>
@@ -118,7 +118,7 @@ export default function RentalsPage() {
                         rentals && rentals.map(rental => (
                             <TableRow key={rental.id}>
                                 <TableCell className="font-medium">{rental.name}</TableCell>
-                                <TableCell>{rental.ownerName}</TableCell>
+                                <TableCell>{rental.location}</TableCell>
                                 <TableCell className="text-center">
                                     <Badge variant="secondary">{rental.rooms?.length ?? 0}</Badge>
                                 </TableCell>

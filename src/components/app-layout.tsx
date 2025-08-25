@@ -2,12 +2,15 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "./ui/button";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const { logout } = useAuth();
 
     const menuItems = [
         { href: '/', label: 'Dashboard', icon: Home },
@@ -34,7 +37,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             <SidebarMenuItem key={item.label}>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
+                                    isActive={item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)}
                                     >
                                     <Link href={item.href}>
                                         <item.icon />
@@ -45,6 +48,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         ))}
                     </SidebarMenu>
                 </SidebarContent>
+                 <div className="p-2 mt-auto">
+                    <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                    </Button>
+                </div>
             </Sidebar>
             <SidebarInset>
                 <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mb-4">
