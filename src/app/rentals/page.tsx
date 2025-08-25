@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { RentalForm } from '@/components/rental-form';
+import { EditRentalForm } from '@/components/edit-rental-form';
 import type { Rental } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Pencil } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,21 +28,23 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import { addRental } from '@/app/actions';
-import { getRentals } from '@/lib/api/rentals';
+import { addRental, getRentals, updateRental } from '@/lib/api/rentals';
 
 export default function RentalsPage() {
   const [rentals, setRentals] = useState<Rental[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
+  async function fetchRentals() {
+    const fetchedRentals = await getRentals();
+    setRentals(fetchedRentals);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-        const fetchedRentals = await getRentals();
-        setRentals(fetchedRentals);
-    }
-    fetchData();
+    fetchRentals();
   }, []);
 
   const handleAddRental = async (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
@@ -55,9 +58,8 @@ export default function RentalsPage() {
           title: 'Rental Added!',
           description: `${data.name} in ${data.location} has been successfully added.`,
         });
-        setIsDialogOpen(false);
-        const updatedRentals = await getRentals();
-        setRentals(updatedRentals);
+        setIsAddDialogOpen(false);
+        await fetchRentals();
         router.refresh();
     } catch (error: any) {
         console.error(error);
@@ -68,6 +70,37 @@ export default function RentalsPage() {
         })
     }
   };
+
+  const handleUpdateRental = async (rentalId: string, data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
+    try {
+      const result = await updateRental(rentalId, data);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: 'Rental Updated!',
+        description: `${data.name} has been successfully updated.`
+      });
+      setIsEditDialogOpen(false);
+      setSelectedRental(null);
+      await fetchRentals();
+      router.refresh();
+
+    } catch (error: any) {
+       console.error(error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to update rental.'
+        })
+    }
+  };
+
+  const openEditDialog = (rental: Rental) => {
+    setSelectedRental(rental);
+    setIsEditDialogOpen(true);
+  }
 
   const getUnoccupiedRooms = (rental: Rental) => {
     if (!rental.rooms) return 0;
@@ -84,7 +117,7 @@ export default function RentalsPage() {
                     <CardDescription>View and manage all rental properties in your system.</CardDescription>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
                                 <PlusCircle className="mr-2" />
@@ -111,10 +144,11 @@ export default function RentalsPage() {
                             <TableHead>Location</TableHead>
                             <TableHead className="text-center">Total Rooms</TableHead>
                             <TableHead className="text-center">Unoccupied Rooms</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rentals && rentals.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center">No rentals added yet.</TableCell></TableRow> :
+                        {rentals && rentals.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center">No rentals added yet.</TableCell></TableRow> :
                         rentals && rentals.map(rental => (
                             <TableRow key={rental.id}>
                                 <TableCell className="font-medium">{rental.name}</TableCell>
@@ -127,6 +161,12 @@ export default function RentalsPage() {
                                         {getUnoccupiedRooms(rental)}
                                     </Badge>
                                 </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(rental)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -134,6 +174,26 @@ export default function RentalsPage() {
             </CardContent>
         </Card>
       </div>
+
+       <Dialog open={isEditDialogOpen} onOpenChange={(isOpen) => {
+            setIsEditDialogOpen(isOpen);
+            if (!isOpen) setSelectedRental(null);
+       }}>
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+                 <DialogHeader>
+                    <DialogTitle>Edit Rental Property</DialogTitle>
+                    <DialogDescription>
+                        Update the details of the rental property and its rooms. Click save when you're done.
+                    </DialogDescription>
+                </DialogHeader>
+                {selectedRental && (
+                    <EditRentalForm 
+                        rental={selectedRental} 
+                        onUpdateRental={handleUpdateRental}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
     </AppLayout>
   )
 }
