@@ -196,6 +196,7 @@ function Home() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Room No.</TableHead>
+                                <TableHead>Room Type</TableHead>
                                 <TableHead>Tenant Name</TableHead>
                                 <TableHead>Next Payment Due</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
@@ -206,17 +207,21 @@ function Home() {
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                                         <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : occupancyDetails.length === 0 ? (
-                                <TableRow><TableCell colSpan={4} className="text-center h-24">No rooms found for this property.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center h-24">No rooms found for this property.</TableCell></TableRow>
                             ) : (
                                 occupancyDetails.map(room => (
                                     <TableRow key={room.id}>
                                         <TableCell className="font-medium">{room.roomNumber}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline">{room.roomType}</Badge>
+                                        </TableCell>
                                         <TableCell>{room.tenantName || '---'}</TableCell>
                                         <TableCell>
                                             {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
