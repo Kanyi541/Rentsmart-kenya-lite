@@ -45,8 +45,8 @@ function NewPaymentPage() {
     const rent = Number(searchParams.get('rent')) || 0;
     const initialPhone = searchParams.get('phone') || '';
     
-    // For this example, deposit is one month's rent
-    const deposit = rent; 
+    // Deposit is half the rent
+    const deposit = rent / 2; 
     const total = rent + deposit;
     const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
