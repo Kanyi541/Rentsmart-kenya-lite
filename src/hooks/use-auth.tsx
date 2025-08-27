@@ -13,7 +13,7 @@ import { z } from 'zod';
 const auth = getAuth(app);
 
 type UserRole = 'admin' | 'client' | null;
-type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName'> & { password?: string };
+type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName'> & { password: string };
 
 interface AuthContextType {
     user: User | null;
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const register = async (data: RegisterData) => {
         const { email, password, ...tenantData } = data;
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password!);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
         // Now, save the rest of the tenant's data to Firestore
