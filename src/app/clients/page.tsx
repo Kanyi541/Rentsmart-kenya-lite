@@ -4,8 +4,10 @@
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import withAuth from '@/components/auth/with-auth';
+import { useAuth } from '@/hooks/use-auth';
 
 function ClientPage() {
+    const { user } = useAuth();
 
     return (
         <AppLayout>
@@ -13,7 +15,7 @@ function ClientPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Tenant Dashboard</CardTitle>
-                        <CardDescription>Welcome to your personal dashboard. Here you can view your details, make payments, and more.</CardDescription>
+                        <CardDescription>Welcome to your personal dashboard, {user?.email}. Here you can view your details, make payments, and more.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p>More features coming soon!</p>

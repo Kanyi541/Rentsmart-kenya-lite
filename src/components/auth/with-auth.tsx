@@ -7,6 +7,7 @@ import { useEffect, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const adminPaths = ['/', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
+const clientPaths = ['/clients'];
 
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
@@ -17,17 +18,18 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     useEffect(() => {
       if (!loading) {
         if (!user) {
-          if (adminPaths.includes(pathname)) {
+          // If not logged in, redirect to the appropriate login page
+          if (adminPaths.some(p => pathname.startsWith(p)) && pathname !== '/admin/login') {
             router.push('/admin/login');
-          } else {
+          } else if (clientPaths.some(p => pathname.startsWith(p)) && pathname !== '/clients/login' && pathname !== '/clients/register') {
             router.push('/clients/login');
           }
         } else {
-          // User is logged in, check role
-          if (userRole === 'admin' && !adminPaths.includes(pathname)) {
+          // User is logged in, check role and redirect if necessary
+          if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) {
             // Admin trying to access client page
              router.push('/');
-          } else if (userRole === 'client' && adminPaths.includes(pathname)) {
+          } else if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) {
             // Client trying to access admin page
             router.push('/clients');
           }
@@ -36,6 +38,10 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     }, [user, loading, router, pathname, userRole]);
 
     if (loading || !user) {
+      // Allow access to login/register pages while loading/not authenticated
+      if (pathname === '/admin/login' || pathname === '/clients/login' || pathname === '/clients/register') {
+        return <WrappedComponent {...props} />;
+      }
       return (
         <div className="flex min-h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin" />
@@ -43,10 +49,9 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       );
     }
 
-    // Role-based access control might still show the page for a flash before redirecting.
-    // This check prevents that.
-    if (userRole === 'admin' && !adminPaths.includes(pathname)) return null;
-    if (userRole === 'client' && adminPaths.includes(pathname)) return null;
+    // Final check to prevent content flash
+    if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) return null;
+    if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) return null;
 
 
     return <WrappedComponent {...props} />;

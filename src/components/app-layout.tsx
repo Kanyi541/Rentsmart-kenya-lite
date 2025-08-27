@@ -2,7 +2,7 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,27 +10,35 @@ import { Button } from "./ui/button";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { logout } = useAuth();
+    const { userRole, logout } = useAuth();
 
-    const menuItems = [
+    const adminMenuItems = [
         { href: '/', label: 'Dashboard', icon: Home },
         { href: '/rentals', label: 'Rentals', icon: Building },
         { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
         { href: '/payments', label: 'Payments', icon: CreditCard },
         { href: '/reports', label: 'Reports', icon: FileText },
-    ]
+    ];
+
+    const clientMenuItems = [
+        { href: '/clients', label: 'My Dashboard', icon: User },
+    ];
+
+    const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;
+    const homeRoute = userRole === 'admin' ? '/' : '/clients';
+
 
     return (
         <SidebarProvider>
             <Sidebar>
                 <SidebarHeader>
-                    <div className="flex items-center gap-2">
+                     <Link href={homeRoute} className="flex items-center gap-2">
                         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
                             <Home className="h-6 w-6" />
                         </div>
                         <h1 className="text-xl font-bold">RentSmart</h1>
-                    </div>
+                    </Link>
                 </SidebarHeader>
                 <SidebarContent>
                     <SidebarMenu>
