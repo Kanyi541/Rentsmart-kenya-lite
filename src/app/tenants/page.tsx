@@ -31,6 +31,7 @@ import { useRouter } from 'next/navigation';
 import { addTenant } from '@/app/actions';
 import { getTenants } from '@/lib/api/tenants';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
@@ -260,9 +261,9 @@ export default function TenantsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Full Name</TableHead>
-                                        <TableHead>Phone</TableHead>
                                         <TableHead>Assigned Property</TableHead>
                                         <TableHead>Room & Rent</TableHead>
+                                        <TableHead>Next Payment Due</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -272,13 +273,15 @@ export default function TenantsPage() {
                                         assignedTenants.map(tenant => (
                                             <TableRow key={tenant.id}>
                                                 <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                                <TableCell>{tenant.phone}</TableCell>
                                                 <TableCell>{tenant.rentalName}</TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">{tenant.roomNumber}</span>
                                                         <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
                                                     </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {tenant.nextPaymentDue ? format(new Date(tenant.nextPaymentDue), 'PPP') : '---'}
                                                 </TableCell>
                                             </TableRow>
                                         ))
