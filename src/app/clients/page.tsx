@@ -3,9 +3,9 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import withAuth from '@/components/auth/with-auth';
 
-export default function ClientPage() {
+function ClientPage() {
 
     return (
         <AppLayout>
@@ -23,3 +23,5 @@ export default function ClientPage() {
         </AppLayout>
     )
 }
+
+export default withAuth(ClientPage);
