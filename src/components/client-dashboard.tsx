@@ -7,7 +7,7 @@ import { getTenantById } from '@/lib/api/tenants';
 import type { Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign } from 'lucide-react';
+import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
@@ -32,6 +32,8 @@ export function ClientDashboard() {
                 }
             }
             fetchTenantData();
+        } else {
+            setLoading(false);
         }
     }, [user]);
     
@@ -44,7 +46,7 @@ export function ClientDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>Error</CardTitle>
-                    <CardDescription>Could not load tenant details. Please contact support.</CardDescription>
+                    <CardDescription>Could not load tenant details. It's possible your registration is incomplete. Please contact support.</CardDescription>
                 </CardHeader>
             </Card>
         )
@@ -114,7 +116,7 @@ export function ClientDashboard() {
                                         </p>
                                     </div>
                                      <Button asChild size="lg">
-                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}&deposit=${deposit}`}>
+                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}`}>
                                             Pay KSh {tenant.rent?.toLocaleString()} Now
                                         </Link>
                                     </Button>
@@ -144,16 +146,16 @@ export function ClientDashboard() {
                              <span className="font-medium">{tenant.phone}</span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <Badge className="h-4 w-4 text-muted-foreground" />
+                            <UserCheck className="h-4 w-4 text-muted-foreground" />
                              <span className="font-medium">ID: {tenant.idNumber}</span>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 pt-2">
                              <Badge variant="outline">{tenant.gender}</Badge>
                              <Badge variant="outline">{tenant.maritalStatus}</Badge>
                         </div>
                     </CardContent>
                     <CardFooter>
-                         <Button variant="outline" className="w-full">Edit Details (coming soon)</Button>
+                         <Button variant="outline" className="w-full" disabled>Edit Details (coming soon)</Button>
                     </CardFooter>
                  </Card>
             </div>

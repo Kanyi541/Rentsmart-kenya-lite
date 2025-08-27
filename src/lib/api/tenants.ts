@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, doc, getDoc, query, where, Timestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, getDoc, query, where, Timestamp, orderBy } from "firebase/firestore";
 import type { Tenant, Assignment, Rental, Room, Payment } from "@/lib/types";
 import { tenantSchema } from "@/lib/schemas";
 import { z } from "zod";
@@ -88,6 +88,7 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
     const tenantSnap = await getDoc(tenantRef);
 
     if (!tenantSnap.exists()) {
+        console.log(`No tenant found with ID: ${tenantId}`);
         return null;
     }
 
@@ -99,7 +100,8 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
     const assignmentSnapshot = await getDocs(assignmentQuery);
 
     if (!assignmentSnapshot.empty) {
-        const assignment = assignmentSnapshot.docs[0].data() as Omit<Assignment, 'id'>;
+        const assignment = assignmentSnapshot.docs[0].data() as Omit<Assignment, 'id'> & {id: string};
+        assignment.id = assignmentSnapshot.docs[0].id;
         
         const rentalRef = doc(db, 'rentals', assignment.rentalId);
         const roomRef = doc(db, `rentals/${assignment.rentalId}/rooms/${assignment.roomId}`);
@@ -108,15 +110,15 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
             getDoc(rentalRef),
             getDoc(roomRef)
         ]);
+        
+        const rental = rentalSnap.exists() ? {id: rentalSnap.id, ...rentalSnap.data()} as Rental : null;
+        const room = roomSnap.exists() ? {id: roomSnap.id, ...roomSnap.data()} as Room : null;
 
-        const rental = rentalSnap.exists() ? rentalSnap.data() as Rental : null;
-        const room = roomSnap.exists() ? roomSnap.data() as Room : null;
-
+        tenant.rentalId = rental?.id
         tenant.rentalName = rental?.name;
+        tenant.roomId = room?.id
         tenant.roomNumber = room?.roomNumber;
         tenant.rent = room?.rent;
-        tenant.rentalId = rental?.id
-        tenant.roomId = room?.id
 
         // Check for next payment due
         const paymentsCol = collection(db, 'payments');
