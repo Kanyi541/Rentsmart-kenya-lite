@@ -9,6 +9,9 @@ import { Loader2 } from 'lucide-react';
 const adminPaths = ['/', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
 const clientPaths = ['/clients'];
 
+// Define paths that don't require authentication
+const publicPaths = ['/admin/login', '/clients/login', '/clients/register'];
+
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
     const { user, loading, userRole } = useAuth();
@@ -16,44 +19,59 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     const pathname = usePathname();
 
     useEffect(() => {
-      if (!loading) {
-        if (!user) {
-          // If not logged in, redirect to the appropriate login page
-          if (adminPaths.some(p => pathname.startsWith(p)) && pathname !== '/admin/login') {
-            router.push('/admin/login');
-          } else if (clientPaths.some(p => pathname.startsWith(p)) && pathname !== '/clients/login' && pathname !== '/clients/register') {
-            router.push('/clients/login');
-          }
-        } else {
-          // User is logged in, check role and redirect if necessary
-          if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) {
-            // Admin trying to access client page
-             router.push('/');
-          } else if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) {
-            // Client trying to access admin page
-            router.push('/clients');
-          }
-        }
+      if (loading) {
+        return; // Wait until authentication status is determined
       }
+
+      const isPublicPath = publicPaths.includes(pathname);
+
+      if (!user) {
+        // If user is not logged in and not on a public page, redirect to login.
+        if (!isPublicPath) {
+           // Heuristic to redirect to the most likely login page
+           if (adminPaths.some(p => pathname.startsWith(p))) {
+             router.replace('/admin/login');
+           } else {
+             router.replace('/clients/login');
+           }
+        }
+        return;
+      }
+      
+      // If user is logged in, handle role-based access
+      if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) {
+         router.replace('/');
+      } else if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) {
+         router.replace('/clients');
+      }
+
     }, [user, loading, router, pathname, userRole]);
 
-    if (loading || !user) {
-      // Allow access to login/register pages while loading/not authenticated
-      if (pathname === '/admin/login' || pathname === '/clients/login' || pathname === '/clients/register') {
-        return <WrappedComponent {...props} />;
-      }
+    // Show loading spinner for protected pages while auth state is resolving
+    if (loading && !publicPaths.includes(pathname)) {
       return (
         <div className="flex min-h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin" />
         </div>
       );
     }
+    
+    // For public pages, render them immediately to avoid a flash of the loading spinner.
+    // Also, if a logged-in user tries to access a login page, the useEffect will redirect them.
+    if (publicPaths.includes(pathname)) {
+        return <WrappedComponent {...props} />;
+    }
 
-    // Final check to prevent content flash
-    if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) return null;
-    if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) return null;
+    // If not loading and no user, and it's a protected route, show loading spinner until redirect happens.
+    if (!user) {
+         return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin" />
+            </div>
+        );
+    }
 
-
+    // If everything is fine, render the component.
     return <WrappedComponent {...props} />;
   };
 
