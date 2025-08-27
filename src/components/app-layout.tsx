@@ -2,7 +2,7 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
         { href: '/payments', label: 'Payments', icon: CreditCard },
+        { href: '/reports', label: 'Reports', icon: FileText },
     ]
 
     return (
