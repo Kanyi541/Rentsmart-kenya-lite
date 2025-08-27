@@ -6,6 +6,8 @@ export type Room = z.infer<typeof roomSchema> & { id: string };
 export type Rental = z-infer<typeof rentalSchema> & { id: string, rooms: Room[] };
 export type Tenant = z.infer<typeof tenantSchema> & { 
     id: string;
+    rentalId?: string;
+    roomId?: string;
     rentalName?: string;
     roomNumber?: string;
     rent?: number;

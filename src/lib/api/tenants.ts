@@ -81,6 +81,65 @@ export async function getTenants(): Promise<Tenant[]> {
     return tenantsWithDetails;
 }
 
+export async function getTenantById(tenantId: string): Promise<Tenant | null> {
+    if (!tenantId) return null;
+
+    const tenantRef = doc(db, 'tenants', tenantId);
+    const tenantSnap = await getDoc(tenantRef);
+
+    if (!tenantSnap.exists()) {
+        return null;
+    }
+
+    const tenant = { id: tenantSnap.id, ...tenantSnap.data() } as Tenant;
+
+    // Check for assignment
+    const assignmentsCol = collection(db, 'assignments');
+    const assignmentQuery = query(assignmentsCol, where("tenantId", "==", tenantId));
+    const assignmentSnapshot = await getDocs(assignmentQuery);
+
+    if (!assignmentSnapshot.empty) {
+        const assignment = assignmentSnapshot.docs[0].data() as Omit<Assignment, 'id'>;
+        
+        const rentalRef = doc(db, 'rentals', assignment.rentalId);
+        const roomRef = doc(db, `rentals/${assignment.rentalId}/rooms/${assignment.roomId}`);
+
+        const [rentalSnap, roomSnap] = await Promise.all([
+            getDoc(rentalRef),
+            getDoc(roomRef)
+        ]);
+
+        const rental = rentalSnap.exists() ? rentalSnap.data() as Rental : null;
+        const room = roomSnap.exists() ? roomSnap.data() as Room : null;
+
+        tenant.rentalName = rental?.name;
+        tenant.roomNumber = room?.roomNumber;
+        tenant.rent = room?.rent;
+        tenant.rentalId = rental?.id
+        tenant.roomId = room?.id
+
+        // Check for next payment due
+        const paymentsCol = collection(db, 'payments');
+        const paymentsQuery = query(paymentsCol, 
+            where("tenantId", "==", tenantId),
+            where("type", "==", "Rent"),
+            where("status", "==", "Completed"),
+            orderBy("createdAt", "desc")
+        );
+        const paymentsSnapshot = await getDocs(paymentsQuery);
+        if (!paymentsSnapshot.empty) {
+            const lastPayment = paymentsSnapshot.docs[0].data();
+            const lastPaymentDate = (lastPayment.createdAt as Timestamp).toDate();
+            const nextDueDate = new Date(lastPaymentDate);
+            nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+            tenant.nextPaymentDue = nextDueDate.toISOString().split('T')[0];
+        }
+    }
+
+    return tenant;
+}
+
+
 export async function addTenant(tenantData: TenantData) {
     try {
         const tenantsCol = collection(db, 'tenants');
