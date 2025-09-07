@@ -51,12 +51,16 @@ export function AdminLoginForm() {
                 description: 'Welcome back!',
             });
             router.push('/');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            let description = 'An unknown error occurred. Please try again.';
+            if (error.code === 'auth/invalid-credential') {
+                description = 'Invalid credentials. Please check your email and password. Note: Admin users must be created in the Firebase Console.'
+            }
             toast({
                 variant: 'destructive',
                 title: 'Login Failed',
-                description: 'Please check your credentials and try again.',
+                description: description,
             });
         } finally {
             setIsSubmitting(false);
