@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,8 +24,17 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, BedDouble } from 'lucide-react';
+import { PlusCircle, BedDouble, Search, ListFilter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addTenant } from '@/app/actions';
@@ -38,6 +47,8 @@ export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
     const { toast } = useToast();
     const router = useRouter();
 
@@ -99,17 +110,40 @@ export default function TenantsPage() {
         }
     }
 
+    const filteredTenants = useMemo(() => {
+        let filtered = tenants;
+
+        // Filter by status
+        if (filterStatus === 'assigned') {
+            filtered = filtered.filter(t => t.rentalName);
+        } else if (filterStatus === 'unassigned') {
+            filtered = filtered.filter(t => !t.rentalName);
+        }
+
+        // Filter by search query
+        if (searchQuery) {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            filtered = filtered.filter(t => 
+                `${t.firstName} ${t.secondName}`.toLowerCase().includes(lowercasedQuery) ||
+                t.phone.toLowerCase().includes(lowercasedQuery) ||
+                t.email.toLowerCase().includes(lowercasedQuery)
+            );
+        }
+
+        return filtered;
+    }, [tenants, searchQuery, filterStatus]);
+
     return (
         <AppLayout>
              <div className="space-y-4 md:space-y-8">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="grid gap-2">
                         <CardTitle className="text-3xl font-bold tracking-tight">Tenants</CardTitle>
-                        <CardDescription>View and manage all registered tenants.</CardDescription>
+                        <CardDescription>View, manage, search, and filter all registered tenants.</CardDescription>
                     </div>
                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button className="w-full sm:w-auto">
                                 <PlusCircle className="mr-2" />
                                 Add New Tenant
                             </Button>
@@ -247,7 +281,36 @@ export default function TenantsPage() {
                     </Dialog>
                 </div>
                 <Card>
-                    <CardContent>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search by name, phone, or email..."
+                                    className="w-full rounded-lg bg-background pl-8"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="flex items-center gap-2">
+                                        <ListFilter className="h-4 w-4" />
+                                        Filter
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuRadioGroup value={filterStatus} onValueChange={setFilterStatus}>
+                                        <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="assigned">Assigned</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="unassigned">Unassigned</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -260,10 +323,10 @@ export default function TenantsPage() {
                             <TableBody>
                                 {loading ? (
                                     <TableRow><TableCell colSpan={4} className="text-center h-24">Loading tenants...</TableCell></TableRow>
-                                ) : tenants.length === 0 ? (
-                                    <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants registered yet.</TableCell></TableRow>
+                                ) : filteredTenants.length === 0 ? (
+                                    <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants found.</TableCell></TableRow>
                                 ) : (
-                                    tenants.map(tenant => (
+                                    filteredTenants.map(tenant => (
                                         <TableRow key={tenant.id}>
                                             <TableCell className="font-medium">
                                                 {`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}
