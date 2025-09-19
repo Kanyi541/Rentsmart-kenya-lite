@@ -30,9 +30,6 @@ export default function LandingPage() {
           <span className="sr-only">RentSmart Kenya Lite</span>
         </Link>
         <nav className="ml-auto hidden lg:flex gap-4 sm:gap-6">
-          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-            Features
-          </Link>
           <Link href="/clients/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Tenant Login
           </Link>
@@ -53,7 +50,6 @@ export default function LandingPage() {
                         <Home className="h-6 w-6 text-primary" />
                         <span>RentSmart</span>
                     </Link>
-                    <Link href="#features" className="hover:text-primary" prefetch={false}>Features</Link>
                     <Link href="/clients/login" className="hover:text-primary" prefetch={false}>Tenant Login</Link>
                     <Link href="/admin/login" className="hover:text-primary" prefetch={false}>Admin Login</Link>
                 </nav>
@@ -96,69 +92,6 @@ export default function LandingPage() {
                     </div>
                 </div>
             </div>
-        </section>
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Key Features</div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need to Manage Your Rentals</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  From tenant onboarding to maintenance requests, our platform handles it all, saving you time and effort.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:max-w-none lg:grid-cols-3 pt-12">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Tenant Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Easily register and manage tenant information, track assignments, and handle move-in/move-out processes digitally.</CardDescription>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> AI-Powered Pricing</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Leverage AI to get competitive rental price suggestions for your properties based on location and type.</CardDescription>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Centralized Communication</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Post announcements, manage complaints, and handle maintenance requests through a centralized system.</CardDescription>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Online Payments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Simulated payment processing for rent and deposits to streamline the tenant onboarding process.</CardDescription>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Occupancy Tracking</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>Get a real-time overview of your property occupancy, with detailed views for each rental unit.</CardDescription>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Tenant Portal</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>A dedicated dashboard for tenants to view their details, make requests, and see announcements.</CardDescription>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
         </section>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
