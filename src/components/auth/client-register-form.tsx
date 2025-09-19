@@ -234,10 +234,84 @@ export function ClientRegisterForm() {
                         </div>
 
                         <ScrollArea className="h-32 w-full rounded-md border bg-muted/50 p-3 text-sm">
-                           <h4 className="font-bold mb-2">Tenant Agreement</h4>
-                            <p className="mb-4">This placeholder text represents the full tenant lease agreement. It outlines the responsibilities of both the tenant and the landlord, including rent payment schedules, property rules, maintenance procedures, and conditions for lease termination. By agreeing, you confirm you have read and understood these terms.</p>
-                            <h4 className="font-bold mb-2">Data Privacy Policy</h4>
-                            <p>This placeholder outlines how we collect, use, and protect your personal information, such as your name, contact details, and ID number. We are committed to safeguarding your data in compliance with relevant laws. By agreeing, you consent to our data practices as described.</p>
+                            <h4 className="font-bold mb-2 text-base">📝 Tenant Agreement</h4>
+                            <p className="mb-2 text-sm">
+                                <strong>This Tenant Agreement (“Agreement”)</strong> is entered into by and between:
+                            </p>
+                            <ul className="list-disc pl-5 mb-2 text-sm space-y-1">
+                                <li><strong>Landlord/Property Owner/Manager</strong> (“Landlord”), and</li>
+                                <li><strong>Tenant</strong> (“Tenant”),</li>
+                            </ul>
+                            <p className="mb-4 text-sm">
+                                through the <strong>Techivo Technologies Rental Management System</strong> (“System”). By registering and using this system, the Tenant agrees to the following:
+                            </p>
+
+                            <hr className="my-3" />
+
+                            <h5 className="font-semibold mb-2">1. Purpose</h5>
+                            <p className="mb-3">This Agreement sets out the rights and obligations of both the Tenant and the Landlord regarding the use of the System for rental management, payment tracking, and communication.</p>
+                            
+                            <h5 className="font-semibold mb-2">2. Tenant Obligations</h5>
+                            <ul className="list-disc pl-5 mb-3 space-y-1">
+                                <li>Provide accurate personal and contact information.</li>
+                                <li>Pay rent and other agreed charges (e.g., deposit, maintenance fees) through the system on or before the due date.</li>
+                                <li>Honor the terms of the signed Lease Agreement with the Landlord.</li>
+                                <li>Use the system responsibly and only for legitimate rental purposes.</li>
+                            </ul>
+
+                            <h5 className="font-semibold mb-2">3. Landlord Obligations</h5>
+                            <ul className="list-disc pl-5 mb-3 space-y-1">
+                                <li>Provide the Tenant with accurate property details and rental terms.</li>
+                                <li>Issue receipts and maintain a clear payment record within the System.</li>
+                                <li>Respond to maintenance requests in a reasonable timeframe.</li>
+                                <li>Notify tenants of rent increases, policy changes, or other updates.</li>
+                            </ul>
+
+                             <h5 className="font-semibold mb-2">4. Payments</h5>
+                            <ul className="list-disc pl-5 mb-3 space-y-1">
+                                <li>Tenants may be required to pay a deposit, followed by monthly rent payments.</li>
+                                <li>Failure to make payments within the agreed period may result in penalties, late fees, or suspension of services (including restricted system access).</li>
+                                <li>Ownership of digital receipts and rental documents will remain with the Landlord until full payment is made.</li>
+                            </ul>
+
+                            <h5 className="font-semibold mb-2">5. Termination</h5>
+                            <p className="mb-3">This Agreement may be terminated by either party if: The Tenant fails to honor rent payments or lease terms; The Landlord breaches obligations under the lease; Either party provides written notice as defined in the lease contract.</p>
+
+                            <h5 className="font-semibold mb-2">6. Dispute Resolution</h5>
+                            <ul className="list-disc pl-5 mb-3 space-y-1">
+                                <li>Any disputes arising from the use of the System shall first be resolved through <strong>direct negotiation</strong> between Tenant and Landlord.</li>
+                                <li>If unresolved, disputes shall be referred to <strong>mediation or arbitration</strong> in accordance with the laws of Kenya.</li>
+                                <li>Legal action shall be a last resort.</li>
+                            </ul>
+                            
+                            <hr className="my-4" />
+
+                            <h4 className="font-bold mb-2 text-base">🔒 Data Privacy Policy</h4>
+                            <p className="mb-3"><strong>Effective Date:</strong> [Insert Date] <br/><strong>Company:</strong> Techivo Technologies</p>
+
+                            <h5 className="font-semibold mb-2">1. Information We Collect</h5>
+                            <p className="mb-3">When you register as a Tenant, we may collect: Personal details, rental details, payment records, and uploaded documents.</p>
+                            
+                            <h5 className="font-semibold mb-2">2. How We Use Your Information</h5>
+                            <p className="mb-3">Your data is used to: Manage rental agreements, provide receipts, facilitate communication, handle maintenance requests, and improve our services.</p>
+
+                            <h5 className="font-semibold mb-2">3. Data Sharing</h5>
+                            <ul className="list-disc pl-5 mb-3 space-y-1">
+                                <li>Data is <strong>not sold or shared</strong> with third parties for marketing.</li>
+                                <li>Information may only be shared with the Landlord, payment providers, or government authorities if required by law.</li>
+                            </ul>
+
+                             <h5 className="font-semibold mb-2">4. Data Security</h5>
+                             <p className="mb-3">Data is stored securely in Firebase (Google Cloud) with authentication and encryption. Access is role-based.</p>
+
+                            <h5 className="font-semibold mb-2">5. Your Rights</h5>
+                            <p className="mb-3">Tenants have the right to access, review, correct, or request deletion of their data (subject to outstanding obligations).</p>
+                           
+                            <h5 className="font-semibold mb-2">6. Retention</h5>
+                            <p className="mb-3">Data is retained while you are an active tenant and archived upon termination for legal purposes.</p>
+
+                            <h5 className="font-semibold mb-2">7. Contact Information</h5>
+                            <p>For questions, please contact Techivo Technologies at [Your Support Email] or [Your Business Address].</p>
                         </ScrollArea>
                         
                         <div className="flex items-center space-x-2">
@@ -269,3 +343,5 @@ export function ClientRegisterForm() {
         </Form>
     );
 }
+
+    
