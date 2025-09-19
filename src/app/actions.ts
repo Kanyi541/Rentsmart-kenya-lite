@@ -3,10 +3,9 @@
 
 import { rentalPriceSuggestion } from '@/ai/flows/rental-price-suggestion';
 import { addRental as dbAddRental } from '@/lib/api/rentals';
-import { addTenant as dbAddTenant } from '@/lib/api/tenants';
 import { assignRoomToTenant as dbAssignRoom } from '@/lib/api/assignments';
 import { createPayment, updatePaymentStatus } from '@/lib/api/payments';
-import { rentalSchema, tenantSchema, assignmentSchema, initiatePaymentSchema } from '@/lib/schemas';
+import { rentalSchema, assignmentSchema, initiatePaymentSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -58,34 +57,6 @@ export async function addRental(data: unknown) {
     } catch (error: any) {
         console.error('Database error in addRental action:', error);
         return { error: 'Database error: Failed to add rental.'}
-    }
-}
-
-export async function addTenant(data: unknown) {
-    const parsedData = tenantSchema.safeParse(data);
-
-    if(!parsedData.success) {
-        let errorMessage = 'Invalid tenant data.';
-        try {
-            // Zod errors are an array of issues. We'll format them.
-            errorMessage = parsedData.error.issues.map(issue => `${issue.path.join('.')} - ${issue.message}`).join(', ');
-        } catch (e) {
-             errorMessage = 'A validation error occurred.';
-        }
-        return { error: errorMessage };
-    }
-
-    try {
-        const result = await dbAddTenant(parsedData.data);
-        if (result.error) {
-            return { error: result.error };
-        }
-        revalidatePath('/tenants');
-        revalidatePath('/');
-        return { success: true, id: result.id };
-    } catch (error) {
-        console.error('Database error in addTenant action:', error);
-        return { error: 'Database error: Failed to add tenant.'}
     }
 }
 

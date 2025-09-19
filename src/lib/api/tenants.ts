@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, doc, getDoc, query, where, Timestamp, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where, Timestamp, orderBy, serverTimestamp, setDoc } from "firebase/firestore";
 import type { Tenant, Assignment, Rental, Room, Payment } from "@/lib/types";
 import { tenantSchema } from "@/lib/schemas";
 import { z } from "zod";
@@ -152,21 +152,4 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
     }
 
     return tenant;
-}
-
-
-export async function addTenant(tenantData: TenantData) {
-    try {
-        const tenantsCol = collection(db, 'tenants');
-        const docRef = await addDoc(tenantsCol, {
-            ...tenantData,
-            createdAt: serverTimestamp()
-        });
-        revalidatePath('/tenants');
-        revalidatePath('/');
-        return { success: true, id: docRef.id };
-    } catch (error: any) {
-        console.error("Error adding tenant to Firestore:", error);
-        return { error: "Failed to add tenant due to a database error." };
-    }
 }

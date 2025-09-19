@@ -8,22 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Tenant } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { tenantSchema } from '@/lib/schemas';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,24 +18,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, BedDouble, Search, ListFilter } from 'lucide-react';
+import { BedDouble, Search, ListFilter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
-import { addTenant } from '@/app/actions';
 import { getTenants } from '@/lib/api/tenants';
 import Link from 'next/link';
 
-type TenantFormValues = z.infer<typeof tenantSchema>;
 
 export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const { toast } = useToast();
-    const router = useRouter();
 
     async function fetchTenants() {
         setLoading(true);
@@ -70,45 +49,7 @@ export default function TenantsPage() {
 
     useEffect(() => {
         fetchTenants();
-    }, []);
-
-    const form = useForm<TenantFormValues>({
-        resolver: zodResolver(tenantSchema),
-        defaultValues: {
-            firstName: '',
-            secondName: '',
-            thirdName: '',
-            idNumber: '',
-            phone: '',
-            email: '',
-            maritalStatus: 'Single',
-            gender: 'Male',
-        }
-    })
-
-    const handleAddTenant = async (data: TenantFormValues) => {
-        try {
-            const result = await addTenant(data);
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            toast({
-                title: "Tenant Registered",
-                description: `${data.firstName} ${data.secondName} has been added to the tenant list.`
-            });
-            form.reset();
-            setIsDialogOpen(false);
-            await fetchTenants();
-            router.refresh();
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: "Error",
-                description: error.message || "Failed to add tenant."
-            })
-        }
-    }
+    }, [toast]);
 
     const filteredTenants = useMemo(() => {
         let filtered = tenants;
@@ -139,146 +80,8 @@ export default function TenantsPage() {
                 <div className="flex items-start flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="grid gap-2">
                         <CardTitle className="text-3xl font-bold tracking-tight">Tenants</CardTitle>
-                        <CardDescription>View, manage, search, and filter all registered tenants.</CardDescription>
+                        <CardDescription>View, manage, search, and filter all registered tenants. Tenants must register themselves via the client portal.</CardDescription>
                     </div>
-                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="w-full sm:w-auto">
-                                <PlusCircle className="mr-2" />
-                                Add New Tenant
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-xl">
-                                <DialogHeader>
-                                <DialogTitle>Register New Tenant</DialogTitle>
-                                <DialogDescription>
-                                    Add a new tenant to your system. Click save when you're done.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(handleAddTenant)} className="space-y-4 py-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="firstName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>First Name</FormLabel>
-                                                    <FormControl><Input placeholder="e.g. John" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="secondName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Second Name</FormLabel>
-                                                    <FormControl><Input placeholder="e.g. Doe" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="thirdName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Third Name (Optional)</FormLabel>
-                                                    <FormControl><Input placeholder="e.g. Smith" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                        <FormField
-                                        control={form.control}
-                                        name="idNumber"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>ID / Passport Number</FormLabel>
-                                                <FormControl><Input placeholder="e.g. 12345678" {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="phone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Phone Number</FormLabel>
-                                                    <FormControl><Input placeholder="e.g. 0798765432" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email Address</FormLabel>
-                                                    <FormControl><Input type="email" placeholder="e.g. user@example.com" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="maritalStatus"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Marital Status</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Single">Single</SelectItem>
-                                                            <SelectItem value="Married">Married</SelectItem>
-                                                            <SelectItem value="Divorced">Divorced</SelectItem>
-                                                            <SelectItem value="Widowed">Widowed</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="gender"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Gender</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Male">Male</SelectItem>
-                                                            <SelectItem value="Female">Female</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild>
-                                            <Button type="button" variant="secondary">Cancel</Button>
-                                        </DialogClose>
-                                        <Button type="submit">Register Tenant</Button>
-                                    </DialogFooter>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
                 </div>
                 <Card>
                     <CardContent className="pt-6">
@@ -370,4 +173,3 @@ export default function TenantsPage() {
         </AppLayout>
     );
 }
-
