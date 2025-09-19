@@ -116,19 +116,26 @@ export async function processPaymentAndAssign(data: unknown) {
         return { error: 'Payment verification failed. Please contact support.'}
     }
 
-    // 1. Create payment records for rent and deposit
-    const rentPaymentId = await createPayment({
-        tenantId, rentalId, roomId, amount: rentAmount, type: 'Rent',
-        status: 'Completed', transactionId: transactionRef, phone, email
-    });
+    let rentPaymentId;
+    let depositPaymentId;
+    try {
+        // 1. Create payment records for rent and deposit
+        rentPaymentId = await createPayment({
+            tenantId, rentalId, roomId, amount: rentAmount, type: 'Rent',
+            status: 'Completed', transactionId: transactionRef, phone, email
+        });
 
-    const depositPaymentId = await createPayment({
-        tenantId, rentalId, roomId, amount: depositAmount, type: 'Deposit',
-        status: 'Completed', transactionId: transactionRef, phone, email
-    });
-    
-    // Invalidate payments page cache
-    revalidatePath('/payments');
+        depositPaymentId = await createPayment({
+            tenantId, rentalId, roomId, amount: depositAmount, type: 'Deposit',
+            status: 'Completed', transactionId: transactionRef, phone, email
+        });
+        
+        // Invalidate payments page cache
+        revalidatePath('/payments');
+    } catch (error) {
+        console.error('Failed to create payment records:', error);
+        return { error: 'Failed to record payments in the database. Please contact support.' };
+    }
     
     // 2. Assign the room
     try {
@@ -136,11 +143,12 @@ export async function processPaymentAndAssign(data: unknown) {
     } catch (error) {
         console.error(error);
         // If room assignment fails, we should ideally refund the payment or flag for manual intervention.
-        await updatePaymentStatus(rentPaymentId, 'Failed');
-        await updatePaymentStatus(depositPaymentId, 'Failed');
+        // For now, we'll mark the payments as failed.
+        if (rentPaymentId) await updatePaymentStatus(rentPaymentId, 'Failed');
+        if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
         return { error: 'Payment was successful, but failed to assign the room. Please contact support.' };
     }
     
-    // 3. Redirect to assignments page
+    // 3. Redirect to assignments page with a success flag
     redirect('/assignments?status=success');
 }

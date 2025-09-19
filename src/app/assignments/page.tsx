@@ -35,7 +35,7 @@ function AssignmentComponent() {
             setShowSuccessAlert(true);
             const timer = setTimeout(() => setShowSuccessAlert(false), 5000);
             // clean up search params
-            router.replace('/assignments', undefined);
+            router.replace('/assignments', { scroll: false });
             return () => clearTimeout(timer);
         }
     }, [searchParams, router]);
