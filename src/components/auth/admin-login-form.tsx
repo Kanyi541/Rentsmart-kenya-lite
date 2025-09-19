@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { CardContent, CardFooter } from '../ui/card';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLoading } from '@/hooks/use-loading';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -33,6 +34,7 @@ export function AdminLoginForm() {
     const { login } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    const { startLoading, stopLoading } = useLoading();
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -44,6 +46,7 @@ export function AdminLoginForm() {
 
     const onSubmit = async (data: LoginFormValues) => {
         setIsSubmitting(true);
+        startLoading();
         try {
             await login(data.email, data.password);
             toast({
@@ -64,6 +67,7 @@ export function AdminLoginForm() {
             });
         } finally {
             setIsSubmitting(false);
+            stopLoading();
         }
     };
 
