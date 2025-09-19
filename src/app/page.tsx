@@ -29,14 +29,6 @@ export default function LandingPage() {
           <Home className="h-6 w-6 text-primary" />
           <span className="sr-only">RentSmart Kenya Lite</span>
         </Link>
-        <nav className="ml-auto hidden lg:flex gap-4 sm:gap-6">
-          <Link href="/clients/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-            Tenant Login
-          </Link>
-          <Link href="/admin/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-            Admin Login
-          </Link>
-        </nav>
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="ml-auto lg:hidden">
@@ -50,8 +42,6 @@ export default function LandingPage() {
                         <Home className="h-6 w-6 text-primary" />
                         <span>RentSmart</span>
                     </Link>
-                    <Link href="/clients/login" className="hover:text-primary" prefetch={false}>Tenant Login</Link>
-                    <Link href="/admin/login" className="hover:text-primary" prefetch={false}>Admin Login</Link>
                 </nav>
             </SheetContent>
         </Sheet>
