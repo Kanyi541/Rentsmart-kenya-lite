@@ -44,16 +44,16 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       
       // If user is logged in, handle role-based access and redirection from public pages
       if (userRole === 'admin') {
-        // If an admin lands on a client or public auth path, redirect to admin home.
+        // If an admin lands on a client path or a public auth path (but not the root landing page), redirect to admin home.
         const isClientPath = clientPaths.some(p => pathname.startsWith(p));
-        const isPublicAuthPath = pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/admin/login');
+        const isPublicAuthPath = ['/clients/login', '/clients/register', '/clients/forgot-password', '/admin/login'].includes(pathname);
         if (isClientPath || isPublicAuthPath) {
           router.replace('/admin/dashboard');
         }
       } else if (userRole === 'client') {
-        // If a client lands on an admin or public auth path, redirect to client home.
+        // If a client lands on an admin path or a public auth path (but not the root landing page), redirect to client home.
         const isAdminPath = adminPaths.some(p => pathname.startsWith(p));
-         if (isAdminPath || publicPaths.includes(pathname) && pathname !== '/') {
+         if (isAdminPath || (publicPaths.includes(pathname) && pathname !== '/')) {
           router.replace('/clients');
         }
       }
@@ -93,3 +93,4 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
 
   return WithAuthComponent;
 }
+
