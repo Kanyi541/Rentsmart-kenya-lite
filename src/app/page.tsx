@@ -46,8 +46,8 @@ export default function LandingPage() {
             </SheetContent>
         </Sheet>
       </header>
-      <main className="flex-1">
-        <section className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] flex items-center justify-center text-center text-white">
+      <main className="flex-1 flex flex-col">
+        <section className="relative w-full flex-1 flex items-center justify-center text-center text-white">
             {heroImages.map((image, index) => (
                 <Image
                     key={image.seed}
