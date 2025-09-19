@@ -29,6 +29,9 @@ export const tenantSchema = z.object({
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
     createdAt: z.any().optional(),
+    nextOfKinName: z.string().min(3, "Next of Kin's name is required"),
+    nextOfKinPhone: z.string().min(10, "A valid phone number is required for Next of Kin"),
+    nextOfKinRelationship: z.string().min(3, "Relationship is required"),
 });
 
 export const assignmentSchema = z.object({

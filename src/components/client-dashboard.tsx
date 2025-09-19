@@ -7,7 +7,7 @@ import { getTenantById } from '@/lib/api/tenants';
 import type { Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck } from 'lucide-react';
+import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
@@ -128,36 +128,59 @@ export function ClientDashboard() {
                     </Card>
                  </div>
                  
-                 <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle>My Personal Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                         <div className="flex items-center gap-4">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{`${tenant.firstName} ${tenant.secondName}`}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{tenant.email}</span>
-                        </div>
-                         <div className="flex items-center gap-4">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                             <span className="font-medium">{tenant.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <UserCheck className="h-4 w-4 text-muted-foreground" />
-                             <span className="font-medium">ID: {tenant.idNumber}</span>
-                        </div>
-                        <div className="flex items-center gap-4 pt-2">
-                             <Badge variant="outline">{tenant.gender}</Badge>
-                             <Badge variant="outline">{tenant.maritalStatus}</Badge>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                         <Button variant="outline" className="w-full" disabled>Edit Details (coming soon)</Button>
-                    </CardFooter>
-                 </Card>
+                 <div className="space-y-6">
+                    <Card className="lg:col-span-1">
+                        <CardHeader>
+                            <CardTitle>My Personal Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            <div className="flex items-center gap-4">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{`${tenant.firstName} ${tenant.secondName}`}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{tenant.email}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{tenant.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">ID: {tenant.idNumber}</span>
+                            </div>
+                            <div className="flex items-center gap-4 pt-2">
+                                <Badge variant="outline">{tenant.gender}</Badge>
+                                <Badge variant="outline">{tenant.maritalStatus}</Badge>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button variant="outline" className="w-full" disabled>Edit Details (coming soon)</Button>
+                        </CardFooter>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <ShieldCheck className="h-6 w-6 text-primary" />
+                            <CardTitle>Next of Kin</CardTitle>
+                        </CardHeader>
+                         <CardContent className="space-y-4 text-sm">
+                             <div className="flex items-center gap-4">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{tenant.nextOfKinName}</span>
+                            </div>
+                             <div className="flex items-center gap-4">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{tenant.nextOfKinPhone}</span>
+                            </div>
+                             <div className="flex items-center gap-4">
+                                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{tenant.nextOfKinRelationship}</span>
+                            </div>
+                         </CardContent>
+                    </Card>
+                </div>
             </div>
              <Card>
                 <CardHeader>

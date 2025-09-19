@@ -21,6 +21,7 @@ import { CardContent, CardFooter } from '../ui/card';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Separator } from '../ui/separator';
 
 const registerSchema = z.object({
     firstName: z.string().min(2, "First name is required"),
@@ -31,6 +32,9 @@ const registerSchema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
+    nextOfKinName: z.string().min(3, "Next of Kin's name is required"),
+    nextOfKinPhone: z.string().min(10, "A valid phone number is required for Next of Kin"),
+    nextOfKinRelationship: z.string().min(3, "Relationship is required"),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -52,6 +56,9 @@ export function ClientRegisterForm() {
             password: '',
             maritalStatus: 'Single',
             gender: 'Male',
+            nextOfKinName: '',
+            nextOfKinPhone: '',
+            nextOfKinRelationship: ''
         },
     });
 
@@ -195,6 +202,51 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
+
+                    <Separator />
+                    
+                    <div>
+                        <h3 className="text-lg font-medium">Emergency / Next of Kin Details</h3>
+                        <p className="text-sm text-muted-foreground">This information will be used in case of an emergency.</p>
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="nextOfKinName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Next of Kin Full Name</FormLabel>
+                                <FormControl><Input placeholder="e.g. Jane Doe" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="nextOfKinPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Next of Kin Phone</FormLabel>
+                                    <FormControl><Input placeholder="e.g. 0712345678" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="nextOfKinRelationship"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Relationship</FormLabel>
+                                    <FormControl><Input placeholder="e.g. Spouse, Sibling" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
                 </CardContent>
                 <CardFooter>
                      <Button type="submit" className="w-full" disabled={isSubmitting}>
