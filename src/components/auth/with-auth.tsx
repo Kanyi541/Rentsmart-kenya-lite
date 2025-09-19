@@ -72,10 +72,14 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       );
     }
     
-    // For public pages, render them immediately to avoid a flash of the loading spinner.
-    // Also, if a logged-in user tries to access a login page, the useEffect will redirect them.
-    if (isPublicPath) {
-        return <WrappedComponent {...props} />;
+    const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
+    // If a logged-in user is on a page like login/register, show a loader while redirecting
+    if (user && publicButNotRoot) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin" />
+        </div>
+      );
     }
 
     // If not loading and no user, and it's a protected route, show loading spinner until redirect happens.
