@@ -1,0 +1,21 @@
+
+{
+    "heroImages": [
+        {
+            "seed": "1",
+            "hint": "apartment building"
+        },
+        {
+            "seed": "2",
+            "hint": "modern kitchen"
+        },
+        {
+            "seed": "3",
+            "hint": "living room"
+        },
+        {
+            "seed": "4",
+            "hint": "house keys"
+        }
+    ]
+}

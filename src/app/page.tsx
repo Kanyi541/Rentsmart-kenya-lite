@@ -1,15 +1,30 @@
 
+'use client'
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { CheckCircle, Home, Menu } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { heroImages } from '@/lib/placeholder-images.json';
+import { cn } from '@/lib/utils';
 
 export default function LandingPage() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 120000); // 2 minutes in milliseconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="flex min-h-[100dvh] flex-col">
-      <header className="px-4 lg:px-6 h-14 flex items-center bg-background sticky top-0 z-50 border-b">
+    <div className="flex min-h-[100dvh] flex-col bg-background">
+      <header className="px-4 lg:px-6 h-14 flex items-center bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b">
         <Link href="#" className="flex items-center justify-center" prefetch={false}>
           <Home className="h-6 w-6 text-primary" />
           <span className="sr-only">RentSmart Kenya Lite</span>
@@ -46,36 +61,41 @@ export default function LandingPage() {
         </Sheet>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-muted/20">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Modern Rental Management, Simplified.
-                  </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    RentSmart Kenya Lite is an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
-                  </p>
+        <section className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] flex items-center justify-center text-center text-white">
+            {heroImages.map((image, index) => (
+                <Image
+                    key={image.seed}
+                    src={`https://picsum.photos/seed/${image.seed}/1920/1080`}
+                    alt="Background"
+                    fill
+                    priority={index === 0}
+                    className={cn(
+                        'object-cover transition-opacity duration-1000 ease-in-out',
+                        index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                    )}
+                    data-ai-hint={image.hint}
+                />
+            ))}
+             <div className="absolute inset-0 bg-black/50" />
+            <div className="relative z-10 container px-4 md:px-6">
+                <div className="flex flex-col justify-center space-y-4 max-w-3xl mx-auto">
+                    <div className="space-y-2">
+                    <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
+                        Modern Rental Management, Simplified.
+                    </h1>
+                    <p className="max-w-[600px] text-lg text-neutral-200 md:text-xl mx-auto [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+                        RentSmart Kenya Lite is an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
+                    </p>
+                    </div>
+                    <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
+                    <Button asChild size="lg">
+                        <Link href="/clients/register" prefetch={false}>
+                        Get Started as a Tenant
+                        </Link>
+                    </Button>
+                    </div>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild size="lg">
-                    <Link href="/clients/register" prefetch={false}>
-                      Get Started as a Tenant
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-               <Image
-                src="https://picsum.photos/seed/1/600/400"
-                width="600"
-                height="400"
-                alt="Hero"
-                data-ai-hint="apartment building"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
-              />
             </div>
-          </div>
         </section>
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
