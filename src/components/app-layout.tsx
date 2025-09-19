@@ -8,10 +8,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
+import { useLoading } from "@/hooks/use-loading";
+import { useEffect } from "react";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { userRole, logout } = useAuth();
+    const { startLoading, stopLoading } = useLoading();
+
+    useEffect(() => {
+        // When a new page is loaded (pathname changes), stop the loading indicator.
+        stopLoading();
+    }, [pathname, stopLoading]);
+
 
     const adminMenuItems = [
         { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
@@ -35,6 +44,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;
     const homeRoute = userRole === 'admin' ? '/admin/dashboard' : '/clients';
 
+    const handleNavigation = (e: React.MouseEvent, href: string) => {
+        if (pathname !== href) {
+            startLoading();
+        }
+    };
 
     return (
         <SidebarProvider>
@@ -55,7 +69,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                     asChild
                                     isActive={pathname.startsWith(item.href)}
                                     >
-                                    <Link href={item.href}>
+                                    <Link href={item.href} onClick={(e) => handleNavigation(e, item.href)}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </Link>
@@ -73,7 +87,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </Sidebar>
             <SidebarInset>
                 <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mb-4">
-                     <SidebarTrigger className="md:hidden" />
+                     <SidebarTrigger />
                 </header>
                 <main className="p-4 sm:px-6 sm:py-0 space-y-4">
                     {children}

@@ -5,6 +5,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Script from 'next/script';
 import { AuthProvider } from '@/hooks/use-auth';
+import { LoadingProvider } from '@/hooks/use-loading';
+import { GlobalLoadingIndicator } from '@/components/global-loading-indicator';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -22,7 +24,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-body antialiased`}>
         <AuthProvider>
-          {children}
+          <LoadingProvider>
+            <GlobalLoadingIndicator />
+            {children}
+          </LoadingProvider>
         </AuthProvider>
         <Toaster />
         <Script src="https://js.paystack.co/v1/inline.js" />
