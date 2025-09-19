@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
+import { LoadingAnimation } from '../loading';
 
 const adminPaths = ['/admin', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
 const clientPaths = ['/clients'];
@@ -36,7 +37,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
              router.replace('/clients/login');
            } else {
              // Default redirect for any other protected routes.
-             router.replace('/clients/login');
+             router.replace('/');
            }
         }
         return;
@@ -67,7 +68,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     if (loading && !isPublicPath) {
       return (
         <div className="flex min-h-screen items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin" />
+            <LoadingAnimation />
         </div>
       );
     }
@@ -77,7 +78,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     if (user && publicButNotRoot) {
       return (
         <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin" />
+          <LoadingAnimation />
         </div>
       );
     }
@@ -86,7 +87,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     if (!user && !isPublicPath) {
          return (
             <div className="flex min-h-screen items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin" />
+                <LoadingAnimation />
             </div>
         );
     }
