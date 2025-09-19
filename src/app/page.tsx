@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -84,11 +85,16 @@ export default function LandingPage() {
                     </p>
                     </div>
                     <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
-                    <Button asChild size="lg">
-                        <Link href="/clients/register" prefetch={false}>
-                        Get Started as a Tenant
-                        </Link>
-                    </Button>
+                        <Button asChild size="lg">
+                            <Link href="/clients/register" prefetch={false}>
+                            Get Started as a Tenant
+                            </Link>
+                        </Button>
+                        <Button asChild size="lg" variant="secondary">
+                            <Link href="/admin/login" prefetch={false}>
+                            Admin Login
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             </div>
