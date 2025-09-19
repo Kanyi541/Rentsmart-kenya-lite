@@ -21,3 +21,15 @@ export type Payment = Omit<z.infer<typeof paymentSchema>, 'createdAt'> & {
     rental?: { name: string }, 
     room?: { roomNumber: string } 
 };
+
+export interface GroupedPayment {
+    id: string;
+    createdAt: string;
+    tenantName: string;
+    rentalName: string;
+    roomNumber: string;
+    rentPaid: number;
+    depositPaid: number;
+    totalPaid: number;
+    status: 'Completed' | 'Failed';
+}

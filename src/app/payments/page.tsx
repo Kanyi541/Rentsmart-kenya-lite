@@ -5,8 +5,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { Payment } from '@/lib/types';
-import { getPayments } from '@/lib/api/payments';
+import type { GroupedPayment } from '@/lib/types';
+import { getGroupedPayments } from '@/lib/api/payments';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const PAYMENTS_PER_PAGE = 5;
 
 export default function PaymentsPage() {
-    const [payments, setPayments] = useState<Payment[]>([]);
+    const [payments, setPayments] = useState<GroupedPayment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,7 +28,7 @@ export default function PaymentsPage() {
         async function fetchData() {
             try {
                 setLoading(true);
-                const fetchedPayments = await getPayments();
+                const fetchedPayments = await getGroupedPayments();
                 setPayments(fetchedPayments);
             } catch (error) {
                 console.error("Failed to fetch payments", error);
@@ -49,10 +49,9 @@ export default function PaymentsPage() {
             return payments;
         }
         return payments.filter(p =>
-            p.tenant?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.tenant?.secondName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.rental?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.room?.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+            p.tenantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.rentalName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [payments, searchQuery]);
 
@@ -66,7 +65,6 @@ export default function PaymentsPage() {
     const getStatusVariant = (status: string) => {
         switch (status) {
             case 'Completed': return 'default';
-            case 'Pending': return 'secondary';
             case 'Failed': return 'destructive';
             default: return 'outline';
         }
@@ -87,8 +85,8 @@ export default function PaymentsPage() {
             <div className="grid flex-1 items-start gap-4 md:gap-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Payment History</CardTitle>
-                        <CardDescription>View and manage all payment transactions.</CardDescription>
+                        <CardTitle>Initial Payment History</CardTitle>
+                        <CardDescription>View all initial rent and deposit payments for new room assignments.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <div className="mb-4">
@@ -111,9 +109,10 @@ export default function PaymentsPage() {
                                 <TableRow>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Tenant</TableHead>
-                                    <TableHead>Rental & Room</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead className="text-right">Amount (KSh)</TableHead>
+                                    <TableHead>Property & Room</TableHead>
+                                    <TableHead className="text-right">Rent Paid (KSh)</TableHead>
+                                    <TableHead className="text-right">Deposit Paid (KSh)</TableHead>
+                                    <TableHead className="text-right">Total Paid (KSh)</TableHead>
                                     <TableHead className="text-center">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -124,13 +123,14 @@ export default function PaymentsPage() {
                                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
                                             <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : paginatedPayments.length === 0 ? (
-                                    <TableRow><TableCell colSpan={6} className="text-center h-24">{searchQuery ? 'No matching payments found.' : 'No payment history found.'}</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={7} className="text-center h-24">{searchQuery ? 'No matching payments found.' : 'No payment history found.'}</TableCell></TableRow>
                                 ) : (
                                     paginatedPayments.map(payment => (
                                         <TableRow key={payment.id}>
@@ -138,19 +138,16 @@ export default function PaymentsPage() {
                                                 {formatDate(payment.createdAt)}
                                             </TableCell>
                                             <TableCell>
-                                                {payment.tenant ? `${payment.tenant.firstName} ${payment.tenant.secondName}` : 'N/A'}
+                                                {payment.tenantName}
                                             </TableCell>
                                             <TableCell>
-                                                {payment.rental?.name || 'N/A'} - {payment.room?.roomNumber || 'N/A'}
+                                                {payment.rentalName} - {payment.roomNumber}
                                             </TableCell>
-                                             <TableCell>
-                                                <Badge variant={payment.type === 'Deposit' ? 'secondary' : 'outline'}>
-                                                    {payment.type}
-                                                </Badge>
-                                             </TableCell>
-                                            <TableCell className="text-right">{payment.amount.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right">{payment.rentPaid.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right">{payment.depositPaid.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right font-semibold">{payment.totalPaid.toLocaleString()}</TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant={getStatusVariant(payment.status)}>{payment.status}</Badge>
+                                                <Badge variant={getStatusVariant(payment.status)}>{payment.status === 'Completed' ? 'Cleared' : payment.status}</Badge>
                                             </TableCell>
                                         </TableRow>
                                     ))
