@@ -50,7 +50,7 @@ export function AdminLoginForm() {
                 title: 'Login Successful',
                 description: 'Welcome back!',
             });
-            router.push('/');
+            router.push('/admin/dashboard');
         } catch (error: any) {
             console.error(error);
             let description = 'An unknown error occurred. Please try again.';
