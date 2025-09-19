@@ -29,9 +29,9 @@ export const tenantSchema = z.object({
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
     createdAt: z.any().optional(),
-    nextOfKinName: z.string().min(3, "Next of Kin's name is required"),
-    nextOfKinPhone: z.string().min(10, "A valid phone number is required for Next of Kin"),
-    nextOfKinRelationship: z.string().min(3, "Relationship is required"),
+    nextOfKinName: z.string().optional(),
+    nextOfKinPhone: z.string().optional(),
+    nextOfKinRelationship: z.string().optional(),
 });
 
 export const assignmentSchema = z.object({
@@ -64,3 +64,16 @@ export const initiatePaymentSchema = z.object({
   email: z.string().email("Email is required for payment"),
   transactionRef: z.string(),
 });
+
+
+export const updateTenantSchema = z.object({
+    firstName: z.string().min(2, "First name is required"),
+    secondName: z.string().min(2, "Second name is required"),
+    phone: z.string().min(10, "A valid phone number is required"),
+    maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
+    gender: z.enum(['Male', 'Female']),
+    nextOfKinName: z.string().optional(),
+    nextOfKinPhone: z.string().optional(),
+    nextOfKinRelationship: z.string().optional(),
+})
+

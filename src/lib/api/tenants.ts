@@ -2,13 +2,15 @@
 'use server'
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, query, where, Timestamp, orderBy, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where, Timestamp, orderBy, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import type { Tenant, Assignment, Rental, Room, Payment } from "@/lib/types";
-import { tenantSchema } from "@/lib/schemas";
+import { tenantSchema, updateTenantSchema } from "@/lib/schemas";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
 type TenantData = z.infer<typeof tenantSchema>;
+type UpdateTenantData = z.infer<typeof updateTenantSchema>;
+
 
 export async function getTenants(): Promise<Tenant[]> {
     const tenantsCol = collection(db, 'tenants');
@@ -37,11 +39,13 @@ export async function getTenants(): Promise<Tenant[]> {
     let tenantIdToLastPaymentMap = new Map<string, Date>();
     if (assignedTenantIds.length > 0) {
         const paymentsCol = collection(db, 'payments');
+        // Simplified query
         const paymentsQuery = query(paymentsCol, where("tenantId", "in", assignedTenantIds));
         const paymentsSnapshot = await getDocs(paymentsQuery);
 
         paymentsSnapshot.docs.forEach(doc => {
             const payment = doc.data();
+            // Filter in code
             if (payment.type === 'Rent' && payment.status === 'Completed') {
                 const paymentDate = (payment.createdAt as Timestamp).toDate();
                 if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
@@ -133,13 +137,11 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
 
         // Check for next payment due
         const paymentsCol = collection(db, 'payments');
-        // Simplified query to avoid composite index
         const paymentsQuery = query(paymentsCol, where("tenantId", "==", tenantId));
         const paymentsSnapshot = await getDocs(paymentsQuery);
         
-        // Find the most recent completed rent payment in code
         let lastPaymentDate: Date | null = null;
-        for (const doc of paymentsSnapshot.docs) {
+        paymentsSnapshot.docs.forEach(doc => {
             const payment = doc.data();
             if (payment.type === 'Rent' && payment.status === 'Completed') {
                 const paymentDate = (payment.createdAt as Timestamp).toDate();
@@ -147,7 +149,7 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
                     lastPaymentDate = paymentDate;
                 }
             }
-        }
+        });
         
         if (lastPaymentDate) {
             const nextDueDate = new Date(lastPaymentDate);
@@ -157,4 +159,19 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
     }
 
     return tenant;
+}
+
+export async function updateTenant(tenantId: string, data: UpdateTenantData) {
+    if (!tenantId) {
+        throw new Error("Tenant ID is required to update details.");
+    }
+    const tenantRef = doc(db, "tenants", tenantId);
+    
+    // Ensure that sensitive fields like email, ID number, etc., are not in the update object
+    // The `updateTenantSchema` already takes care of this by only including allowed fields.
+    const validatedData = updateTenantSchema.parse(data);
+
+    await updateDoc(tenantRef, validatedData);
+    
+    revalidatePath(`/clients`); // Revalidate the client dashboard to show new data
 }

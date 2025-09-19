@@ -3,39 +3,63 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { getTenantById } from '@/lib/api/tenants';
+import { getTenantById, updateTenant } from '@/lib/api/tenants';
 import type { Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck } from 'lucide-react';
+import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck, Pencil } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { EditTenantForm } from './edit-tenant-form';
+import { useToast } from '@/hooks/use-toast';
+import { updateTenantSchema } from '@/lib/schemas';
+import { z } from 'zod';
 
 export function ClientDashboard() {
     const { user } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const { toast } = useToast();
 
-    useEffect(() => {
-        if (user) {
-            async function fetchTenantData() {
-                try {
-                    setLoading(true);
-                    const tenantData = await getTenantById(user.uid);
-                    setTenant(tenantData);
-                } catch (error) {
-                    console.error("Failed to fetch tenant data", error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-            fetchTenantData();
-        } else {
+    async function fetchTenantData() {
+        if (!user) return;
+        try {
+            setLoading(true);
+            const tenantData = await getTenantById(user.uid);
+            setTenant(tenantData);
+        } catch (error) {
+            console.error("Failed to fetch tenant data", error);
+        } finally {
             setLoading(false);
         }
+    }
+
+    useEffect(() => {
+        fetchTenantData();
     }, [user]);
+
+    const handleUpdateTenant = async (data: z.infer<typeof updateTenantSchema>) => {
+        if (!user) return;
+        try {
+            await updateTenant(user.uid, data);
+            toast({
+                title: 'Details Updated!',
+                description: 'Your personal information has been successfully updated.'
+            });
+            setIsEditDialogOpen(false);
+            await fetchTenantData(); // Re-fetch data to show the update
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: error.message || 'An unexpected error occurred.'
+            });
+        }
+    };
     
     if (loading) {
         return <DashboardSkeleton />
@@ -156,7 +180,23 @@ export function ClientDashboard() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="outline" className="w-full" disabled>Edit Details (coming soon)</Button>
+                             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="w-full">
+                                        <Pencil className="mr-2" />
+                                        Edit Details
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Your Details</DialogTitle>
+                                        <DialogDescription>
+                                            Update your personal and emergency contact information.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <EditTenantForm tenant={tenant} onUpdate={handleUpdateTenant} />
+                                </DialogContent>
+                            </Dialog>
                         </CardFooter>
                     </Card>
 
@@ -166,18 +206,24 @@ export function ClientDashboard() {
                             <CardTitle>Next of Kin</CardTitle>
                         </CardHeader>
                          <CardContent className="space-y-4 text-sm">
-                             <div className="flex items-center gap-4">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{tenant.nextOfKinName}</span>
-                            </div>
-                             <div className="flex items-center gap-4">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{tenant.nextOfKinPhone}</span>
-                            </div>
-                             <div className="flex items-center gap-4">
-                                <UserCheck className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{tenant.nextOfKinRelationship}</span>
-                            </div>
+                            {tenant.nextOfKinName ? (
+                                <>
+                                    <div className="flex items-center gap-4">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">{tenant.nextOfKinName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Phone className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">{tenant.nextOfKinPhone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">{tenant.nextOfKinRelationship}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-muted-foreground">Not provided. Please edit your details to add an emergency contact.</p>
+                            )}
                          </CardContent>
                     </Card>
                 </div>

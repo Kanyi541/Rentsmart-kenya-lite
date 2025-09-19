@@ -14,76 +14,48 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { CardContent, CardFooter } from '../ui/card';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Separator } from '../ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Separator } from './ui/separator';
+import type { Tenant } from '@/lib/types';
+import { updateTenantSchema } from '@/lib/schemas';
 
-const registerSchema = z.object({
-    firstName: z.string().min(2, "First name is required"),
-    secondName: z.string().min(2, "Second name is required"),
-    idNumber: z.string().min(5, "A valid ID or Passport Number is required"),
-    phone: z.string().min(10, "A valid phone number is required"),
-    email: z.string().email("A valid email is required"),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
-    gender: z.enum(['Male', 'Female']),
-});
+type UpdateTenantFormValues = z.infer<typeof updateTenantSchema>;
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+interface EditTenantFormProps {
+    tenant: Tenant;
+    onUpdate: (data: UpdateTenantFormValues) => Promise<void>;
+}
 
-export function ClientRegisterForm() {
+export function EditTenantForm({ tenant, onUpdate }: EditTenantFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { register } = useAuth();
-    const { toast } = useToast();
-    const router = useRouter();
 
-    const form = useForm<RegisterFormValues>({
-        resolver: zodResolver(registerSchema),
+    const form = useForm<UpdateTenantFormValues>({
+        resolver: zodResolver(updateTenantSchema),
         defaultValues: {
-            firstName: '',
-            secondName: '',
-            idNumber: '',
-            phone: '',
-            email: '',
-            password: '',
-            maritalStatus: 'Single',
-            gender: 'Male',
+            firstName: tenant.firstName || '',
+            secondName: tenant.secondName || '',
+            phone: tenant.phone || '',
+            maritalStatus: tenant.maritalStatus || 'Single',
+            gender: tenant.gender || 'Male',
+            nextOfKinName: tenant.nextOfKinName || '',
+            nextOfKinPhone: tenant.nextOfKinPhone || '',
+            nextOfKinRelationship: tenant.nextOfKinRelationship || '',
         },
     });
 
-    const onSubmit = async (data: RegisterFormValues) => {
+    const onSubmit = async (data: UpdateTenantFormValues) => {
         setIsSubmitting(true);
-        try {
-            await register(data as any);
-            toast({
-                title: 'Registration Successful',
-                description: "Welcome! You can now log in.",
-            });
-            router.push('/clients/login');
-        } catch (error: any) {
-            console.error(error);
-            const message = error.code === 'auth/email-already-in-use' 
-                ? 'This email is already registered.' 
-                : 'Registration failed. Please try again.';
-            toast({
-                variant: 'destructive',
-                title: 'Registration Failed',
-                description: message,
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        await onUpdate(data);
+        setIsSubmitting(false);
     };
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <CardContent className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Personal Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -108,18 +80,7 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
-                     <FormField
-                        control={form.control}
-                        name="idNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>ID / Passport Number</FormLabel>
-                                <FormControl><Input placeholder="e.g. 12345678" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="phone"
@@ -131,29 +92,12 @@ export function ClientRegisterForm() {
                                 </FormItem>
                             )}
                         />
-                         <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email Address</FormLabel>
-                                    <FormControl><Input type="email" placeholder="e.g. user@example.com" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl><Input type="email" value={tenant.email} disabled /></FormControl>
+                            <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+                        </FormItem>
                     </div>
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl><Input type="password" placeholder="********" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -161,7 +105,7 @@ export function ClientRegisterForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Marital Status</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                         </FormControl>
@@ -196,14 +140,56 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
+                </div>
 
-                </CardContent>
-                <CardFooter>
-                     <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Separator />
+
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Emergency / Next of Kin Details</h3>
+                    <FormField
+                        control={form.control}
+                        name="nextOfKinName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Next of Kin Full Name</FormLabel>
+                                <FormControl><Input placeholder="e.g. Jane Doe" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="nextOfKinPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Next of Kin Phone</FormLabel>
+                                    <FormControl><Input placeholder="e.g. 0712345678" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="nextOfKinRelationship"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Relationship</FormLabel>
+                                    <FormControl><Input placeholder="e.g. Spouse, Sibling" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                    <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Register
+                        Save Changes
                     </Button>
-                </CardFooter>
+                </div>
             </form>
         </Form>
     );
