@@ -7,7 +7,8 @@ import { assignRoomToTenant as dbAssignRoom } from '@/lib/api/assignments';
 import { createPayment, updatePaymentStatus } from '@/lib/api/payments';
 import { createMaintenanceRequest as dbCreateMaintenanceRequest } from '@/lib/api/maintenance';
 import { createAnnouncement as dbCreateAnnouncement, deleteAnnouncement as dbDeleteAnnouncement } from '@/lib/api/announcements';
-import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema } from '@/lib/schemas';
+import { createComplaint as dbCreateComplaint } from '@/lib/api/complaints';
+import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema, createComplaintSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -178,5 +179,27 @@ export async function deleteAnnouncement(id: string) {
         return { success: true };
     } catch (error) {
         return { error: 'Failed to delete announcement.' };
+    }
+}
+
+export async function createComplaint(data: unknown) {
+    const parsedData = createComplaintSchema.safeParse(data);
+
+    if (!parsedData.success) {
+        let errorMessage = 'Invalid complaint data.';
+        try {
+            errorMessage = JSON.parse(parsedData.error.message)[0].message;
+        } catch (e) {}
+        return { error: errorMessage };
+    }
+
+    try {
+        await dbCreateComplaint(parsedData.data);
+        revalidatePath('/clients/complaints');
+        revalidatePath('/admin/complaints');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Database error in createComplaint action:', error);
+        return { error: 'Database error: Failed to submit complaint.' };
     }
 }

@@ -29,9 +29,9 @@ export const tenantSchema = z.object({
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
     createdAt: z.any().optional(),
-    nextOfKinName: z.string().optional(),
-    nextOfKinPhone: z.string().optional(),
-    nextOfKinRelationship: z.string().optional(),
+    nextOfKinName: z.string().optional().or(z.literal('')),
+    nextOfKinPhone: z.string().optional().or(z.literal('')),
+    nextOfKinRelationship: z.string().optional().or(z.literal('')),
 });
 
 export const assignmentSchema = z.object({
@@ -92,4 +92,15 @@ export const createMaintenanceRequestSchema = maintenanceRequestSchema.extend({
 export const announcementSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters long.'),
     content: z.string().min(10, 'Content must be at least 10 characters long.'),
+});
+
+export const complaintSchema = z.object({
+    subject: z.string().min(5, 'Subject is required and must be at least 5 characters.'),
+    description: z.string().min(10, 'Please provide a detailed description of the complaint.'),
+});
+
+export const createComplaintSchema = complaintSchema.extend({
+    tenantId: z.string(),
+    rentalId: z.string(),
+    roomId: z.string(),
 });

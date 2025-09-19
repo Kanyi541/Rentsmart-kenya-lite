@@ -2,7 +2,7 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User, Wrench, Megaphone } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User, Wrench, Megaphone, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,11 +20,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/payments', label: 'Payments', icon: CreditCard },
         { href: '/reports', label: 'Reports', icon: FileText },
         { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+        { href: '/admin/complaints', label: 'Complaints', icon: ShieldAlert },
     ];
 
     const clientMenuItems = [
         { href: '/clients', label: 'My Dashboard', icon: User },
         { href: '/clients/maintenance', label: 'Maintenance', icon: Wrench },
+        { href: '/clients/complaints', label: 'Complaints', icon: ShieldAlert },
     ];
 
     const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;

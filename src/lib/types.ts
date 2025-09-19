@@ -1,6 +1,6 @@
 
 import { type z } from 'zod';
-import { type rentalSchema, type roomSchema, type tenantSchema, type assignmentSchema, type paymentSchema, type maintenanceRequestSchema, type announcementSchema } from './schemas';
+import { type rentalSchema, type roomSchema, type tenantSchema, type assignmentSchema, type paymentSchema, type maintenanceRequestSchema, type announcementSchema, type complaintSchema } from './schemas';
 
 export type Room = z.infer<typeof roomSchema> & { id: string };
 export type Rental = z.infer<typeof rentalSchema> & { id: string, rooms: Room[] };
@@ -52,3 +52,15 @@ export type Announcement = z.infer<typeof announcementSchema> & {
     id: string;
     createdAt: any;
 };
+
+export type Complaint = z.infer<typeof complaintSchema> & {
+    id: string;
+    createdAt: any;
+    status: 'New' | 'Investigating' | 'Resolved';
+    tenantId: string;
+    rentalId: string;
+    roomId: string;
+    tenantName?: string;
+    rentalName?: string;
+    roomNumber?: string;
+}
