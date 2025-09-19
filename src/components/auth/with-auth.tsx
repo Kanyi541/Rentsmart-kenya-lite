@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useAuth } from '@/hooks/use-auth';
@@ -6,11 +7,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
 
-const adminPaths = ['/', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
+const adminPaths = ['/admin', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
 const clientPaths = ['/clients'];
 
 // Define paths that don't require authentication
-const publicPaths = ['/admin/login', '/clients/login', '/clients/register', '/clients/forgot-password'];
+const publicPaths = ['/', '/admin/login', '/clients/login', '/clients/register', '/clients/forgot-password'];
 
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
@@ -23,19 +24,19 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
         return; // Wait until authentication status is determined
       }
 
-      const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/clients/forgot-password');
+      const isPublicPath = publicPaths.includes(pathname);
 
       if (!user) {
         // If user is not logged in and not on a public page, redirect to login.
         if (!isPublicPath) {
            // Heuristic to redirect to the most likely login page
-           if (adminPaths.some(p => pathname.startsWith(p) && p !== '/')) {
+           if (adminPaths.some(p => pathname.startsWith(p))) {
              router.replace('/admin/login');
            } else if (clientPaths.some(p => pathname.startsWith(p))) {
              router.replace('/clients/login');
-           } else if (pathname === '/') {
-             // If they land on the root, they're likely an admin
-             router.replace('/admin/login');
+           } else {
+             // Default redirect for any other protected routes.
+             router.replace('/clients/login');
            }
         }
         return;
@@ -43,15 +44,16 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       
       // If user is logged in, handle role-based access and redirection from public pages
       if (userRole === 'admin') {
-        // If an admin lands on a client or public path, redirect to admin home.
-        if (clientPaths.some(p => pathname.startsWith(p)) || isPublicPath) {
-          router.replace('/');
+        // If an admin lands on a client or public auth path, redirect to admin home.
+        const isClientPath = clientPaths.some(p => pathname.startsWith(p));
+        const isPublicAuthPath = pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/admin/login');
+        if (isClientPath || isPublicAuthPath) {
+          router.replace('/admin/dashboard');
         }
       } else if (userRole === 'client') {
-        // If a client lands on an admin or public path, redirect to client home.
-        // Check if current path is an admin path (and not just the root '/')
-        const isAdminPath = adminPaths.includes(pathname);
-        if (isAdminPath || isPublicPath) {
+        // If a client lands on an admin or public auth path, redirect to client home.
+        const isAdminPath = adminPaths.some(p => pathname.startsWith(p));
+         if (isAdminPath || publicPaths.includes(pathname) && pathname !== '/') {
           router.replace('/clients');
         }
       }
@@ -59,6 +61,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     }, [user, loading, router, pathname, userRole]);
 
     // Show loading spinner for protected pages while auth state is resolving
+    const isPublicAuthPage = pathname.startsWith('/admin/login') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register');
     if (loading && !publicPaths.includes(pathname)) {
       return (
         <div className="flex min-h-screen items-center justify-center">

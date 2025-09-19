@@ -14,7 +14,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const { userRole, logout } = useAuth();
 
     const adminMenuItems = [
-        { href: '/', label: 'Dashboard', icon: Home },
+        { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
         { href: '/rentals', label: 'Rentals', icon: Building },
         { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
@@ -33,7 +33,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     ];
 
     const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;
-    const homeRoute = userRole === 'admin' ? '/' : '/clients';
+    const homeRoute = userRole === 'admin' ? '/admin/dashboard' : '/clients';
 
 
     return (
@@ -53,7 +53,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             <SidebarMenuItem key={item.label}>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)}
+                                    isActive={pathname.startsWith(item.href)}
                                     >
                                     <Link href={item.href}>
                                         <item.icon />

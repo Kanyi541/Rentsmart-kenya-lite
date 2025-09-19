@@ -1,322 +1,157 @@
 
-'use client'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { CheckCircle, Home, Menu } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
 
-import { AppLayout } from '@/components/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import withAuth from '@/components/auth/with-auth';
-import { useEffect, useState, useMemo } from 'react';
-import { getDashboardStats, getStatsForRental } from '@/lib/api/dashboard';
-import { getRentals } from '@/lib/api/rentals';
-import type { Rental } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getOccupancyDetailsForRental, type OccupancyDetails } from '@/lib/api/occupancy';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
-
-interface DashboardStats {
-    totalRentals: number;
-    totalTenants: number;
-    totalRooms: number;
-    occupiedRooms: number;
-}
-
-interface RentalStats {
-    tenantCount: number;
-    occupiedRooms: number;
-    totalRooms: number;
-}
-
-const ROOMS_PER_PAGE = 5;
-
-function Home() {
-  const [globalStats, setGlobalStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
-  const [rentals, setRentals] = useState<Rental[]>([]);
-  const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
-  const [rentalStats, setRentalStats] = useState<RentalStats | null>(null);
-  const [occupancyDetails, setOccupancyDetails] = useState<OccupancyDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
-
-
-  useEffect(() => {
-    async function fetchInitialData() {
-        setLoading(true);
-        try {
-            const [dashboardStats, fetchedRentals] = await Promise.all([
-                getDashboardStats(),
-                getRentals()
-            ]);
-            setGlobalStats(dashboardStats);
-            setRentals(fetchedRentals);
-            // We are no longer selecting the first rental by default
-        } catch (error) {
-            console.error("Failed to fetch initial data", error);
-            // Handle error with a toast or message
-        } finally {
-            setLoading(false);
-        }
-    }
-    fetchInitialData();
-  }, []);
-
-  useEffect(() => {
-      async function fetchRentalDetails() {
-          if (!selectedRentalId) {
-            setRentalStats(null);
-            setOccupancyDetails([]);
-            return;
-          };
-          setRentalDetailsLoading(true);
-          setCurrentPage(1); // Reset to first page on new selection
-          try {
-              const [stats, details] = await Promise.all([
-                getStatsForRental(selectedRentalId),
-                getOccupancyDetailsForRental(selectedRentalId)
-              ]);
-              setRentalStats(stats);
-              setOccupancyDetails(details);
-          } catch (error) {
-              console.error(`Failed to fetch details for rental ${selectedRentalId}`, error);
-              setRentalStats(null);
-              setOccupancyDetails([]);
-          } finally {
-              setRentalDetailsLoading(false);
-          }
-      }
-      fetchRentalDetails();
-  }, [selectedRentalId]);
-
-  const filteredOccupancyDetails = useMemo(() => {
-    if (!searchQuery) {
-        return occupancyDetails;
-    }
-    return occupancyDetails.filter(room => 
-        room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        room.tenantName?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [occupancyDetails, searchQuery]);
-
-  const paginatedRooms = useMemo(() => {
-    const startIndex = (currentPage - 1) * ROOMS_PER_PAGE;
-    return filteredOccupancyDetails.slice(startIndex, startIndex + ROOMS_PER_PAGE);
-  }, [filteredOccupancyDetails, currentPage]);
-
-  const totalPages = Math.ceil(filteredOccupancyDetails.length / ROOMS_PER_PAGE);
-
-  const selectedRental = rentals.find(r => r.id === selectedRentalId);
-
-  const getStatusVariant = (isOccupied: boolean) => {
-    return isOccupied ? 'default' : 'secondary';
-  }
-
-
+export default function LandingPage() {
   return (
-    <AppLayout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                <p className="text-muted-foreground">Welcome to your RentSmart dashboard.</p>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-                <Button asChild className="flex-1 sm:flex-initial">
-                    <Link href="/rentals">
-                        <PlusCircle className="mr-2" />
-                        Add Rental
-                    </Link>
+    <div className="flex min-h-[100dvh] flex-col">
+      <header className="px-4 lg:px-6 h-14 flex items-center bg-background sticky top-0 z-50 border-b">
+        <Link href="#" className="flex items-center justify-center" prefetch={false}>
+          <Home className="h-6 w-6 text-primary" />
+          <span className="sr-only">RentSmart Kenya Lite</span>
+        </Link>
+        <nav className="ml-auto hidden lg:flex gap-4 sm:gap-6">
+          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Features
+          </Link>
+          <Link href="/clients/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Tenant Login
+          </Link>
+          <Link href="/admin/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Admin Login
+          </Link>
+        </nav>
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="ml-auto lg:hidden">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle navigation menu</span>
                 </Button>
-                <Button asChild variant="outline" className="flex-1 sm:flex-initial">
-                     <Link href="/tenants">
-                        <PlusCircle className="mr-2" />
-                        Add Tenant
+            </SheetTrigger>
+            <SheetContent side="right">
+                <nav className="grid gap-6 text-lg font-medium">
+                    <Link href="#" className="flex items-center gap-2 text-lg font-semibold" prefetch={false}>
+                        <Home className="h-6 w-6 text-primary" />
+                        <span>RentSmart</span>
                     </Link>
-                </Button>
-            </div>
-        </div>
-
-        {/* Global Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-            <Link href="/rentals">
-                <Card className="hover:bg-muted/50 transition-colors">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Rentals</CardTitle>
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalRentals}</div>}
-                        <p className="text-xs text-muted-foreground">properties being managed</p>
-                    </CardContent>
-                </Card>
-            </Link>
-            <Link href="/tenants">
-                <Card className="hover:bg-muted/50 transition-colors">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalTenants}</div>}
-                        <p className="text-xs text-muted-foreground">tenants registered across all rentals</p>
-                    </CardContent>
-                </Card>
-            </Link>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Overall Occupancy</CardTitle>
-                    <BedDouble className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                     {loading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{globalStats.occupiedRooms} / {globalStats.totalRooms}</div>}
-                     <p className="text-xs text-muted-foreground">rooms currently occupied</p>
-                </CardContent>
-            </Card>
-            <Card>
-                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Next Payment Due</CardTitle>
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">---</div>
-                    <p className="text-xs text-muted-foreground">coming soon</p>
-                </CardContent>
-            </Card>
-        </div>
-
-        <div className="border-t pt-8">
-             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Property-Specific Details</h2>
-                    <p className="text-muted-foreground">Select a property to view its occupancy and payment details.</p>
+                    <Link href="#features" className="hover:text-primary" prefetch={false}>Features</Link>
+                    <Link href="/clients/login" className="hover:text-primary" prefetch={false}>Tenant Login</Link>
+                    <Link href="/admin/login" className="hover:text-primary" prefetch={false}>Admin Login</Link>
+                </nav>
+            </SheetContent>
+        </Sheet>
+      </header>
+      <main className="flex-1">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-muted/20">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                    Modern Rental Management, Simplified.
+                  </h1>
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                    RentSmart Kenya Lite is an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
+                  </p>
                 </div>
-                 <div className="w-full sm:w-64">
-                    {loading ? <Skeleton className="h-10 w-full" /> : (
-                        <Select onValueChange={setSelectedRentalId} value={selectedRentalId || ''}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a Rental" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {rentals.map(rental => (
-                                    <SelectItem key={rental.id} value={rental.id}>{rental.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                 </div>
+                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                  <Button asChild size="lg">
+                    <Link href="/clients/register" prefetch={false}>
+                      Get Started as a Tenant
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+               <Image
+                src="https://picsum.photos/seed/1/600/400"
+                width="600"
+                height="400"
+                alt="Hero"
+                data-ai-hint="apartment building"
+                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
+              />
             </div>
-
-            {selectedRentalId && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
-                        <CardDescription>
-                            {rentalDetailsLoading ? 'Loading details...' : `Showing ${paginatedRooms.length} of ${filteredOccupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="mb-4">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="search"
-                                    placeholder="Search by room number or tenant name..."
-                                    className="w-full rounded-lg bg-background pl-8"
-                                    value={searchQuery}
-                                    onChange={(e) => {
-                                        setSearchQuery(e.target.value);
-                                        setCurrentPage(1); // Reset page on new search
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Room No.</TableHead>
-                                    <TableHead>Room Type</TableHead>
-                                    <TableHead>Tenant Name</TableHead>
-                                    <TableHead>Next Payment Due</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {rentalDetailsLoading ? (
-                                    Array.from({ length: ROOMS_PER_PAGE }).map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                            <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : paginatedRooms.length === 0 ? (
-                                    <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
-                                ) : (
-                                    paginatedRooms.map(room => (
-                                        <TableRow key={room.id}>
-                                            <TableCell className="font-medium">{room.roomNumber}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{room.roomType}</Badge>
-                                            </TableCell>
-                                            <TableCell>{room.tenantName || '---'}</TableCell>
-                                            <TableCell>
-                                                {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant={getStatusVariant(room.isOccupied)}>
-                                                    {room.isOccupied ? 'Occupied' : 'Vacant'}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                    {totalPages > 1 && (
-                        <CardFooter>
-                            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-                                <div>
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardFooter>
-                    )}
-                </Card>
-            )}
-        </div>
-
-      </div>
-    </AppLayout>
-  );
+          </div>
+        </section>
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Key Features</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need to Manage Your Rentals</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  From tenant onboarding to maintenance requests, our platform handles it all, saving you time and effort.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:max-w-none lg:grid-cols-3 pt-12">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Tenant Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>Easily register and manage tenant information, track assignments, and handle move-in/move-out processes digitally.</CardDescription>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> AI-Powered Pricing</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>Leverage AI to get competitive rental price suggestions for your properties based on location and type.</CardDescription>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Centralized Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>Post announcements, manage complaints, and handle maintenance requests through a centralized system.</CardDescription>
+                </CardContent>
+              </Card>
+               <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Online Payments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>Simulated payment processing for rent and deposits to streamline the tenant onboarding process.</CardDescription>
+                </CardContent>
+              </Card>
+               <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Occupancy Tracking</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>Get a real-time overview of your property occupancy, with detailed views for each rental unit.</CardDescription>
+                </CardContent>
+              </Card>
+               <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="text-primary" /> Tenant Portal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>A dedicated dashboard for tenants to view their details, make requests, and see announcements.</CardDescription>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-muted-foreground">&copy; 2024 RentSmart Kenya Lite. All rights reserved.</p>
+        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Terms of Service
+          </Link>
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Privacy
+          </Link>
+        </nav>
+      </footer>
+    </div>
+  )
 }
-
-export default withAuth(Home);
