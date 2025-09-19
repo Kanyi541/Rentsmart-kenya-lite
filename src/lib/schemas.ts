@@ -89,3 +89,7 @@ export const createMaintenanceRequestSchema = maintenanceRequestSchema.extend({
     // photoUrl: z.string().optional(), // Will be handled in the action
 });
 
+export const announcementSchema = z.object({
+    title: z.string().min(5, 'Title must be at least 5 characters long.'),
+    content: z.string().min(10, 'Content must be at least 10 characters long.'),
+});

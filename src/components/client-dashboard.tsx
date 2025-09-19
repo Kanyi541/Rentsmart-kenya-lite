@@ -4,10 +4,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { getTenantById, updateTenant } from '@/lib/api/tenants';
-import type { Tenant } from '@/lib/types';
+import type { Tenant, Announcement } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck, Pencil, Wrench } from 'lucide-react';
+import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck, Pencil, Wrench, Megaphone } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
@@ -17,20 +17,26 @@ import { EditTenantForm } from './edit-tenant-form';
 import { useToast } from '@/hooks/use-toast';
 import { updateTenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
+import { getAnnouncements } from '@/lib/api/announcements';
 
 export function ClientDashboard() {
     const { user } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const { toast } = useToast();
 
-    async function fetchTenantData() {
+    async function fetchDashboardData() {
         if (!user) return;
         try {
             setLoading(true);
-            const tenantData = await getTenantById(user.uid);
+            const [tenantData, announcementsData] = await Promise.all([
+                getTenantById(user.uid),
+                getAnnouncements()
+            ]);
             setTenant(tenantData);
+            setAnnouncements(announcementsData);
         } catch (error) {
             console.error("Failed to fetch tenant data", error);
         } finally {
@@ -39,7 +45,7 @@ export function ClientDashboard() {
     }
 
     useEffect(() => {
-        fetchTenantData();
+        fetchDashboardData();
     }, [user]);
 
     const handleUpdateTenant = async (data: z.infer<typeof updateTenantSchema>) => {
@@ -51,7 +57,7 @@ export function ClientDashboard() {
                 description: 'Your personal information has been successfully updated.'
             });
             setIsEditDialogOpen(false);
-            await fetchTenantData(); // Re-fetch data to show the update
+            await fetchDashboardData(); // Re-fetch data to show the update
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -85,6 +91,22 @@ export function ClientDashboard() {
                 <h1 className="text-3xl font-bold tracking-tight">Welcome, {tenant.firstName}!</h1>
                 <p className="text-muted-foreground">Here is a summary of your tenancy details and payments.</p>
             </div>
+
+            {announcements.length > 0 && (
+                 <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/50 dark:border-blue-800">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
+                            <Megaphone />
+                            Latest Announcement
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <h3 className="font-semibold mb-1">{announcements[0].title}</h3>
+                        <p className="text-sm text-blue-800/80 dark:text-blue-300/80">{announcements[0].content}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{format(new Date(announcements[0].createdAt), 'PPP')}</p>
+                    </CardContent>
+                </Card>
+            )}
             
             <div className="grid gap-6 lg:grid-cols-3">
                  <div className="lg:col-span-2 space-y-6">

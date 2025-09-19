@@ -6,7 +6,8 @@ import { addRental as dbAddRental } from '@/lib/api/rentals';
 import { assignRoomToTenant as dbAssignRoom } from '@/lib/api/assignments';
 import { createPayment, updatePaymentStatus } from '@/lib/api/payments';
 import { createMaintenanceRequest as dbCreateMaintenanceRequest } from '@/lib/api/maintenance';
-import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema } from '@/lib/schemas';
+import { createAnnouncement as dbCreateAnnouncement, deleteAnnouncement as dbDeleteAnnouncement } from '@/lib/api/announcements';
+import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -151,5 +152,31 @@ export async function createMaintenanceRequest(data: unknown) {
     } catch (error: any) {
         console.error('Database error in createMaintenanceRequest action:', error);
         return { error: 'Database error: Failed to submit maintenance request.' };
+    }
+}
+
+export async function createAnnouncement(data: unknown) {
+    const parsedData = announcementSchema.safeParse(data);
+    if (!parsedData.success) {
+        return { error: 'Invalid announcement data.' };
+    }
+    try {
+        await dbCreateAnnouncement(parsedData.data);
+        revalidatePath('/admin/announcements');
+        revalidatePath('/clients');
+        return { success: true };
+    } catch (error) {
+        return { error: 'Failed to create announcement.' };
+    }
+}
+
+export async function deleteAnnouncement(id: string) {
+    try {
+        await dbDeleteAnnouncement(id);
+        revalidatePath('/admin/announcements');
+        revalidatePath('/clients');
+        return { success: true };
+    } catch (error) {
+        return { error: 'Failed to delete announcement.' };
     }
 }
