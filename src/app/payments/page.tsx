@@ -1,19 +1,27 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Payment } from '@/lib/types';
 import { getPayments } from '@/lib/api/payments';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const PAYMENTS_PER_PAGE = 5;
 
 export default function PaymentsPage() {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -35,6 +43,25 @@ export default function PaymentsPage() {
         }
         fetchData();
     }, [toast]);
+
+    const filteredPayments = useMemo(() => {
+        if (!searchQuery) {
+            return payments;
+        }
+        return payments.filter(p =>
+            p.tenant?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.tenant?.secondName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.rental?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.room?.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [payments, searchQuery]);
+
+    const paginatedPayments = useMemo(() => {
+        const startIndex = (currentPage - 1) * PAYMENTS_PER_PAGE;
+        return filteredPayments.slice(startIndex, startIndex + PAYMENTS_PER_PAGE);
+    }, [filteredPayments, currentPage]);
+
+    const totalPages = Math.ceil(filteredPayments.length / PAYMENTS_PER_PAGE);
     
     const getStatusVariant = (status: string) => {
         switch (status) {
@@ -61,9 +88,24 @@ export default function PaymentsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Payment History</CardTitle>
-                        <CardDescription>View all payment transactions.</CardDescription>
+                        <CardDescription>View and manage all payment transactions.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                         <div className="mb-4">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search by tenant, rental, or room..."
+                                    className="w-full rounded-lg bg-background pl-8"
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1); // Reset page on new search
+                                    }}
+                                />
+                            </div>
+                        </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -77,11 +119,20 @@ export default function PaymentsPage() {
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
-                                    <TableRow><TableCell colSpan={6} className="text-center">Loading payments...</TableCell></TableRow>
-                                ) : payments.length === 0 ? (
-                                    <TableRow><TableCell colSpan={6} className="text-center">No payment history found.</TableCell></TableRow>
+                                    Array.from({length: PAYMENTS_PER_PAGE}).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
+                                            <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : paginatedPayments.length === 0 ? (
+                                    <TableRow><TableCell colSpan={6} className="text-center h-24">{searchQuery ? 'No matching payments found.' : 'No payment history found.'}</TableCell></TableRow>
                                 ) : (
-                                    payments.map(payment => (
+                                    paginatedPayments.map(payment => (
                                         <TableRow key={payment.id}>
                                             <TableCell className="font-medium">
                                                 {formatDate(payment.createdAt)}
@@ -92,7 +143,11 @@ export default function PaymentsPage() {
                                             <TableCell>
                                                 {payment.rental?.name || 'N/A'} - {payment.room?.roomNumber || 'N/A'}
                                             </TableCell>
-                                            <TableCell>{payment.type}</TableCell>
+                                             <TableCell>
+                                                <Badge variant={payment.type === 'Deposit' ? 'secondary' : 'outline'}>
+                                                    {payment.type}
+                                                </Badge>
+                                             </TableCell>
                                             <TableCell className="text-right">{payment.amount.toLocaleString()}</TableCell>
                                             <TableCell className="text-center">
                                                 <Badge variant={getStatusVariant(payment.status)}>{payment.status}</Badge>
@@ -103,6 +158,33 @@ export default function PaymentsPage() {
                             </TableBody>
                         </Table>
                     </CardContent>
+                    {totalPages > 1 && (
+                        <CardFooter>
+                            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+                                <div>
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             </div>
         </AppLayout>
