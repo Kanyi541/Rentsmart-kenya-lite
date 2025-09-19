@@ -14,7 +14,14 @@ export async function getTenants(): Promise<Tenant[]> {
     const tenantsCol = collection(db, 'tenants');
     const tenantsQuery = query(tenantsCol, orderBy('createdAt', 'desc'));
     const tenantSnapshot = await getDocs(tenantsQuery);
-    const tenants = tenantSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tenant));
+    const tenants = tenantSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data,
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || null,
+        } as Tenant;
+    });
 
     // Get all assignments
     const assignmentsCol = collection(db, 'assignments');
@@ -93,7 +100,12 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
         return null;
     }
 
-    const tenant = { id: tenantSnap.id, ...tenantSnap.data() } as Tenant;
+    const tenantData = tenantSnap.data();
+    const tenant = { 
+        id: tenantSnap.id, 
+        ...tenantData,
+        createdAt: (tenantData.createdAt as Timestamp)?.toDate().toISOString() || null
+    } as Tenant;
 
     // Check for assignment
     const assignmentsCol = collection(db, 'assignments');
