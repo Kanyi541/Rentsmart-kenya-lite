@@ -80,6 +80,11 @@ export default function LandingPage() {
                                 Get Started As a Tenant
                             </Link>
                         </Button>
+                         <Button asChild size="lg" variant="secondary">
+                            <Link href="/demo" prefetch={false}>
+                                View Demo
+                            </Link>
+                        </Button>
                         <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
                             <Button asChild size="lg" variant="secondary">
                                 <Link href="/clients/login" prefetch={false}>
