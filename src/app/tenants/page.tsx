@@ -31,7 +31,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, BedDouble } from 'lucide-react';
+import { PlusCircle, BedDouble, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addTenant } from '@/app/actions';
@@ -256,17 +256,20 @@ export default function TenantsPage() {
                     </Dialog>
                 </div>
 
-                <Accordion type="multiple" className="grid gap-4 md:gap-8 lg:grid-cols-2 lg:items-start">
+                <Accordion type="multiple" defaultValue={['assigned-tenants', 'unassigned-tenants']} className="grid gap-4 md:gap-8 lg:grid-cols-2 lg:items-start">
                     <AccordionItem value="assigned-tenants" className="border-0">
-                        <Card>
-                            <AccordionTrigger className="hover:no-underline">
-                                <CardHeader className="w-full text-left p-6">
-                                    <CardTitle>Assigned Tenants</CardTitle>
-                                    <CardDescription>Tenants who are currently occupying a room.</CardDescription>
+                         <Card>
+                            <AccordionTrigger className="w-full p-0 hover:no-underline">
+                                <CardHeader className="flex flex-row items-center justify-between w-full p-6">
+                                    <div>
+                                        <CardTitle>Assigned Tenants</CardTitle>
+                                        <CardDescription>Tenants who are currently occupying a room.</CardDescription>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                 </CardHeader>
                             </AccordionTrigger>
                             <AccordionContent>
-                                <CardContent>
+                                <CardContent className="pt-0">
                                    <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -304,15 +307,18 @@ export default function TenantsPage() {
                     </AccordionItem>
 
                     <AccordionItem value="unassigned-tenants" className="border-0">
-                        <Card>
-                             <AccordionTrigger className="hover:no-underline">
-                                <CardHeader className="w-full text-left p-6">
-                                    <CardTitle>Unassigned Tenants</CardTitle>
-                                    <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
+                       <Card>
+                             <AccordionTrigger className="w-full p-0 hover:no-underline">
+                                <CardHeader className="flex flex-row items-center justify-between w-full p-6">
+                                    <div>
+                                        <CardTitle>Unassigned Tenants</CardTitle>
+                                        <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                 </CardHeader>
                             </AccordionTrigger>
                             <AccordionContent>
-                                <CardContent>
+                                <CardContent className="pt-0">
                                    <Table>
                                         <TableHeader>
                                             <TableRow>
