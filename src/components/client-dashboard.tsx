@@ -201,10 +201,10 @@ export function ClientDashboard() {
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-muted/50">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Next Payment Due:</p>
-                                        <p className="text-2xl font-bold flex items-center gap-2">
+                                        <div className="text-2xl font-bold flex items-center gap-2">
                                             {format(new Date(tenant.nextPaymentDue), 'PPP')}
                                             {isPaymentDue && <Badge variant="destructive">Overdue</Badge>}
-                                        </p>
+                                        </div>
                                     </div>
                                      <Button asChild size="lg">
                                         <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}`}>
@@ -346,3 +346,5 @@ function DashboardSkeleton() {
         </div>
     )
 }
+
+    
