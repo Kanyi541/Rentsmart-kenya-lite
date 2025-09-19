@@ -101,108 +101,108 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Simple, Transparent Pricing</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Straightforward Pricing for Your Success</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Choose the plan that works best for you
+                  Select a plan that scales with your property management needs. No hidden fees.
                 </p>
               </div>
             </div>
             <div className="mx-auto grid max-w-sm items-start gap-8 pt-12 sm:max-w-4xl sm:grid-cols-2 md:gap-12 lg:max-w-5xl lg:grid-cols-3">
               <Card>
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl">Basic</CardTitle>
+                  <CardTitle className="text-2xl">Starter</CardTitle>
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold">Ksh 2,999</span>
                     <span className="text-sm text-muted-foreground">/month</span>
                   </div>
-                  <CardDescription>Perfect for small property managers</CardDescription>
+                  <CardDescription>The essential toolkit for managing your first few properties with ease.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Property Management
+                      Core Property Tools
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Tenant Management
+                      Tenant Database
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Basic Reporting
+                      Standard Reports
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Get Started</Button>
+                    <Button className="w-full">Choose Plan</Button>
                 </CardFooter>
               </Card>
 
               <Card className="border-primary shadow-lg">
                  <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl">Professional</CardTitle>
+                  <CardTitle className="text-2xl">Growth</CardTitle>
                    <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold">Ksh 4,999</span>
                     <span className="text-sm text-muted-foreground">/month</span>
                   </div>
-                  <CardDescription>For growing property management businesses</CardDescription>
+                  <CardDescription>Advanced features for professionals scaling their rental portfolio.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2 font-medium text-foreground">
                       <Check className="h-4 w-4 text-primary" />
-                      Everything in Basic
+                      All Starter Features
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Advanced Reporting
+                      In-Depth Analytics
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Email Notifications
+                      Automated Email Alerts
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Document Storage
+                      Secure Document Hosting
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Get Started</Button>
+                    <Button className="w-full">Choose Plan</Button>
                 </CardFooter>
               </Card>
 
               <Card>
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl">Enterprise</CardTitle>
+                  <CardTitle className="text-2xl">Scale</CardTitle>
                    <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold">Ksh 9,999</span>
                     <span className="text-sm text-muted-foreground">/month</span>
                   </div>
-                  <CardDescription>Complete solution for large property managers</CardDescription>
+                  <CardDescription>The ultimate solution for large-scale property operations and agencies.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2 font-medium text-foreground">
                       <Check className="h-4 w-4 text-primary" />
-                      Everything in Professional
+                      All Growth Features
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      API Access
+                      Full API Access
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Priority Support
+                      Dedicated Support
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Custom Branding
+                      White-Label Options
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Get Started</Button>
+                    <Button className="w-full">Choose Plan</Button>
                 </CardFooter>
               </Card>
             </div>
