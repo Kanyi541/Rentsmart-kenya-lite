@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 interface DashboardStats {
     totalRentals: number;
@@ -44,6 +45,7 @@ function Home() {
   const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
 
 
   useEffect(() => {
@@ -174,14 +176,14 @@ function Home() {
                      <p className="text-xs text-muted-foreground">rooms currently occupied</p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="hover:bg-muted/50 cursor-pointer" onClick={() => router.push('/tenants')}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Next Payment Due</CardTitle>
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">View All Tenants</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    {rentalDetailsLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">-</div>}
-                    <p className="text-xs text-muted-foreground">coming soon</p>
+                    <div className="text-2xl font-bold">&rarr;</div>
+                    <p className="text-xs text-muted-foreground">Click to see all tenants</p>
                 </CardContent>
             </Card>
         </div>
