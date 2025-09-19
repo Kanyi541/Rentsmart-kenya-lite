@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,51 +24,42 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, BedDouble, ChevronDown } from 'lucide-react';
+import { PlusCircle, BedDouble } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addTenant } from '@/app/actions';
 import { getTenants } from '@/lib/api/tenants';
 import Link from 'next/link';
-import { format } from 'date-fns';
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
-
 
 export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
 
     async function fetchTenants() {
-        const fetchedTenants = await getTenants();
-        setTenants(fetchedTenants);
+        setLoading(true);
+        try {
+            const fetchedTenants = await getTenants();
+            setTenants(fetchedTenants);
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Failed to load tenant data."
+            })
+        } finally {
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
         fetchTenants();
     }, []);
-
-    const { assignedTenants, unassignedTenants } = useMemo(() => {
-        const assigned: Tenant[] = [];
-        const unassigned: Tenant[] = [];
-        tenants.forEach(tenant => {
-            if (tenant.rentalName) {
-                assigned.push(tenant);
-            } else {
-                unassigned.push(tenant);
-            }
-        });
-        return { assignedTenants: assigned, unassignedTenants: unassigned };
-    }, [tenants]);
 
     const form = useForm<TenantFormValues>({
         resolver: zodResolver(tenantSchema),
@@ -98,7 +89,7 @@ export default function TenantsPage() {
             form.reset();
             setIsDialogOpen(false);
             await fetchTenants();
-            router.refresh(); // reloads server components
+            router.refresh();
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -255,107 +246,65 @@ export default function TenantsPage() {
                         </DialogContent>
                     </Dialog>
                 </div>
-
-                <Accordion type="multiple" defaultValue={['assigned-tenants', 'unassigned-tenants']} className="w-full space-y-4">
-                    <AccordionItem value="assigned-tenants" className="border-0">
-                         <Card>
-                            <AccordionTrigger className="w-full p-0 hover:no-underline">
-                                <CardHeader className="flex flex-row items-center justify-between w-full p-6">
-                                    <div>
-                                        <CardTitle>Assigned Tenants</CardTitle>
-                                        <CardDescription>Tenants who are currently occupying a room.</CardDescription>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-                                </CardHeader>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <CardContent className="pt-0">
-                                   <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Full Name</TableHead>
-                                                <TableHead>Assigned Property</TableHead>
-                                                <TableHead>Room & Rent</TableHead>
-                                                <TableHead>Next Payment Due</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {assignedTenants.length === 0 ? (
-                                                <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants have been assigned rooms yet.</TableCell></TableRow>
-                                             ) : (
-                                                assignedTenants.map(tenant => (
-                                                    <TableRow key={tenant.id}>
-                                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                                        <TableCell>{tenant.rentalName}</TableCell>
-                                                        <TableCell>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium">{tenant.roomNumber}</span>
-                                                                <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {tenant.nextPaymentDue ? format(new Date(tenant.nextPaymentDue), 'PPP') : '---'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            )}
-                                        </TableBody>
-                                   </Table>
-                                </CardContent>
-                            </AccordionContent>
-                        </Card>
-                    </AccordionItem>
-
-                    <AccordionItem value="unassigned-tenants" className="border-0">
-                       <Card>
-                             <AccordionTrigger className="w-full p-0 hover:no-underline">
-                                <CardHeader className="flex flex-row items-center justify-between w-full p-6">
-                                    <div>
-                                        <CardTitle>Unassigned Tenants</CardTitle>
-                                        <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-                                </CardHeader>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <CardContent className="pt-0">
-                                   <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Full Name</TableHead>
-                                                <TableHead>Phone</TableHead>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead className="text-right">Actions</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                             {unassignedTenants.length === 0 ? (
-                                                <TableRow><TableCell colSpan={4} className="text-center h-24">All tenants are assigned to rooms.</TableCell></TableRow>
-                                             ) : (
-                                                unassignedTenants.map(tenant => (
-                                                    <TableRow key={tenant.id}>
-                                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                                        <TableCell>{tenant.phone}</TableCell>
-                                                        <TableCell>{tenant.email}</TableCell>
-                                                        <TableCell className="text-right">
-                                                            <Button asChild variant="outline" size="sm">
-                                                                <Link href="/assignments">
-                                                                    <BedDouble className="mr-2 h-4 w-4" />
-                                                                    Assign a Room
-                                                                </Link>
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                             )}
-                                        </TableBody>
-                                   </Table>
-                                </CardContent>
-                            </AccordionContent>
-                        </Card>
-                    </AccordionItem>
-                </Accordion>
+                <Card>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Full Name</TableHead>
+                                    <TableHead>Contact</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions / Details</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow><TableCell colSpan={4} className="text-center h-24">Loading tenants...</TableCell></TableRow>
+                                ) : tenants.length === 0 ? (
+                                    <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants registered yet.</TableCell></TableRow>
+                                ) : (
+                                    tenants.map(tenant => (
+                                        <TableRow key={tenant.id}>
+                                            <TableCell className="font-medium">
+                                                {`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span>{tenant.phone}</span>
+                                                    <span className="text-xs text-muted-foreground">{tenant.email}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {tenant.rentalName ? (
+                                                    <Badge variant="default">Assigned</Badge>
+                                                ) : (
+                                                    <Badge variant="secondary">Unassigned</Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {tenant.rentalName ? (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="font-semibold">{tenant.rentalName}</span>
+                                                        <span className="text-sm text-muted-foreground">Room: {tenant.roomNumber}</span>
+                                                    </div>
+                                                ) : (
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <Link href="/assignments">
+                                                            <BedDouble className="mr-2 h-4 w-4" />
+                                                            Assign a Room
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
              </div>
         </AppLayout>
     );
 }
+
