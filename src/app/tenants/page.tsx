@@ -24,6 +24,12 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, BedDouble } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -250,91 +256,100 @@ export default function TenantsPage() {
                     </Dialog>
                 </div>
 
-                <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Assigned Tenants</CardTitle>
-                            <CardDescription>Tenants who are currently occupying a room.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                           <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Full Name</TableHead>
-                                        <TableHead>Assigned Property</TableHead>
-                                        <TableHead>Room & Rent</TableHead>
-                                        <TableHead>Next Payment Due</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {assignedTenants.length === 0 ? (
-                                        <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants have been assigned rooms yet.</TableCell></TableRow>
-                                     ) : (
-                                        assignedTenants.map(tenant => (
-                                            <TableRow key={tenant.id}>
-                                                <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                                <TableCell>{tenant.rentalName}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium">{tenant.roomNumber}</span>
-                                                        <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {tenant.nextPaymentDue ? format(new Date(tenant.nextPaymentDue), 'PPP') : '---'}
-                                                </TableCell>
+                <Accordion type="multiple" className="grid gap-4 md:gap-8 lg:grid-cols-2 lg:items-start">
+                    <AccordionItem value="assigned-tenants" className="border-0">
+                        <Card>
+                            <AccordionTrigger className="hover:no-underline">
+                                <CardHeader className="w-full text-left p-6">
+                                    <CardTitle>Assigned Tenants</CardTitle>
+                                    <CardDescription>Tenants who are currently occupying a room.</CardDescription>
+                                </CardHeader>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <CardContent>
+                                   <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Full Name</TableHead>
+                                                <TableHead>Assigned Property</TableHead>
+                                                <TableHead>Room & Rent</TableHead>
+                                                <TableHead>Next Payment Due</TableHead>
                                             </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                           </Table>
-                        </CardContent>
-                    </Card>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {assignedTenants.length === 0 ? (
+                                                <TableRow><TableCell colSpan={4} className="text-center h-24">No tenants have been assigned rooms yet.</TableCell></TableRow>
+                                             ) : (
+                                                assignedTenants.map(tenant => (
+                                                    <TableRow key={tenant.id}>
+                                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
+                                                        <TableCell>{tenant.rentalName}</TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{tenant.roomNumber}</span>
+                                                                <span className="text-xs text-muted-foreground">KSh {tenant.rent?.toLocaleString()}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {tenant.nextPaymentDue ? format(new Date(tenant.nextPaymentDue), 'PPP') : '---'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                   </Table>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Unassigned Tenants</CardTitle>
-                            <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                           <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Full Name</TableHead>
-                                        <TableHead>Phone</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                     {unassignedTenants.length === 0 ? (
-                                        <TableRow><TableCell colSpan={4} className="text-center h-24">All tenants are assigned to rooms.</TableCell></TableRow>
-                                     ) : (
-                                        unassignedTenants.map(tenant => (
-                                            <TableRow key={tenant.id}>
-                                                <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
-                                                <TableCell>{tenant.phone}</TableCell>
-                                                <TableCell>{tenant.email}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href="/assignments">
-                                                            <BedDouble className="mr-2 h-4 w-4" />
-                                                            Assign a Room
-                                                        </Link>
-                                                    </Button>
-                                                </TableCell>
+                    <AccordionItem value="unassigned-tenants" className="border-0">
+                        <Card>
+                             <AccordionTrigger className="hover:no-underline">
+                                <CardHeader className="w-full text-left p-6">
+                                    <CardTitle>Unassigned Tenants</CardTitle>
+                                    <CardDescription>Tenants who are registered but not yet assigned to a room.</CardDescription>
+                                </CardHeader>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <CardContent>
+                                   <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Full Name</TableHead>
+                                                <TableHead>Phone</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
-                                        ))
-                                     )}
-                                </TableBody>
-                           </Table>
-                        </CardContent>
-                    </Card>
-                </div>
+                                        </TableHeader>
+                                        <TableBody>
+                                             {unassignedTenants.length === 0 ? (
+                                                <TableRow><TableCell colSpan={4} className="text-center h-24">All tenants are assigned to rooms.</TableCell></TableRow>
+                                             ) : (
+                                                unassignedTenants.map(tenant => (
+                                                    <TableRow key={tenant.id}>
+                                                        <TableCell className="font-medium">{`${tenant.firstName} ${tenant.secondName} ${tenant.thirdName || ''}`.trim()}</TableCell>
+                                                        <TableCell>{tenant.phone}</TableCell>
+                                                        <TableCell>{tenant.email}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button asChild variant="outline" size="sm">
+                                                                <Link href="/assignments">
+                                                                    <BedDouble className="mr-2 h-4 w-4" />
+                                                                    Assign a Room
+                                                                </Link>
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                             )}
+                                        </TableBody>
+                                   </Table>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                </Accordion>
              </div>
         </AppLayout>
-    )
-
-    
-
-    
+    );
+}
