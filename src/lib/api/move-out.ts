@@ -22,15 +22,20 @@ export async function getNoticesForTenant(tenantId: string): Promise<MoveOutNoti
     if (!tenantId) return [];
 
     const noticesCol = collection(db, 'moveOutNotices');
-    const q = query(noticesCol, where('tenantId', '==', tenantId), orderBy('createdAt', 'desc'));
+    const q = query(noticesCol, where('tenantId', '==', tenantId));
     const snapshot = await getDocs(q);
     
-    return snapshot.docs.map(d => ({
+    const notices = snapshot.docs.map(d => ({
         id: d.id,
         ...d.data(),
         createdAt: (d.data().createdAt as Timestamp)?.toDate().toISOString(),
         moveOutDate: (d.data().moveOutDate as Timestamp)?.toDate(),
     } as MoveOutNotice));
+
+    // Sort in code instead of in the query to avoid needing an index
+    notices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return notices;
 }
 
 
@@ -73,4 +78,3 @@ export async function updateNoticeStatus(id: string, status: 'Pending' | 'Proces
     await updateDoc(noticeRef, { status });
     return { success: true };
 }
-
