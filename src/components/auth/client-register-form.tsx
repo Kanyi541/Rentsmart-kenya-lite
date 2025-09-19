@@ -18,10 +18,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CardContent, CardFooter } from '../ui/card';
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 
 const registerSchema = z.object({
     firstName: z.string().min(2, "First name is required"),
@@ -32,12 +35,17 @@ const registerSchema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
+    nextOfKinName: z.string().optional().or(z.literal('')),
+    nextOfKinPhone: z.string().optional().or(z.literal('')),
+    nextOfKinRelationship: z.string().optional().or(z.literal('')),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function ClientRegisterForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAgreed, setIsAgreed] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(120);
     const { register } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
@@ -53,8 +61,23 @@ export function ClientRegisterForm() {
             password: '',
             maritalStatus: 'Single',
             gender: 'Male',
+            nextOfKinName: '',
+            nextOfKinPhone: '',
+            nextOfKinRelationship: ''
         },
     });
+
+    useEffect(() => {
+        if (timeLeft === 0) return;
+
+        const timerId = setInterval(() => {
+            setTimeLeft((prevTime) => prevTime - 1);
+        }, 1000);
+
+        return () => clearInterval(timerId);
+    }, [timeLeft]);
+
+    const canSubmit = timeLeft === 0 && isAgreed;
 
     const onSubmit = async (data: RegisterFormValues) => {
         setIsSubmitting(true);
@@ -196,12 +219,50 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <div className="flex items-start gap-3">
+                            <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                            <div>
+                                <h3 className="font-semibold">Tenant Agreement & Data Privacy</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Please take a moment to review our terms and conditions before proceeding.
+                                </p>
+                            </div>
+                        </div>
+
+                        <ScrollArea className="h-32 w-full rounded-md border bg-muted/50 p-3 text-sm">
+                           <h4 className="font-bold mb-2">Tenant Agreement</h4>
+                            <p className="mb-4">This placeholder text represents the full tenant lease agreement. It outlines the responsibilities of both the tenant and the landlord, including rent payment schedules, property rules, maintenance procedures, and conditions for lease termination. By agreeing, you confirm you have read and understood these terms.</p>
+                            <h4 className="font-bold mb-2">Data Privacy Policy</h4>
+                            <p>This placeholder outlines how we collect, use, and protect your personal information, such as your name, contact details, and ID number. We are committed to safeguarding your data in compliance with relevant laws. By agreeing, you consent to our data practices as described.</p>
+                        </ScrollArea>
+                        
+                        <div className="flex items-center space-x-2">
+                            <Checkbox 
+                                id="agree-terms" 
+                                checked={isAgreed}
+                                onCheckedChange={(checked) => setIsAgreed(checked as boolean)}
+                                disabled={timeLeft > 0}
+                            />
+                            <Label htmlFor="agree-terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                I have read and agree to the Tenant Agreement and Data Privacy Policy.
+                            </Label>
+                        </div>
+                    </div>
 
                 </CardContent>
                 <CardFooter>
-                     <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Register
+                     <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
+                        {isSubmitting ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : timeLeft > 0 ? (
+                             <span>Please wait {Math.floor(timeLeft / 60)}:{('0' + (timeLeft % 60)).slice(-2)} to agree</span>
+                        ) : (
+                            'Register'
+                        )}
                     </Button>
                 </CardFooter>
             </form>
