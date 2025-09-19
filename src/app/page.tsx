@@ -83,17 +83,24 @@ export default function LandingPage() {
                         RentSmart Kenya Lite is an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
                     </p>
                     </div>
-                    <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
+                    <div className="flex flex-col items-center gap-4">
                         <Button asChild size="lg">
-                            <Link href="/clients/login" prefetch={false}>
-                            Tenant Login
+                             <Link href="/clients/register" prefetch={false}>
+                                Get Started As a Tenant
                             </Link>
                         </Button>
-                        <Button asChild size="lg" variant="secondary">
-                            <Link href="/admin/login" prefetch={false}>
-                            Admin Login
-                            </Link>
-                        </Button>
+                        <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
+                            <Button asChild size="lg" variant="secondary">
+                                <Link href="/clients/login" prefetch={false}>
+                                Tenant Login
+                                </Link>
+                            </Button>
+                            <Button asChild size="lg" variant="secondary">
+                                <Link href="/admin/login" prefetch={false}>
+                                Admin Login
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
