@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
-import { Home } from 'lucide-react'
+import { Home, Check } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { heroImages } from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -94,6 +95,118 @@ export default function LandingPage() {
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-background border-t">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Simple, Transparent Pricing</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Choose the plan that works best for you
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-sm items-start gap-8 pt-12 sm:max-w-4xl sm:grid-cols-2 md:gap-12 lg:max-w-5xl lg:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl">Basic</CardTitle>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">Ksh 2,999</span>
+                    <span className="text-sm text-muted-foreground">/month</span>
+                  </div>
+                  <CardDescription>Perfect for small property managers</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="grid gap-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Property Management
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Tenant Management
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Basic Reporting
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                    <Button className="w-full">Get Started</Button>
+                </CardFooter>
+              </Card>
+
+              <Card className="border-primary shadow-lg">
+                 <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl">Professional</CardTitle>
+                   <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">Ksh 4,999</span>
+                    <span className="text-sm text-muted-foreground">/month</span>
+                  </div>
+                  <CardDescription>For growing property management businesses</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="grid gap-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2 font-medium text-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      Everything in Basic
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Advanced Reporting
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Email Notifications
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Document Storage
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                    <Button className="w-full">Get Started</Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl">Enterprise</CardTitle>
+                   <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">Ksh 9,999</span>
+                    <span className="text-sm text-muted-foreground">/month</span>
+                  </div>
+                  <CardDescription>Complete solution for large property managers</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="grid gap-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2 font-medium text-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      Everything in Professional
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      API Access
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Priority Support
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      Custom Branding
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                    <Button className="w-full">Get Started</Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
         </section>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
