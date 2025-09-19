@@ -36,19 +36,19 @@ export async function getTenants(): Promise<Tenant[]> {
     // Fetch payments for assigned tenants
     let tenantIdToLastPaymentMap = new Map<string, Date>();
     if (assignedTenantIds.length > 0) {
+        // Simplified query to avoid composite index requirement
         const paymentsCol = collection(db, 'payments');
-        const paymentsQuery = query(paymentsCol, 
-            where("tenantId", "in", assignedTenantIds),
-            where("type", "==", "Rent"),
-            where("status", "==", "Completed")
-        );
+        const paymentsQuery = query(paymentsCol, where("tenantId", "in", assignedTenantIds));
         const paymentsSnapshot = await getDocs(paymentsQuery);
 
         paymentsSnapshot.docs.forEach(doc => {
             const payment = doc.data();
-            const paymentDate = (payment.createdAt as Timestamp).toDate();
-            if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
-                tenantIdToLastPaymentMap.set(payment.tenantId, paymentDate);
+            // Filter in code instead of in the query
+            if (payment.type === 'Rent' && payment.status === 'Completed') {
+                const paymentDate = (payment.createdAt as Timestamp).toDate();
+                if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
+                    tenantIdToLastPaymentMap.set(payment.tenantId, paymentDate);
+                }
             }
         });
     }
@@ -135,19 +135,23 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
 
         // Check for next payment due
         const paymentsCol = collection(db, 'payments');
+        // Simplified query
         const paymentsQuery = query(paymentsCol, 
             where("tenantId", "==", tenantId),
-            where("type", "==", "Rent"),
-            where("status", "==", "Completed"),
             orderBy("createdAt", "desc")
         );
         const paymentsSnapshot = await getDocs(paymentsQuery);
-        if (!paymentsSnapshot.empty) {
-            const lastPayment = paymentsSnapshot.docs[0].data();
-            const lastPaymentDate = (lastPayment.createdAt as Timestamp).toDate();
-            const nextDueDate = new Date(lastPaymentDate);
-            nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-            tenant.nextPaymentDue = nextDueDate.toISOString().split('T')[0];
+        
+        // Find the most recent completed rent payment in code
+        for (const doc of paymentsSnapshot.docs) {
+            const lastPayment = doc.data();
+            if (lastPayment.type === 'Rent' && lastPayment.status === 'Completed') {
+                const lastPaymentDate = (lastPayment.createdAt as Timestamp).toDate();
+                const nextDueDate = new Date(lastPaymentDate);
+                nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                tenant.nextPaymentDue = nextDueDate.toISOString().split('T')[0];
+                break; // Exit loop once the latest is found
+            }
         }
     }
 

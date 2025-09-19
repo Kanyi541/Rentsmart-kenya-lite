@@ -1,7 +1,7 @@
 
 'use server'
 
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Room, Tenant } from "@/lib/types";
 
@@ -53,19 +53,19 @@ export async function getOccupancyDetailsForRental(rentalId: string): Promise<Oc
     
     // 4. Fetch the most recent 'Rent' payment for each tenant
     const paymentsCol = collection(db, 'payments');
-    const paymentsQuery = query(paymentsCol, 
-        where("tenantId", "in", tenantIds),
-        where("type", "==", "Rent"),
-        where("status", "==", "Completed")
-    );
+    // Simplified Query: Just get all payments for the relevant tenants
+    const paymentsQuery = query(paymentsCol, where("tenantId", "in", tenantIds));
     const paymentsSnapshot = await getDocs(paymentsQuery);
     const tenantIdToLastPaymentMap = new Map<string, Date>();
     
     paymentsSnapshot.docs.forEach(doc => {
         const payment = doc.data();
-        const paymentDate = payment.createdAt.toDate();
-        if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
-            tenantIdToLastPaymentMap.set(payment.tenantId, paymentDate);
+        // Filter in code instead of in the query
+        if (payment.type === 'Rent' && payment.status === 'Completed') {
+            const paymentDate = (payment.createdAt as Timestamp).toDate();
+            if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
+                tenantIdToLastPaymentMap.set(payment.tenantId, paymentDate);
+            }
         }
     });
 
