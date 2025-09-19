@@ -256,7 +256,7 @@ export default function TenantsPage() {
                     </Dialog>
                 </div>
 
-                <Accordion type="multiple" defaultValue={['assigned-tenants', 'unassigned-tenants']} className="grid gap-4 md:gap-8 lg:grid-cols-2 lg:items-start">
+                <Accordion type="multiple" defaultValue={['assigned-tenants', 'unassigned-tenants']} className="w-full space-y-4">
                     <AccordionItem value="assigned-tenants" className="border-0">
                          <Card>
                             <AccordionTrigger className="w-full p-0 hover:no-underline">
