@@ -27,15 +27,18 @@ export default function DemoPage() {
             await login(email, password);
             toast({
                 title: 'Demo Login Successful',
-                description: `Welcome! You are now logged in as a demo ${role}.`,
+                description: `Welcome! Redirecting to the demo ${role} dashboard.`,
             });
-            // The withAuth HOC will handle the redirect to the correct dashboard.
-            // We can push to a generic protected route and let it sort it out.
-            router.push('/');
+            // Directly push to the correct dashboard
+            if (role === 'admin') {
+                router.push('/admin/dashboard');
+            } else {
+                router.push('/clients');
+            }
         } catch (error: any) {
             let description = 'An unknown error occurred.';
             if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                description = `The demo ${role} user does not exist. Please create it in the Firebase console.`;
+                description = `The demo ${role} user does not exist. Please ensure it has been created in the Firebase console.`;
             }
             toast({
                 variant: 'destructive',
