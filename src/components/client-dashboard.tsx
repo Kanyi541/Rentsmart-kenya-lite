@@ -7,7 +7,7 @@ import { getTenantById, updateTenant } from '@/lib/api/tenants';
 import type { Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck, Pencil } from 'lucide-react';
+import { User, Phone, Mail, Home, KeyRound, Calendar, BadgeDollarSign, UserCheck, ShieldCheck, Pencil, Wrench } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
@@ -231,9 +231,14 @@ export function ClientDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>Submit a Complaint or Request</CardTitle>
+                    <CardDescription>Having an issue? Let us know here.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-center text-muted-foreground py-8">Maintenance requests and complaint submissions coming soon!</p>
+                <CardContent className="flex flex-col items-center justify-center text-center p-6">
+                    <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">For any maintenance issues, repairs, or service requests, please use our dedicated maintenance page.</p>
+                     <Button asChild>
+                        <Link href="/clients/maintenance">Go to Maintenance Page</Link>
+                    </Button>
                 </CardContent>
             </Card>
         </div>

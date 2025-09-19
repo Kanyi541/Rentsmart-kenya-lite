@@ -5,7 +5,8 @@ import { rentalPriceSuggestion } from '@/ai/flows/rental-price-suggestion';
 import { addRental as dbAddRental } from '@/lib/api/rentals';
 import { assignRoomToTenant as dbAssignRoom } from '@/lib/api/assignments';
 import { createPayment, updatePaymentStatus } from '@/lib/api/payments';
-import { rentalSchema, assignmentSchema, initiatePaymentSchema } from '@/lib/schemas';
+import { createMaintenanceRequest as dbCreateMaintenanceRequest } from '@/lib/api/maintenance';
+import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -122,4 +123,33 @@ export async function processPaymentAndAssign(data: unknown) {
     
     // 3. Redirect to assignments page with a success flag
     redirect('/assignments?status=success');
+}
+
+
+export async function createMaintenanceRequest(data: unknown) {
+    const parsedData = createMaintenanceRequestSchema.safeParse(data);
+
+    if (!parsedData.success) {
+        let errorMessage = 'Invalid maintenance request data.';
+        try {
+            errorMessage = JSON.parse(parsedData.error.message)[0].message;
+        } catch (e) {}
+        return { error: errorMessage };
+    }
+
+    // Note: Photo upload is simulated. In a real app, you'd upload to Firebase Storage
+    // and get a URL here. We'll just pass a placeholder string.
+    // const photoUrl = await uploadPhotoAndGetUrl(parsedData.data.photo);
+
+    try {
+        await dbCreateMaintenanceRequest({
+            ...parsedData.data,
+            // photoUrl: photoUrl
+        });
+        revalidatePath('/clients/maintenance');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Database error in createMaintenanceRequest action:', error);
+        return { error: 'Database error: Failed to submit maintenance request.' };
+    }
 }

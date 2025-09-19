@@ -1,6 +1,6 @@
 
 import { type z } from 'zod';
-import { type rentalSchema, type roomSchema, type tenantSchema, type assignmentSchema, type paymentSchema } from './schemas';
+import { type rentalSchema, type roomSchema, type tenantSchema, type assignmentSchema, type paymentSchema, type maintenanceRequestSchema } from './schemas';
 
 export type Room = z.infer<typeof roomSchema> & { id: string };
 export type Rental = z.infer<typeof rentalSchema> & { id: string, rooms: Room[] };
@@ -34,3 +34,16 @@ export interface GroupedPayment {
     totalPaid: number;
     status: 'Completed' | 'Failed';
 }
+
+export type MaintenanceRequest = z.infer<typeof maintenanceRequestSchema> & {
+    id: string;
+    createdAt: any;
+    status: 'Pending' | 'In Progress' | 'Completed';
+    tenantId: string;
+    rentalId: string;
+    roomId: string;
+    photoUrl?: string;
+    tenantName?: string;
+    rentalName?: string;
+    roomNumber?: string;
+};

@@ -72,8 +72,20 @@ export const updateTenantSchema = z.object({
     phone: z.string().min(10, "A valid phone number is required"),
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
-    nextOfKinName: z.string().optional(),
-    nextOfKinPhone: z.string().optional(),
-    nextOfKinRelationship: z.string().optional(),
+    nextOfKinName: z.string().optional().or(z.literal('')),
+    nextOfKinPhone: z.string().optional().or(z.literal('')),
+    nextOfKinRelationship: z.string().optional().or(z.literal('')),
 })
+
+export const maintenanceRequestSchema = z.object({
+  description: z.string().min(10, 'Please provide a detailed description of the issue.'),
+  photo: z.any().optional(),
+});
+
+export const createMaintenanceRequestSchema = maintenanceRequestSchema.extend({
+    tenantId: z.string(),
+    rentalId: z.string(),
+    roomId: z.string(),
+    // photoUrl: z.string().optional(), // Will be handled in the action
+});
 
