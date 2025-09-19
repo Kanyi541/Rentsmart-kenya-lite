@@ -26,8 +26,12 @@ import { format } from 'date-fns';
 
 type MaintenanceRequestFormValues = z.infer<typeof maintenanceRequestSchema>;
 
+const demoRequests: MaintenanceRequest[] = [
+    { id: 'mr1', description: 'The kitchen sink is clogged.', status: 'Pending', createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), tenantId: 'demotenant', rentalId: 'demo1', roomId: 'r2', rentalName: 'Demo Heights', roomNumber: 'A102' }
+];
+
 export default function MaintenancePage() {
-    const { user } = useAuth();
+    const { user, isDemoUser } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -44,8 +48,18 @@ export default function MaintenancePage() {
     
     async function fetchInitialData() {
         if (!user) return;
+        setLoading(true);
+
+        if (isDemoUser) {
+            const storedTenant = localStorage.getItem('demoTenant');
+            setTenant(storedTenant ? JSON.parse(storedTenant) : null);
+            const storedRequests = localStorage.getItem('demoMaintenanceRequests');
+            setRequests(storedRequests ? JSON.parse(storedRequests) : demoRequests);
+            setLoading(false);
+            return;
+        }
+
         try {
-            setLoading(true);
             const [tenantData, requestData] = await Promise.all([
                 getTenantById(user.uid),
                 getMaintenanceRequestsForTenant(user.uid)
@@ -62,7 +76,7 @@ export default function MaintenancePage() {
 
     useEffect(() => {
         fetchInitialData();
-    }, [user]);
+    }, [user, isDemoUser]);
 
     const onSubmit = async (data: MaintenanceRequestFormValues) => {
         if (!user || !tenant?.rentalId || !tenant?.roomId) {
@@ -71,10 +85,30 @@ export default function MaintenancePage() {
         }
 
         setIsSubmitting(true);
+
+        if (isDemoUser && tenant) {
+            const newRequest: MaintenanceRequest = {
+                id: `demo_mr_${new Date().getTime()}`,
+                description: data.description,
+                tenantId: user.uid,
+                rentalId: tenant.rentalId,
+                roomId: tenant.roomId,
+                rentalName: tenant.rentalName,
+                roomNumber: tenant.roomNumber,
+                status: 'Pending',
+                createdAt: new Date().toISOString()
+            };
+            const updatedRequests = [newRequest, ...requests];
+            setRequests(updatedRequests);
+            localStorage.setItem('demoMaintenanceRequests', JSON.stringify(updatedRequests));
+            toast({ title: "Request Submitted!", description: "This is a demo. Your request is saved in local storage." });
+            form.reset();
+            setIsSubmitting(false);
+            return;
+        }
+        
         try {
-            // NOTE: Photo upload is simulated. In a real app, you would upload the file to
-            // Firebase Storage here and pass the URL to the server action.
-            // For now, we are not passing the photo data.
+            // NOTE: Photo upload is simulated.
             const result = await createMaintenanceRequest({
                 description: data.description,
                 tenantId: user.uid,

@@ -41,7 +41,8 @@ export default function AdminComplaintsPage() {
         async function fetchData() {
             setLoading(true);
             if (isDemoUser) {
-                setComplaints(demoComplaints);
+                const storedComplaints = localStorage.getItem('demoComplaints');
+                setComplaints(storedComplaints ? JSON.parse(storedComplaints) : demoComplaints);
                 setLoading(false);
                 return;
             }
@@ -84,13 +85,15 @@ export default function AdminComplaintsPage() {
     }
 
     const handleStatusChange = (complaintId: string, newStatus: string) => {
+        const updatedComplaints = complaints.map(c => c.id === complaintId ? { ...c, status: newStatus as Complaint['status'] } : c);
+        setComplaints(updatedComplaints);
+
         if (isDemoUser) {
-            setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, status: newStatus as Complaint['status'] } : c));
-            toast({ title: "Demo Mode", description: `Status changed to ${newStatus}. This is not saved.` });
+            localStorage.setItem('demoComplaints', JSON.stringify(updatedComplaints));
+            toast({ title: "Demo Mode", description: `Status changed to ${newStatus}. This is saved in local storage.` });
             return;
         }
         // In a real app, you would call a server action here to update the status in Firestore.
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, status: newStatus as Complaint['status'] } : c));
         toast({ title: "Status Updated", description: `Complaint status set to ${newStatus}.` });
     }
 

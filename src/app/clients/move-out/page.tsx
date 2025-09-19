@@ -27,8 +27,12 @@ import { cn } from '@/lib/utils';
 
 type MoveOutNoticeFormValues = z.infer<typeof moveOutNoticeSchema>;
 
+const demoMoveOutNotices: MoveOutNotice[] = [
+    { id: 'mo1', moveOutDate: new Date(Date.now() + 86400000 * 30), noticeType: 'Standard', status: 'Pending', createdAt: new Date().toISOString(), tenantId: 'demotenant', rentalId: 'demo1', roomId: 'r2' }
+];
+
 export default function MoveOutPage() {
-    const { user } = useAuth();
+    const { user, isDemoUser } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [notices, setNotices] = useState<MoveOutNotice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -51,8 +55,18 @@ export default function MoveOutPage() {
     
     async function fetchInitialData() {
         if (!user) return;
+        setLoading(true);
+
+        if (isDemoUser) {
+            const storedTenant = localStorage.getItem('demoTenant');
+            setTenant(storedTenant ? JSON.parse(storedTenant) : null);
+            const storedNotices = localStorage.getItem('demoClientMoveOutNotices');
+            setNotices(storedNotices ? JSON.parse(storedNotices) : demoMoveOutNotices);
+            setLoading(false);
+            return;
+        }
+
         try {
-            setLoading(true);
             const [tenantData, noticesData] = await Promise.all([
                 getTenantById(user.uid),
                 getNoticesForTenant(user.uid)
@@ -69,7 +83,7 @@ export default function MoveOutPage() {
 
     useEffect(() => {
         fetchInitialData();
-    }, [user]);
+    }, [user, isDemoUser]);
 
     const onSubmit = async (data: MoveOutNoticeFormValues) => {
         if (!user || !tenant?.rentalId || !tenant?.roomId || !noticeType) {
@@ -78,6 +92,28 @@ export default function MoveOutPage() {
         }
 
         setIsSubmitting(true);
+
+        if (isDemoUser && tenant) {
+            const newNotice: MoveOutNotice = {
+                id: `demo_mo_${new Date().getTime()}`,
+                moveOutDate: data.moveOutDate,
+                tenantId: user.uid,
+                rentalId: tenant.rentalId,
+                roomId: tenant.roomId,
+                noticeType: noticeType,
+                status: 'Pending',
+                createdAt: new Date().toISOString()
+            };
+            const updatedNotices = [newNotice, ...notices];
+            setNotices(updatedNotices);
+            localStorage.setItem('demoClientMoveOutNotices', JSON.stringify(updatedNotices));
+            localStorage.setItem('demoMoveOutNotices', JSON.stringify(updatedNotices)); // also update admin view
+            toast({ title: "Notice Submitted!", description: "This is a demo. Your notice is saved in local storage." });
+            form.reset();
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const result = await createMoveOutNotice({
                 moveOutDate: data.moveOutDate,

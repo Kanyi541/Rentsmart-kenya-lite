@@ -26,8 +26,12 @@ import { format } from 'date-fns';
 
 type ComplaintFormValues = z.infer<typeof complaintSchema>;
 
+const demoComplaints: Complaint[] = [
+    { id: 'c1', subject: 'Loud Neighbor', description: 'My neighbor is playing loud music late at night.', status: 'New', createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), tenantId: 'demotenant', rentalId: 'demo1', roomId: 'r2' },
+];
+
 export default function ComplaintsPage() {
-    const { user } = useAuth();
+    const { user, isDemoUser } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [loading, setLoading] = useState(true);
@@ -44,8 +48,18 @@ export default function ComplaintsPage() {
     
     async function fetchInitialData() {
         if (!user) return;
+        setLoading(true);
+
+        if (isDemoUser) {
+            const storedTenant = localStorage.getItem('demoTenant');
+            setTenant(storedTenant ? JSON.parse(storedTenant) : null);
+            const storedComplaints = localStorage.getItem('demoClientComplaints');
+            setComplaints(storedComplaints ? JSON.parse(storedComplaints) : demoComplaints);
+            setLoading(false);
+            return;
+        }
+
         try {
-            setLoading(true);
             const [tenantData, complaintsData] = await Promise.all([
                 getTenantById(user.uid),
                 getComplaintsForTenant(user.uid)
@@ -62,7 +76,7 @@ export default function ComplaintsPage() {
 
     useEffect(() => {
         fetchInitialData();
-    }, [user]);
+    }, [user, isDemoUser]);
 
     const onSubmit = async (data: ComplaintFormValues) => {
         if (!user || !tenant?.rentalId || !tenant?.roomId) {
@@ -71,6 +85,26 @@ export default function ComplaintsPage() {
         }
 
         setIsSubmitting(true);
+         if (isDemoUser) {
+            const newComplaint: Complaint = {
+                id: `demo_complaint_${new Date().getTime()}`,
+                ...data,
+                tenantId: user.uid,
+                rentalId: tenant.rentalId,
+                roomId: tenant.roomId,
+                status: 'New',
+                createdAt: new Date().toISOString()
+            };
+            const updatedComplaints = [newComplaint, ...complaints];
+            setComplaints(updatedComplaints);
+            localStorage.setItem('demoClientComplaints', JSON.stringify(updatedComplaints));
+            localStorage.setItem('demoComplaints', JSON.stringify(updatedComplaints)); // also update admin view
+            toast({ title: "Complaint Submitted!", description: "This is a demo. Your complaint is saved in local storage." });
+            form.reset();
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const result = await createComplaint({
                 subject: data.subject,

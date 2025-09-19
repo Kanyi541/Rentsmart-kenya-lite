@@ -40,7 +40,8 @@ export default function AdminMoveOutPage() {
     async function fetchData() {
         setLoading(true);
         if (isDemoUser) {
-            setNotices(demoNotices);
+            const storedNotices = localStorage.getItem('demoMoveOutNotices');
+            setNotices(storedNotices ? JSON.parse(storedNotices) : demoNotices);
             setLoading(false);
             return;
         }
@@ -87,17 +88,20 @@ export default function AdminMoveOutPage() {
     }
 
     const handleStatusChange = async (noticeId: string, newStatus: MoveOutNotice['status']) => {
+        const updatedNotices = notices.map(n => n.id === noticeId ? { ...n, status: newStatus } : n);
+        setNotices(updatedNotices);
+        
         if (isDemoUser) {
-            setNotices(prev => prev.map(n => n.id === noticeId ? { ...n, status: newStatus } : n));
-            toast({ title: 'Demo Mode', description: `Status changed to ${newStatus}. This is not saved.` });
+            localStorage.setItem('demoMoveOutNotices', JSON.stringify(updatedNotices));
+            toast({ title: 'Demo Mode', description: `Status changed to ${newStatus}. This is saved in local storage.` });
             return;
         }
         try {
             await updateNoticeStatus(noticeId, newStatus);
-            setNotices(prev => prev.map(n => n.id === noticeId ? { ...n, status: newStatus } : n));
             toast({ title: "Status Updated", description: `Notice status set to ${newStatus}.` });
         } catch (error) {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update notice status.' });
+            fetchData(); // Revert optimistic update on failure
         }
     }
 

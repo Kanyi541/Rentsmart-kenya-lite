@@ -59,8 +59,10 @@ export function ClientDashboard() {
         setLoading(true);
 
         if (isDemoUser) {
-            setTenant(demoTenant);
-            setAnnouncements(demoAnnouncements);
+            const storedTenant = localStorage.getItem('demoTenant');
+            setTenant(storedTenant ? JSON.parse(storedTenant) : demoTenant);
+            const storedAnnouncements = localStorage.getItem('demoAnnouncements');
+            setAnnouncements(storedAnnouncements ? JSON.parse(storedAnnouncements) : demoAnnouncements);
             setLoading(false);
             return;
         }
@@ -86,7 +88,10 @@ export function ClientDashboard() {
     const handleUpdateTenant = async (data: z.infer<typeof updateTenantSchema>) => {
         if (!user) return;
         if (isDemoUser) {
-            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            const updatedTenant = { ...tenant, ...data };
+            setTenant(updatedTenant as Tenant);
+            localStorage.setItem('demoTenant', JSON.stringify(updatedTenant));
+            toast({ title: 'Demo Mode', description: 'Your details have been updated in local storage.' });
             setIsEditDialogOpen(false);
             return;
         }

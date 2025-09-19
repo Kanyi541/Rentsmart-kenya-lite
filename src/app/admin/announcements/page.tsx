@@ -48,7 +48,8 @@ export default function AnnouncementsPage() {
     async function fetchAnnouncements() {
         setLoading(true);
         if (isDemoUser) {
-            setAnnouncements(demoAnnouncements);
+            const storedAnnouncements = localStorage.getItem('demoAnnouncements');
+            setAnnouncements(storedAnnouncements ? JSON.parse(storedAnnouncements) : demoAnnouncements);
             setLoading(false);
             return;
         }
@@ -69,7 +70,16 @@ export default function AnnouncementsPage() {
     const onSubmit = async (data: AnnouncementFormValues) => {
         setIsSubmitting(true);
          if (isDemoUser) {
-            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            const newAnnouncement: Announcement = {
+                id: `demo_${new Date().getTime()}`,
+                ...data,
+                createdAt: new Date().toISOString()
+            };
+            const updatedAnnouncements = [newAnnouncement, ...announcements];
+            setAnnouncements(updatedAnnouncements);
+            localStorage.setItem('demoAnnouncements', JSON.stringify(updatedAnnouncements));
+            toast({ title: 'Announcement Published!', description: 'This is a demo. The announcement is saved in local storage.' });
+            form.reset();
             setIsSubmitting(false);
             return;
         }
@@ -88,7 +98,10 @@ export default function AnnouncementsPage() {
 
     const handleDelete = async (id: string) => {
         if (isDemoUser) {
-            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            const updatedAnnouncements = announcements.filter(ann => ann.id !== id);
+            setAnnouncements(updatedAnnouncements);
+            localStorage.setItem('demoAnnouncements', JSON.stringify(updatedAnnouncements));
+            toast({ title: 'Announcement Deleted', description: 'This is a demo. The change is saved in local storage.' });
             return;
         }
         try {
