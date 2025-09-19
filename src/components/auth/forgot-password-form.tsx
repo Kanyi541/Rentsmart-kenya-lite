@@ -16,48 +16,43 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { CardContent, CardFooter } from '../ui/card';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export function ClientLoginForm() {
+export function ForgotPasswordForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login } = useAuth();
+    const { forgotPassword } = useAuth();
     const { toast } = useToast();
-    const router = useRouter();
 
-    const form = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
+    const form = useForm<ForgotPasswordFormValues>({
+        resolver: zodResolver(forgotPasswordSchema),
         defaultValues: {
-        email: '',
-        password: '',
+            email: '',
         },
     });
 
-    const onSubmit = async (data: LoginFormValues) => {
+    const onSubmit = async (data: ForgotPasswordFormValues) => {
         setIsSubmitting(true);
         try {
-            await login(data.email, data.password);
+            await forgotPassword(data.email);
             toast({
-                title: 'Login Successful',
-                description: 'Welcome back!',
+                title: 'Check Your Email',
+                description: 'A password reset link has been sent to your email address.',
             });
-            router.push('/clients');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({
+             toast({
                 variant: 'destructive',
-                title: 'Login Failed',
-                description: 'Please check your credentials and try again.',
+                title: 'Error',
+                description: error.message || 'Failed to send reset link. Please try again.',
             });
         } finally {
             setIsSubmitting(false);
@@ -75,36 +70,21 @@ export function ClientLoginForm() {
                         <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                            <Input placeholder="tenant@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                        <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel>Password</FormLabel>
-                                <Link href="/clients/forgot-password" passHref className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
-                                    Forgot Password?
-                                </Link>
-                            </div>
-                            <FormControl>
-                            <Input type="password" placeholder="********" {...field} />
+                            <Input placeholder="your.email@example.com" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
                     />
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-4">
                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Login
+                        Send Reset Link
                     </Button>
+                    <Link href="/clients/login" passHref className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                        Back to Login
+                    </Link>
                 </CardFooter>
             </form>
         </Form>

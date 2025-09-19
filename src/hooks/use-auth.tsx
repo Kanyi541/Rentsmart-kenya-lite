@@ -2,7 +2,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { app, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import type { Tenant } from '@/lib/types';
@@ -22,6 +22,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     userRole: UserRole;
+    forgotPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     };
 
+    const forgotPassword = async (email: string) => {
+        await sendPasswordResetEmail(auth, email);
+    };
+
     const logout = async () => {
         const roleBeforeLogout = userRole;
         await signOut(auth);
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register, userRole }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, userRole, forgotPassword }}>
             {children}
         </AuthContext.Provider>
     );
