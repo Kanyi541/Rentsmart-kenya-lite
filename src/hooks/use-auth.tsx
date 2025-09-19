@@ -89,9 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         const roleBeforeLogout = userRole;
+        const wasDemoUser = isDemoUser;
         await signOut(auth);
         setUserRole(null); // Clear role on logout
-        if(roleBeforeLogout === 'admin') {
+        
+        if (wasDemoUser) {
+            router.push('/demo');
+        } else if(roleBeforeLogout === 'admin') {
             router.push('/admin/login');
         } else {
             router.push('/clients/login');
