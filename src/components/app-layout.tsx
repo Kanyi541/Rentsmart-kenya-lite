@@ -19,9 +19,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/tenants', label: 'Tenants', icon: Users },
         { href: '/assignments', label: 'Assignments', icon: BedDouble },
         { href: '/payments', label: 'Payments', icon: CreditCard },
-        { href: '/reports', label: 'Reports', icon: FileText },
         { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
         { href: '/admin/complaints', label: 'Complaints', icon: ShieldAlert },
+        { href: '/admin/move-out', label: 'Move-out Notices', icon: LogOut },
     ];
 
     const clientMenuItems = [
@@ -29,6 +29,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/clients/maintenance', label: 'Maintenance', icon: Wrench },
         { href: '/clients/complaints', label: 'Complaints', icon: ShieldAlert },
         { href: '/clients/checklist', label: 'Checklist', icon: ClipboardList },
+        { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
     ];
 
     const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;

@@ -104,3 +104,14 @@ export const createComplaintSchema = complaintSchema.extend({
     rentalId: z.string(),
     roomId: z.string(),
 });
+
+export const moveOutNoticeSchema = z.object({
+  moveOutDate: z.date({ required_error: 'Please select your intended move out date.'}),
+});
+
+export const createMoveOutNoticeSchema = moveOutNoticeSchema.extend({
+  tenantId: z.string(),
+  rentalId: z.string(),
+  roomId: z.string(),
+  noticeType: z.enum(['Standard', 'Immediate']),
+});

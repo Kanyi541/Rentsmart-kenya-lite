@@ -8,7 +8,8 @@ import { createPayment, updatePaymentStatus } from '@/lib/api/payments';
 import { createMaintenanceRequest as dbCreateMaintenanceRequest } from '@/lib/api/maintenance';
 import { createAnnouncement as dbCreateAnnouncement, deleteAnnouncement as dbDeleteAnnouncement } from '@/lib/api/announcements';
 import { createComplaint as dbCreateComplaint } from '@/lib/api/complaints';
-import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema, createComplaintSchema } from '@/lib/schemas';
+import { createMoveOutNotice as dbCreateMoveOutNotice } from '@/lib/api/move-out';
+import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema, createComplaintSchema, createMoveOutNoticeSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -201,5 +202,22 @@ export async function createComplaint(data: unknown) {
     } catch (error: any) {
         console.error('Database error in createComplaint action:', error);
         return { error: 'Database error: Failed to submit complaint.' };
+    }
+}
+
+export async function createMoveOutNotice(data: unknown) {
+    const parsedData = createMoveOutNoticeSchema.safeParse(data);
+    if (!parsedData.success) {
+        return { error: 'Invalid data.' };
+    }
+
+    try {
+        await dbCreateMoveOutNotice(parsedData.data);
+        revalidatePath('/clients/move-out');
+        revalidatePath('/admin/move-out');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Database error in createMoveOutNotice action:', error);
+        return { error: 'Database error: Failed to submit notice.' };
     }
 }
