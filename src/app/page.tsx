@@ -1,16 +1,15 @@
 
-
 'use client'
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { CheckCircle, Home, Menu } from 'lucide-react'
+import { Home } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { heroImages } from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -86,8 +85,8 @@ export default function LandingPage() {
                     </div>
                     <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
                         <Button asChild size="lg">
-                            <Link href="/clients/register" prefetch={false}>
-                            Get Started as a Tenant
+                            <Link href="/clients/login" prefetch={false}>
+                            Tenant Login
                             </Link>
                         </Button>
                         <Button asChild size="lg" variant="secondary">
