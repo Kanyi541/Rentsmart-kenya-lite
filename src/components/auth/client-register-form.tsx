@@ -67,6 +67,11 @@ export function ClientRegisterForm() {
         },
     });
 
+    const { watch } = form;
+    const firstName = watch('firstName');
+    const secondName = watch('secondName');
+    const tenantName = (firstName && secondName) ? `${firstName} ${secondName}`.trim() : 'The Tenant';
+
     useEffect(() => {
         if (timeLeft === 0) return;
 
@@ -239,8 +244,8 @@ export function ClientRegisterForm() {
                                 <strong>This Tenant Agreement (“Agreement”)</strong> is entered into by and between:
                             </p>
                             <ul className="list-disc pl-5 mb-2 text-sm space-y-1">
-                                <li><strong>Landlord/Property Owner/Manager</strong> (“Landlord”), and</li>
-                                <li><strong>Tenant</strong> (“Tenant”),</li>
+                                <li><strong>RentSmart Kenya Lite</strong> (“Landlord”), and</li>
+                                <li><strong>{tenantName}</strong> (“Tenant”),</li>
                             </ul>
                             <p className="mb-4 text-sm">
                                 through the <strong>Techivo Technologies Rental Management System</strong> (“System”). By registering and using this system, the Tenant agrees to the following:
@@ -343,5 +348,3 @@ export function ClientRegisterForm() {
         </Form>
     );
 }
-
-    
