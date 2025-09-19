@@ -2,7 +2,7 @@
 'use client'
 
 import { AppLayout } from '@/components/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -32,6 +32,8 @@ interface RentalStats {
     totalRooms: number;
 }
 
+const ROOMS_PER_PAGE = 5;
+
 function Home() {
   const [globalStats, setGlobalStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
   const [rentals, setRentals] = useState<Rental[]>([]);
@@ -41,6 +43,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
 
   useEffect(() => {
@@ -72,6 +75,7 @@ function Home() {
             return;
           };
           setRentalDetailsLoading(true);
+          setCurrentPage(1); // Reset to first page on new selection
           try {
               const [stats, details] = await Promise.all([
                 getStatsForRental(selectedRentalId),
@@ -99,6 +103,13 @@ function Home() {
         room.tenantName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [occupancyDetails, searchQuery]);
+
+  const paginatedRooms = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROOMS_PER_PAGE;
+    return filteredOccupancyDetails.slice(startIndex, startIndex + ROOMS_PER_PAGE);
+  }, [filteredOccupancyDetails, currentPage]);
+
+  const totalPages = Math.ceil(filteredOccupancyDetails.length / ROOMS_PER_PAGE);
 
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
 
@@ -202,7 +213,7 @@ function Home() {
                     <CardHeader>
                         <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
                         <CardDescription>
-                            {rentalDetailsLoading ? 'Loading details...' : `Showing ${filteredOccupancyDetails.length} of ${occupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
+                            {rentalDetailsLoading ? 'Loading details...' : `Showing ${paginatedRooms.length} of ${filteredOccupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -214,7 +225,10 @@ function Home() {
                                     placeholder="Search by room number or tenant name..."
                                     className="w-full rounded-lg bg-background pl-8"
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1); // Reset page on new search
+                                    }}
                                 />
                             </div>
                         </div>
@@ -230,7 +244,7 @@ function Home() {
                             </TableHeader>
                             <TableBody>
                                 {rentalDetailsLoading ? (
-                                    Array.from({ length: 5 }).map((_, i) => (
+                                    Array.from({ length: ROOMS_PER_PAGE }).map((_, i) => (
                                         <TableRow key={i}>
                                             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-28" /></TableCell>
@@ -239,10 +253,10 @@ function Home() {
                                             <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                         </TableRow>
                                     ))
-                                ) : filteredOccupancyDetails.length === 0 ? (
+                                ) : paginatedRooms.length === 0 ? (
                                     <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
                                 ) : (
-                                    filteredOccupancyDetails.map(room => (
+                                    paginatedRooms.map(room => (
                                         <TableRow key={room.id}>
                                             <TableCell className="font-medium">{room.roomNumber}</TableCell>
                                             <TableCell>
@@ -263,6 +277,33 @@ function Home() {
                             </TableBody>
                         </Table>
                     </CardContent>
+                    {totalPages > 1 && (
+                        <CardFooter>
+                            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+                                <div>
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             )}
         </div>
