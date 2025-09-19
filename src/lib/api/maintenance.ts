@@ -22,10 +22,11 @@ export async function getMaintenanceRequestsForTenant(tenantId: string): Promise
     if (!tenantId) return [];
 
     const requestsCol = collection(db, 'maintenanceRequests');
-    const q = query(requestsCol, where('tenantId', '==', tenantId), orderBy('createdAt', 'desc'));
+    // Simplified query to avoid index requirement
+    const q = query(requestsCol, where('tenantId', '==', tenantId));
     const requestSnapshot = await getDocs(q);
 
-    const requests = await Promise.all(requestSnapshot.docs.map(async (d) => {
+    const requestsWithDetails = await Promise.all(requestSnapshot.docs.map(async (d) => {
         const data = d.data();
         const rentalRef = doc(db, 'rentals', data.rentalId);
         const roomRef = doc(db, `rentals/${data.rentalId}/rooms/${data.roomId}`);
@@ -38,11 +39,15 @@ export async function getMaintenanceRequestsForTenant(tenantId: string): Promise
         return {
             id: d.id,
             ...data,
-            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || null,
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
             rentalName: rentalSnap.exists() ? rentalSnap.data().name : 'N/A',
             roomNumber: roomSnap.exists() ? roomSnap.data().roomNumber : 'N/A',
         } as MaintenanceRequest;
     }));
 
-    return requests;
+    // Sort in code instead of in the query
+    requestsWithDetails.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+
+    return requestsWithDetails;
 }
