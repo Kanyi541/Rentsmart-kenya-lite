@@ -12,6 +12,7 @@ export type Tenant = z.infer<typeof tenantSchema> & {
     roomNumber?: string;
     rent?: number;
     nextPaymentDue?: string;
+    createdAt: any;
 };
 export type Assignment = z.infer<typeof assignmentSchema> & { id: string };
 export type Payment = Omit<z.infer<typeof paymentSchema>, 'createdAt'> & { 

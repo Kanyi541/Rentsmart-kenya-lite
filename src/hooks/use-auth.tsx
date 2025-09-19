@@ -6,14 +6,14 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User,
 import { app, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import type { Tenant } from '@/lib/types';
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { tenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
 
 const auth = getAuth(app);
 
 type UserRole = 'admin' | 'client' | null;
-type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName'> & { password: string };
+type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName' | 'createdAt'> & { password: string };
 
 interface AuthContextType {
     user: User | null;
@@ -64,7 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Now, save the rest of the tenant's data to Firestore
         // using the UID from authentication as the document ID.
-        await setDoc(doc(db, "tenants", user.uid), tenantData);
+        await setDoc(doc(db, "tenants", user.uid), {
+            ...tenantData,
+            createdAt: serverTimestamp()
+        });
     };
 
     const logout = async () => {

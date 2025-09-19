@@ -28,6 +28,7 @@ export const tenantSchema = z.object({
     email: z.string().email("A valid email is required"),
     maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
     gender: z.enum(['Male', 'Female']),
+    createdAt: z.any().optional(),
 });
 
 export const assignmentSchema = z.object({

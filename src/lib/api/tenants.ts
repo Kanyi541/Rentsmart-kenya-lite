@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, doc, getDoc, query, where, Timestamp, orderBy } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, getDoc, query, where, Timestamp, orderBy, serverTimestamp } from "firebase/firestore";
 import type { Tenant, Assignment, Rental, Room, Payment } from "@/lib/types";
 import { tenantSchema } from "@/lib/schemas";
 import { z } from "zod";
@@ -12,7 +12,8 @@ type TenantData = z.infer<typeof tenantSchema>;
 
 export async function getTenants(): Promise<Tenant[]> {
     const tenantsCol = collection(db, 'tenants');
-    const tenantSnapshot = await getDocs(tenantsCol);
+    const tenantsQuery = query(tenantsCol, orderBy('createdAt', 'desc'));
+    const tenantSnapshot = await getDocs(tenantsQuery);
     const tenants = tenantSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tenant));
 
     // Get all assignments
@@ -145,7 +146,10 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
 export async function addTenant(tenantData: TenantData) {
     try {
         const tenantsCol = collection(db, 'tenants');
-        const docRef = await addDoc(tenantsCol, tenantData);
+        const docRef = await addDoc(tenantsCol, {
+            ...tenantData,
+            createdAt: serverTimestamp()
+        });
         revalidatePath('/tenants');
         revalidatePath('/');
         return { success: true, id: docRef.id };
