@@ -29,8 +29,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { addRental, getRentals, updateRental } from '@/lib/api/rentals';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function RentalsPage() {
+  const { isDemoUser } = useAuth();
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -39,15 +41,31 @@ export default function RentalsPage() {
   const router = useRouter();
 
   async function fetchRentals() {
+    if (isDemoUser) {
+        // In demo mode, we might want to show some static demo rentals
+        setRentals([
+            { id: 'demo1', name: 'Demo Heights', location: 'Demo City', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [{id: 'r1', roomNumber: 'A1', roomType: '1 Bedroom', rent: 10000, isOccupied: true}] },
+            { id: 'demo2', name: 'Sample Towers', location: 'Demo Suburb', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [{id: 'r2', roomNumber: 'B2', roomType: 'Bedsitter', rent: 5000, isOccupied: false}] },
+        ]);
+        return;
+    }
     const fetchedRentals = await getRentals();
     setRentals(fetchedRentals);
   }
 
   useEffect(() => {
     fetchRentals();
-  }, []);
+  }, [isDemoUser]);
 
   const handleAddRental = async (data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
+    if (isDemoUser) {
+        toast({
+            title: 'Demo Mode',
+            description: 'Adding new rentals is disabled in demo mode.',
+        });
+        setIsAddDialogOpen(false);
+        return;
+    }
     try {
         const result = await addRental(data);
         if (result.error) {
@@ -72,6 +90,14 @@ export default function RentalsPage() {
   };
 
   const handleUpdateRental = async (rentalId: string, data: Omit<Rental, 'id' | 'rooms'> & { rooms: Omit<Rental['rooms'][0], 'id'>[]}) => {
+    if (isDemoUser) {
+        toast({
+            title: 'Demo Mode',
+            description: 'Updating rentals is disabled in demo mode.',
+        });
+        setIsEditDialogOpen(false);
+        return;
+    }
     try {
       const result = await updateRental(rentalId, data);
       if (result.error) {
