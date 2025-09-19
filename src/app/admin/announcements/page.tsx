@@ -19,11 +19,19 @@ import type { Announcement } from '@/lib/types';
 import { getAnnouncements } from '@/lib/api/announcements';
 import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/hooks/use-auth';
+
+// Demo Data
+const demoAnnouncements: Announcement[] = [
+    { id: '1', title: 'Water Maintenance Schedule', content: 'Please note that the water will be shut off for maintenance on Friday from 10 AM to 2 PM.', createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: '2', title: 'Quarterly Pest Control', content: 'Pest control services will be conducted on all floors next Monday. Please ensure your units are accessible.', createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+];
 
 
 type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 export default function AnnouncementsPage() {
+    const { isDemoUser } = useAuth();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +47,11 @@ export default function AnnouncementsPage() {
 
     async function fetchAnnouncements() {
         setLoading(true);
+        if (isDemoUser) {
+            setAnnouncements(demoAnnouncements);
+            setLoading(false);
+            return;
+        }
         try {
             const data = await getAnnouncements();
             setAnnouncements(data);
@@ -51,10 +64,15 @@ export default function AnnouncementsPage() {
 
     useEffect(() => {
         fetchAnnouncements();
-    }, []);
+    }, [isDemoUser]);
 
     const onSubmit = async (data: AnnouncementFormValues) => {
         setIsSubmitting(true);
+         if (isDemoUser) {
+            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            setIsSubmitting(false);
+            return;
+        }
         try {
             const result = await createAnnouncement(data);
             if (result?.error) throw new Error(result.error);
@@ -69,6 +87,10 @@ export default function AnnouncementsPage() {
     }
 
     const handleDelete = async (id: string) => {
+        if (isDemoUser) {
+            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            return;
+        }
         try {
             const result = await deleteAnnouncement(id);
              if (result?.error) throw new Error(result.error);

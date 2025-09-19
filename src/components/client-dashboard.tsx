@@ -19,8 +19,35 @@ import { updateTenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { getAnnouncements } from '@/lib/api/announcements';
 
+// Demo Data
+const demoTenant: Tenant = {
+    id: 'demotenant',
+    firstName: 'Demo',
+    secondName: 'Tenant',
+    email: 'tenant@demo.com',
+    phone: '0700123123',
+    idNumber: '12345678',
+    gender: 'Female',
+    maritalStatus: 'Single',
+    rentalId: 'demo1',
+    roomId: 'r2',
+    rentalName: 'Demo Heights',
+    roomNumber: 'A102',
+    rent: 15000,
+    nextPaymentDue: '2024-08-01',
+    createdAt: new Date().toISOString(),
+    nextOfKinName: 'Demo Next of Kin',
+    nextOfKinPhone: '0700456456',
+    nextOfKinRelationship: 'Sibling',
+};
+
+const demoAnnouncements: Announcement[] = [
+    { id: '1', title: 'Water Maintenance Schedule', content: 'Please note that the water will be shut off for maintenance on Friday from 10 AM to 2 PM.', createdAt: new Date(Date.now() - 86400000).toISOString() },
+];
+
+
 export function ClientDashboard() {
-    const { user } = useAuth();
+    const { user, isDemoUser } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,8 +56,16 @@ export function ClientDashboard() {
 
     async function fetchDashboardData() {
         if (!user) return;
+        setLoading(true);
+
+        if (isDemoUser) {
+            setTenant(demoTenant);
+            setAnnouncements(demoAnnouncements);
+            setLoading(false);
+            return;
+        }
+
         try {
-            setLoading(true);
             const [tenantData, announcementsData] = await Promise.all([
                 getTenantById(user.uid),
                 getAnnouncements()
@@ -46,10 +81,15 @@ export function ClientDashboard() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [user]);
+    }, [user, isDemoUser]);
 
     const handleUpdateTenant = async (data: z.infer<typeof updateTenantSchema>) => {
         if (!user) return;
+        if (isDemoUser) {
+            toast({ title: 'Demo Mode', description: 'This feature is disabled in the demo.' });
+            setIsEditDialogOpen(false);
+            return;
+        }
         try {
             await updateTenant(user.uid, data);
             toast({

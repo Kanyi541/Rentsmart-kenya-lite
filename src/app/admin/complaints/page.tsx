@@ -20,8 +20,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '@/hooks/use-auth';
+
+// Demo Data
+const demoComplaints: Complaint[] = [
+    { id: '1', createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), tenantName: 'John Doe', rentalName: 'Demo Heights', roomNumber: 'A101', subject: 'Noise Complaint', description: 'Loud music from the apartment upstairs after 10 PM.', status: 'New', tenantId: '', rentalId: '', roomId: '' },
+    { id: '2', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), tenantName: 'Jane Smith', rentalName: 'Demo Heights', roomNumber: 'A102', subject: 'Leaky Faucet', description: 'The kitchen faucet has been dripping for three days.', status: 'Investigating', tenantId: '', rentalId: '', roomId: '' },
+    { id: '3', createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), tenantName: 'Peter Jones', rentalName: 'Sample Towers', roomNumber: 'G01', subject: 'Parking Spot Issue', description: 'Another vehicle is consistently parked in my assigned spot.', status: 'Resolved', tenantId: '', rentalId: '', roomId: '' },
+];
+
 
 export default function AdminComplaintsPage() {
+    const { isDemoUser } = useAuth();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,8 +39,13 @@ export default function AdminComplaintsPage() {
 
     useEffect(() => {
         async function fetchData() {
+            setLoading(true);
+            if (isDemoUser) {
+                setComplaints(demoComplaints);
+                setLoading(false);
+                return;
+            }
             try {
-                setLoading(true);
                 const fetchedData = await getAllComplaints();
                 setComplaints(fetchedData);
             } catch (error) {
@@ -45,7 +60,7 @@ export default function AdminComplaintsPage() {
             }
         }
         fetchData();
-    }, [toast]);
+    }, [isDemoUser, toast]);
 
     const filteredComplaints = useMemo(() => {
         if (!searchQuery) {
@@ -69,8 +84,12 @@ export default function AdminComplaintsPage() {
     }
 
     const handleStatusChange = (complaintId: string, newStatus: string) => {
+        if (isDemoUser) {
+            setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, status: newStatus as Complaint['status'] } : c));
+            toast({ title: "Demo Mode", description: `Status changed to ${newStatus}. This is not saved.` });
+            return;
+        }
         // In a real app, you would call a server action here to update the status in Firestore.
-        // For now, we'll just update the local state to simulate the change.
         setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, status: newStatus as Complaint['status'] } : c));
         toast({ title: "Status Updated", description: `Complaint status set to ${newStatus}.` });
     }

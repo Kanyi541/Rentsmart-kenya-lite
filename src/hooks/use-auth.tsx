@@ -15,6 +15,9 @@ const auth = getAuth(app);
 type UserRole = 'admin' | 'client' | null;
 type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName' | 'createdAt'> & { password: string };
 
+const DEMO_ADMIN_EMAIL = 'rentsmart@demo.com';
+const DEMO_TENANT_EMAIL = 'tenant@demo.com';
+
 interface AuthContextType {
     user: User | null;
     loading: boolean;
@@ -22,6 +25,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     userRole: UserRole;
+    isDemoUser: boolean;
     forgotPassword: (email: string) => Promise<void>;
 }
 
@@ -31,12 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<UserRole>(null);
+    const [isDemoUser, setIsDemoUser] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             if (user) {
+                 if (user.email === DEMO_ADMIN_EMAIL || user.email === DEMO_TENANT_EMAIL) {
+                    setIsDemoUser(true);
+                } else {
+                    setIsDemoUser(false);
+                }
+
                 // Check if user is in 'tenants' collection to determine role
                 const tenantDoc = await getDoc(doc(db, 'tenants', user.uid));
                 if (tenantDoc.exists()) {
@@ -47,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             } else {
                  setUserRole(null);
+                 setIsDemoUser(false);
             }
             setLoading(false);
         });
@@ -87,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register, userRole, forgotPassword }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, userRole, isDemoUser, forgotPassword }}>
             {children}
         </AuthContext.Provider>
     );

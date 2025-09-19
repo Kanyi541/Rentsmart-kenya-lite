@@ -20,17 +20,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { revalidatePath } from 'next/cache';
+import { useAuth } from '@/hooks/use-auth';
+
+// Demo Data
+const demoNotices: MoveOutNotice[] = [
+    { id: '1', createdAt: new Date(Date.now() - 86400000 * 4).toISOString(), tenantName: 'Alice Johnson', rentalName: 'Demo Heights', roomNumber: 'C301', moveOutDate: new Date(Date.now() + 86400000 * 25), noticeType: 'Standard', status: 'Pending', tenantId: '', rentalId: '', roomId: '' },
+    { id: '2', createdAt: new Date(Date.now() - 86400000 * 1).toISOString(), tenantName: 'Bob Williams', rentalName: 'Sample Towers', roomNumber: 'B105', moveOutDate: new Date(Date.now() + 86400000 * 5), noticeType: 'Immediate', status: 'Pending', tenantId: '', rentalId: '', roomId: '' },
+    { id: '3', createdAt: new Date(Date.now() - 86400000 * 15).toISOString(), tenantName: 'Charlie Brown', rentalName: 'Demo Heights', roomNumber: 'D402', moveOutDate: new Date(Date.now() - 86400000 * 2), noticeType: 'Standard', status: 'Processed', tenantId: '', rentalId: '', roomId: '' },
+];
+
 
 export default function AdminMoveOutPage() {
+    const { isDemoUser } = useAuth();
     const [notices, setNotices] = useState<MoveOutNotice[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
     async function fetchData() {
+        setLoading(true);
+        if (isDemoUser) {
+            setNotices(demoNotices);
+            setLoading(false);
+            return;
+        }
         try {
-            setLoading(true);
             const fetchedData = await getAllNotices();
             setNotices(fetchedData);
         } catch (error) {
@@ -47,7 +61,7 @@ export default function AdminMoveOutPage() {
 
     useEffect(() => {
         fetchData();
-    }, [toast]);
+    }, [isDemoUser, toast]);
 
     const filteredNotices = useMemo(() => {
         if (!searchQuery) {
@@ -73,11 +87,15 @@ export default function AdminMoveOutPage() {
     }
 
     const handleStatusChange = async (noticeId: string, newStatus: MoveOutNotice['status']) => {
+        if (isDemoUser) {
+            setNotices(prev => prev.map(n => n.id === noticeId ? { ...n, status: newStatus } : n));
+            toast({ title: 'Demo Mode', description: `Status changed to ${newStatus}. This is not saved.` });
+            return;
+        }
         try {
             await updateNoticeStatus(noticeId, newStatus);
             setNotices(prev => prev.map(n => n.id === noticeId ? { ...n, status: newStatus } : n));
             toast({ title: "Status Updated", description: `Notice status set to ${newStatus}.` });
-            // In a real app, you might trigger revalidation here if needed
         } catch (error) {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update notice status.' });
         }

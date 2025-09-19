@@ -19,6 +19,29 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+
+// Demo Data
+const demoGlobalStats = { totalRentals: 3, totalTenants: 45, totalRooms: 60, occupiedRooms: 45 };
+const demoRentals = [
+    { id: 'demo1', name: 'Demo Heights', location: 'Demo City', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [] },
+    { id: 'demo2', name: 'Sample Towers', location: 'Demo Suburb', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [] },
+];
+const demoRentalStats = {
+    'demo1': { tenantCount: 20, occupiedRooms: 20, totalRooms: 25 },
+    'demo2': { tenantCount: 25, occupiedRooms: 25, totalRooms: 35 },
+};
+const demoOccupancyDetails = {
+    'demo1': [
+        { id: 'r1', roomNumber: 'A101', roomType: '1 Bedroom', isOccupied: true, tenantName: 'John Doe', nextPaymentDue: '2024-08-01' },
+        { id: 'r2', roomNumber: 'A102', roomType: '1 Bedroom', isOccupied: true, tenantName: 'Jane Smith', nextPaymentDue: '2024-08-01' },
+        { id: 'r3', roomNumber: 'B201', roomType: 'Bedsitter', isOccupied: false, tenantName: null, nextPaymentDue: null },
+    ],
+    'demo2': [
+        { id: 'r4', roomNumber: 'G01', roomType: '2 Bedroom', isOccupied: true, tenantName: 'Peter Jones', nextPaymentDue: '2024-08-05' },
+    ]
+};
+
 
 interface DashboardStats {
     totalRentals: number;
@@ -36,6 +59,7 @@ interface RentalStats {
 const ROOMS_PER_PAGE = 5;
 
 function Home() {
+  const { isDemoUser } = useAuth();
   const [globalStats, setGlobalStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
@@ -51,6 +75,12 @@ function Home() {
   useEffect(() => {
     async function fetchInitialData() {
         setLoading(true);
+        if (isDemoUser) {
+            setGlobalStats(demoGlobalStats);
+            setRentals(demoRentals as Rental[]);
+            setLoading(false);
+            return;
+        }
         try {
             const [dashboardStats, fetchedRentals] = await Promise.all([
                 getDashboardStats(),
@@ -58,16 +88,14 @@ function Home() {
             ]);
             setGlobalStats(dashboardStats);
             setRentals(fetchedRentals);
-            // We are no longer selecting the first rental by default
         } catch (error) {
             console.error("Failed to fetch initial data", error);
-            // Handle error with a toast or message
         } finally {
             setLoading(false);
         }
     }
     fetchInitialData();
-  }, []);
+  }, [isDemoUser]);
 
   useEffect(() => {
       async function fetchRentalDetails() {
@@ -78,6 +106,12 @@ function Home() {
           };
           setRentalDetailsLoading(true);
           setCurrentPage(1); // Reset to first page on new selection
+          if (isDemoUser) {
+              setRentalStats(demoRentalStats[selectedRentalId as keyof typeof demoRentalStats]);
+              setOccupancyDetails(demoOccupancyDetails[selectedRentalId as keyof typeof demoOccupancyDetails] as OccupancyDetails[]);
+              setRentalDetailsLoading(false);
+              return;
+          }
           try {
               const [stats, details] = await Promise.all([
                 getStatsForRental(selectedRentalId),
@@ -94,7 +128,7 @@ function Home() {
           }
       }
       fetchRentalDetails();
-  }, [selectedRentalId]);
+  }, [selectedRentalId, isDemoUser]);
 
   const filteredOccupancyDetails = useMemo(() => {
     if (!searchQuery) {
