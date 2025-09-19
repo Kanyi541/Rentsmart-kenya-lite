@@ -3,19 +3,19 @@
     "heroImages": [
         {
             "seed": "1",
-            "hint": "apartment exterior"
+            "hint": "apartment building"
         },
         {
             "seed": "2",
-            "hint": "cozy bedroom"
+            "hint": "modern kitchen"
         },
         {
             "seed": "3",
-            "hint": "spacious living room"
+            "hint": "happy tenant"
         },
         {
             "seed": "4",
-            "hint": "house rental"
+            "hint": "house keys"
         }
     ]
 }
