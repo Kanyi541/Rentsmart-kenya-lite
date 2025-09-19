@@ -316,7 +316,7 @@ export function ClientRegisterForm() {
                             <p className="mb-3">Data is retained while you are an active tenant and archived upon termination for legal purposes.</p>
 
                             <h5 className="font-semibold mb-2">7. Contact Information</h5>
-                            <p>For questions, please contact Techivo Technologies at [Your Support Email] or [Your Business Address].</p>
+                            <p>For questions, please contact Techivo Technologies at elviskanyi8@gmail.com or +254111871428.</p>
                         </ScrollArea>
                         
                         <div className="flex items-center space-x-2">
