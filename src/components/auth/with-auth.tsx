@@ -10,7 +10,7 @@ const adminPaths = ['/', '/rentals', '/tenants', '/assignments', '/payments', '/
 const clientPaths = ['/clients'];
 
 // Define paths that don't require authentication
-const publicPaths = ['/admin/login', '/clients/login', '/clients/register'];
+const publicPaths = ['/admin/login', '/clients/login', '/clients/register', '/clients/forgot-password'];
 
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
@@ -23,26 +23,37 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
         return; // Wait until authentication status is determined
       }
 
-      const isPublicPath = publicPaths.includes(pathname);
+      const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/clients/forgot-password');
 
       if (!user) {
         // If user is not logged in and not on a public page, redirect to login.
         if (!isPublicPath) {
            // Heuristic to redirect to the most likely login page
-           if (adminPaths.some(p => pathname.startsWith(p))) {
+           if (adminPaths.some(p => pathname.startsWith(p) && p !== '/')) {
              router.replace('/admin/login');
-           } else {
+           } else if (clientPaths.some(p => pathname.startsWith(p))) {
              router.replace('/clients/login');
+           } else if (pathname === '/') {
+             // If they land on the root, they're likely an admin
+             router.replace('/admin/login');
            }
         }
         return;
       }
       
-      // If user is logged in, handle role-based access
-      if (userRole === 'admin' && clientPaths.some(p => pathname.startsWith(p))) {
-         router.replace('/');
-      } else if (userRole === 'client' && adminPaths.some(p => pathname.startsWith(p))) {
-         router.replace('/clients');
+      // If user is logged in, handle role-based access and redirection from public pages
+      if (userRole === 'admin') {
+        // If an admin lands on a client or public path, redirect to admin home.
+        if (clientPaths.some(p => pathname.startsWith(p)) || isPublicPath) {
+          router.replace('/');
+        }
+      } else if (userRole === 'client') {
+        // If a client lands on an admin or public path, redirect to client home.
+        // Check if current path is an admin path (and not just the root '/')
+        const isAdminPath = adminPaths.includes(pathname);
+        if (isAdminPath || isPublicPath) {
+          router.replace('/clients');
+        }
       }
 
     }, [user, loading, router, pathname, userRole]);
@@ -63,7 +74,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
     }
 
     // If not loading and no user, and it's a protected route, show loading spinner until redirect happens.
-    if (!user) {
+    if (!user && !publicPaths.includes(pathname)) {
          return (
             <div className="flex min-h-screen items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin" />

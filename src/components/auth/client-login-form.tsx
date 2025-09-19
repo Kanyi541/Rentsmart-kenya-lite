@@ -49,9 +49,10 @@ export function ClientLoginForm() {
             await login(data.email, data.password);
             toast({
                 title: 'Login Successful',
-                description: 'Welcome back!',
+                description: 'Welcome back! Redirecting to your dashboard.',
             });
-            router.push('/clients');
+            // The withAuth HOC will handle the redirect, but we can push here as a fallback
+            router.push('/clients'); 
         } catch (error) {
             console.error(error);
             toast({
