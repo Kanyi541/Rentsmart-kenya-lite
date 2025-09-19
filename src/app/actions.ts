@@ -89,11 +89,13 @@ export async function addTenant(data: unknown) {
     }
 }
 
+// This function simulates payment verification for testing purposes.
 // In a real application, you would verify the payment transaction reference with Paystack's API here
-// before creating payment records and assigning the room. This function simulates that process.
+// before creating payment records and assigning the room.
 async function verifyPayment(transactionRef: string) {
-    console.log(`Simulating verification for transaction ref: ${transactionRef}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(`SIMULATING payment verification for transaction ref: ${transactionRef}`);
+    console.log("The live payment process will be activated upon system purchase.");
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
     console.log(`Verification successful for ${transactionRef}`);
     return { success: true };
 }
@@ -108,8 +110,7 @@ export async function processPaymentAndAssign(data: unknown) {
     
     const { tenantId, rentalId, roomId, rentAmount, depositAmount, phone, email, transactionRef } = parsedData.data;
 
-    // In a production app, this is where you would call the Paystack API to verify the transaction `transactionRef`.
-    // We are simulating a successful verification here.
+    // This is a simulated verification for testing.
     const verification = await verifyPayment(transactionRef);
     if (!verification.success) {
         return { error: 'Payment verification failed. Please contact support.'}

@@ -1,7 +1,7 @@
 
 'use client'
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,14 +14,16 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { processPaymentAndAssign } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-declare global {
-    interface Window {
-        PaystackPop: any;
-    }
-}
+// The PaystackPop declaration is no longer needed for simulation
+// declare global {
+//     interface Window {
+//         PaystackPop: any;
+//     }
+// }
 
 const paymentFormSchema = z.object({
   phone: z.string().min(10, "A valid phone number is required e.g 254..."),
@@ -34,6 +36,8 @@ function NewPaymentPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
+    const [isSimulatingPayment, setIsSimulatingPayment] = useState(false);
+
 
     // Read details from URL
     const tenantId = searchParams.get('tenantId') || '';
@@ -48,8 +52,7 @@ function NewPaymentPage() {
     // Deposit is half the rent
     const deposit = rent / 2; 
     const total = rent + deposit;
-    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-
+    
     const form = useForm<PaymentFormValues>({
         resolver: zodResolver(paymentFormSchema),
         defaultValues: {
@@ -58,8 +61,6 @@ function NewPaymentPage() {
         }
     });
     
-    const { isSubmitting } = form.formState;
-
     if (!tenantId || !rentalId || !roomId) {
         return (
              <AppLayout>
@@ -75,66 +76,35 @@ function NewPaymentPage() {
             </AppLayout>
         )
     }
-
-    if (!paystackKey) {
-        return (
-             <AppLayout>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Configuration Error</CardTitle>
-                        <CardDescription>Paystack public key is not configured. Please contact support.</CardDescription>
-                    </CardHeader>
-                </Card>
-            </AppLayout>
-        )
-    }
     
-    const handlePayment = async (data: PaymentFormValues) => {
-        const handler = window.PaystackPop.setup({
-            key: paystackKey,
-            email: data.email,
-            amount: total * 100, // Paystack amount is in kobo (or cents)
-            currency: 'KES', // Add the currency here
-            phone: data.phone,
-            ref: '' + Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference.
-            onClose: function(){
-                toast({
-                    variant: 'destructive',
-                    title: 'Payment Incomplete',
-                    description: "You closed the payment popup. Please try again."
-                });
-            },
-            callback: function(response: any){
-                // This callback is where you would ideally verify the transaction on your server.
-                // For now, we will optimistically proceed.
-                form.control.handleSubmit(async () => {
-                     try {
-                        const result = await processPaymentAndAssign({
-                            tenantId,
-                            rentalId,
-                            roomId,
-                            rentAmount: rent,
-                            depositAmount: deposit,
-                            phone: data.phone,
-                            email: data.email,
-                            transactionRef: response.reference
-                        });
+    const handleSimulatedPayment = async (data: PaymentFormValues) => {
+        setIsSimulatingPayment(true);
+        const transactionRef = 'SIMULATED_REF_' + Math.floor((Math.random() * 1000000000) + 1);
 
-                        if (result?.error) {
-                            throw new Error(result.error);
-                        }
-                        // Redirect is handled by the server action
-                    } catch (error: any) {
-                         toast({
-                            variant: 'destructive',
-                            title: 'Assignment Failed',
-                            description: error.message || "An unexpected error occurred after payment."
-                        })
-                    }
-                })();
+        try {
+            const result = await processPaymentAndAssign({
+                tenantId,
+                rentalId,
+                roomId,
+                rentAmount: rent,
+                depositAmount: deposit,
+                phone: data.phone,
+                email: data.email,
+                transactionRef: transactionRef
+            });
+
+            if (result?.error) {
+                throw new Error(result.error);
             }
-        });
-        handler.openIframe();
+            // On success, the server action will redirect.
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: 'Assignment Failed',
+                description: error.message || "An unexpected error occurred during the simulation."
+            });
+            setIsSimulatingPayment(false);
+        }
     };
 
 
@@ -143,12 +113,21 @@ function NewPaymentPage() {
             <div className="flex justify-center items-start py-8">
                 <Card className="w-full max-w-2xl">
                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handlePayment)}>
+                        <form onSubmit={form.handleSubmit(handleSimulatedPayment)}>
                             <CardHeader>
                                 <CardTitle>Complete Room Assignment</CardTitle>
                                 <CardDescription>Confirm payment details to finalize the assignment for {tenantName}.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
+
+                                <Alert variant="destructive" className="bg-yellow-50 border-yellow-400 text-yellow-800">
+                                    <AlertTriangle className="h-4 w-4 !text-yellow-700" />
+                                    <AlertTitle className="font-bold">Demonstration Mode</AlertTitle>
+                                    <AlertDescription>
+                                        This is a simulated payment process for testing. No real money will be charged. The live payment feature will be activated upon system purchase.
+                                    </AlertDescription>
+                                </Alert>
+
                                 <div className="p-4 border rounded-lg bg-muted/50">
                                     <h3 className="font-semibold mb-2">Assignment Summary</h3>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
@@ -207,18 +186,18 @@ function NewPaymentPage() {
                                         )}
                                     />
                                 </div>
-                                {isSubmitting && (
+                                {isSimulatingPayment && (
                                      <div className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg text-center">
                                         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                                        <p className="font-semibold text-blue-700 dark:text-blue-300">Processing Payment...</p>
-                                        <p className="text-sm text-muted-foreground">Please wait while we confirm your payment of KSh {total.toLocaleString()}.</p>
+                                        <p className="font-semibold text-blue-700 dark:text-blue-300">Simulating Payment...</p>
+                                        <p className="text-sm text-muted-foreground">Please wait while we simulate the payment of KSh {total.toLocaleString()}.</p>
                                     </div>
                                 )}
                             </CardContent>
                             <CardFooter className="flex justify-between">
-                                <Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? 'Processing...' : `Pay KSh ${total.toLocaleString()}`}
+                                <Button variant="outline" onClick={() => router.back()} disabled={isSimulatingPayment}>Cancel</Button>
+                                <Button type="submit" disabled={isSimulatingPayment}>
+                                    {isSimulatingPayment ? 'Processing...' : `Simulate Payment of KSh ${total.toLocaleString()}`}
                                 </Button>
                             </CardFooter>
                         </form>
