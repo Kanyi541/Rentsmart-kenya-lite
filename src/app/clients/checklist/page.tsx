@@ -9,23 +9,23 @@ import { Label } from '@/components/ui/label';
 const moveInItems = [
     { id: 'mi-1', label: 'Inspect the unit for any damages and report them to the landlord.' },
     { id: 'mi-2', label: 'Take photos of the unit, including any existing damage.' },
-    { id'mi-3', label: 'Test all appliances to ensure they are in working order.' },
-    { id'mi-4', label: 'Check all smoke detectors and carbon monoxide detectors.' },
-    { id'mi-5', label: 'Confirm all keys have been received and test them.' },
-    { id'mi-6', label: 'Set up utilities (electricity, water, gas, internet).' },
-    { id'mi-7', label: 'Update your mailing address with the post office and other services.' },
-    { id'mi-8', label: 'Obtain a copy of the signed lease agreement.' },
+    { id: 'mi-3', label: 'Test all appliances to ensure they are in working order.' },
+    { id: 'mi-4', label: 'Check all smoke detectors and carbon monoxide detectors.' },
+    { id: 'mi-5', label: 'Confirm all keys have been received and test them.' },
+    { id: 'mi-6', label: 'Set up utilities (electricity, water, gas, internet).' },
+    { id: 'mi-7', label: 'Update your mailing address with the post office and other services.' },
+    { id: 'mi-8', label: 'Obtain a copy of the signed lease agreement.' },
 ];
 
 const moveOutItems = [
     { id: 'mo-1', label: 'Provide the landlord with a written notice of your intent to move out.' },
     { id: 'mo-2', label: 'Thoroughly clean the unit, including appliances.' },
-    { id'mo-3', label: 'Repair any damages beyond normal wear and tear.' },
-    { id'mo-4', label: 'Take photos of the unit to document its condition upon leaving.' },
-    { id'mo-5', label: 'Schedule a final walkthrough with the landlord.' },
-    { id'mo-6', label: 'Return all keys to the landlord.' },
-    { id'mo-7', label: 'Provide a forwarding address for your security deposit return.' },
-    { id'mo-8', label: 'Cancel or transfer utilities.' },
+    { id: 'mo-3', label: 'Repair any damages beyond normal wear and tear.' },
+    { id: 'mo-4', label: 'Take photos of the unit to document its condition upon leaving.' },
+    { id: 'mo-5', label: 'Schedule a final walkthrough with the landlord.' },
+    { id: 'mo-6', label: 'Return all keys to the landlord.' },
+    { id: 'mo-7', label: 'Provide a forwarding address for your security deposit return.' },
+    { id: 'mo-8', label: 'Cancel or transfer utilities.' },
 ];
 
 export default function ChecklistPage() {
