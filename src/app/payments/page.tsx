@@ -14,10 +14,19 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 const PAYMENTS_PER_PAGE = 5;
 
+// Demo Data
+const demoPayments: GroupedPayment[] = [
+    { id: 'sim_1', createdAt: new Date(Date.now() - 86400000).toISOString(), tenantName: 'John Doe', rentalName: 'Demo Heights', roomNumber: 'A101', rentPaid: 10000, depositPaid: 5000, totalPaid: 15000, status: 'Completed' },
+    { id: 'sim_2', createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), tenantName: 'Jane Smith', rentalName: 'Sample Towers', roomNumber: 'G01', rentPaid: 25000, depositPaid: 12500, totalPaid: 37500, status: 'Completed' },
+    { id: 'sim_3', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), tenantName: 'Demo Tenant', rentalName: 'Demo Heights', roomNumber: 'A102', rentPaid: 15000, depositPaid: 7500, totalPaid: 22500, status: 'Completed' },
+];
+
 export default function PaymentsPage() {
+    const { isDemoUser } = useAuth();
     const [payments, setPayments] = useState<GroupedPayment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -26,8 +35,14 @@ export default function PaymentsPage() {
 
     useEffect(() => {
         async function fetchData() {
+            setLoading(true);
+            if (isDemoUser) {
+                const storedPayments = localStorage.getItem('demoPayments');
+                setPayments(storedPayments ? JSON.parse(storedPayments) : demoPayments);
+                setLoading(false);
+                return;
+            }
             try {
-                setLoading(true);
                 const fetchedPayments = await getGroupedPayments();
                 setPayments(fetchedPayments);
             } catch (error) {
@@ -42,7 +57,7 @@ export default function PaymentsPage() {
             }
         }
         fetchData();
-    }, [toast]);
+    }, [isDemoUser, toast]);
 
     const filteredPayments = useMemo(() => {
         if (!searchQuery) {
