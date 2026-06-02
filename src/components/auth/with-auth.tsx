@@ -1,18 +1,15 @@
-
-
 'use client'
 
 import { useAuth } from '@/hooks/use-auth';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, ComponentType } from 'react';
-import { Loader2 } from 'lucide-react';
 import { LoadingAnimation } from '../loading';
 
 const adminPaths = ['/admin', '/rentals', '/tenants', '/assignments', '/payments', '/reports'];
 const clientPaths = ['/clients'];
 
 // Define paths that don't require authentication
-const publicPaths = ['/', '/demo', '/admin/login', '/clients/login', '/clients/register', '/clients/forgot-password'];
+const publicPaths = ['/', '/demo', '/admin/login', '/admin/register', '/clients/login', '/clients/register', '/clients/forgot-password'];
 
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
@@ -44,7 +41,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       }
       
       // If user is logged in, handle role-based access and redirection from public pages
-      const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
+      const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/admin/register') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
 
       if (userRole === 'admin') {
         // If an admin lands on a client path or a public auth path (but not the root landing page), redirect to admin home.
@@ -73,7 +70,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       );
     }
     
-    const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
+    const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/admin/register') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
     // If a logged-in user is on a page like login/register, show a loader while redirecting
     if (user && publicButNotRoot) {
       return (

@@ -1,15 +1,13 @@
-
 'use client'
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
-import { Home, Check } from 'lucide-react'
+import { Home, Check, Menu } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { heroImages } from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 export default function LandingPage() {
@@ -43,6 +41,8 @@ export default function LandingPage() {
                         <Home className="h-6 w-6 text-primary" />
                         <span>RentSmart</span>
                     </Link>
+                    <Link href="/admin/login" className="text-muted-foreground hover:text-primary">Admin Login</Link>
+                    <Link href="/clients/login" className="text-muted-foreground hover:text-primary">Tenant Login</Link>
                 </nav>
             </SheetContent>
         </Sheet>
@@ -126,24 +126,26 @@ export default function LandingPage() {
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
+                      1 Property Limit
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
                       Core Property Tools
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
                       Tenant Database
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
-                      Standard Reports
-                    </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Choose Plan</Button>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/register?plan=Starter">Choose Plan</Link>
+                    </Button>
                 </CardFooter>
               </Card>
 
-              <Card className="border-primary shadow-lg">
+              <Card className="border-primary shadow-lg scale-105">
                  <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Growth</CardTitle>
                    <div className="flex items-baseline gap-2">
@@ -156,24 +158,22 @@ export default function LandingPage() {
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2 font-medium text-foreground">
                       <Check className="h-4 w-4 text-primary" />
-                      All Starter Features
+                      5 Properties Limit
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      In-Depth Analytics
+                      Announcements & Complaints
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Automated Email Alerts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
-                      Secure Document Hosting
+                      Move-out Management
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Choose Plan</Button>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/register?plan=Growth">Choose Plan</Link>
+                    </Button>
                 </CardFooter>
               </Card>
 
@@ -190,24 +190,22 @@ export default function LandingPage() {
                   <ul className="grid gap-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2 font-medium text-foreground">
                       <Check className="h-4 w-4 text-primary" />
-                      All Growth Features
+                      Unlimited Properties
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Full API Access
+                      Priority Support
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" />
-                      Dedicated Support
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
-                      White-Label Options
+                      Full Feature Access
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full">Choose Plan</Button>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/register?plan=Scale">Choose Plan</Link>
+                    </Button>
                 </CardFooter>
               </Card>
             </div>
