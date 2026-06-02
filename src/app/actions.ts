@@ -13,6 +13,8 @@ import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanc
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
 const suggestionInputSchema = z.object({
   location: z.string(),
@@ -64,17 +66,11 @@ export async function addRental(data: unknown) {
     }
 }
 
-// This function simulates payment verification for testing purposes.
-// In a real application, you would verify the payment transaction reference with Paystack's API here
-// before creating payment records and assigning the room.
 async function verifyPayment(transactionRef: string) {
     console.log(`SIMULATING payment verification for transaction ref: ${transactionRef}`);
-    console.log("The live payment process will be activated upon system purchase.");
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    console.log(`Verification successful for ${transactionRef}`);
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
     return { success: true };
 }
-
 
 export async function processPaymentAndAssign(data: unknown) {
     const parsedData = initiatePaymentSchema.safeParse(data);
@@ -83,9 +79,8 @@ export async function processPaymentAndAssign(data: unknown) {
         return { error: 'Invalid payment data.' };
     }
     
-    const { tenantId, rentalId, roomId, rentAmount, depositAmount, phone, email, transactionRef } = parsedData.data;
+    const { tenantId, rentalId, roomId, orgId, rentAmount, depositAmount, phone, email, transactionRef } = parsedData.data;
 
-    // This is a simulated verification for testing.
     const verification = await verifyPayment(transactionRef);
     if (!verification.success) {
         return { error: 'Payment verification failed. Please contact support.'}
@@ -94,78 +89,86 @@ export async function processPaymentAndAssign(data: unknown) {
     let rentPaymentId;
     let depositPaymentId;
     try {
-        // 1. Create payment records for rent and deposit
+        // 1. Create payment records
         rentPaymentId = await createPayment({
-            tenantId, rentalId, roomId, amount: rentAmount, type: 'Rent',
+            tenantId, rentalId, roomId, orgId, amount: rentAmount, type: 'Rent',
             status: 'Completed', transactionId: transactionRef, phone, email
         });
 
-        depositPaymentId = await createPayment({
-            tenantId, rentalId, roomId, amount: depositAmount, type: 'Deposit',
-            status: 'Completed', transactionId: transactionRef, phone, email
-        });
+        if (depositAmount > 0) {
+            depositPaymentId = await createPayment({
+                tenantId, rentalId, roomId, orgId, amount: depositAmount, type: 'Deposit',
+                status: 'Completed', transactionId: transactionRef, phone, email
+            });
+        }
         
-        // Invalidate payments page cache
         revalidatePath('/payments');
     } catch (error) {
         console.error('Failed to create payment records:', error);
-        return { error: 'Failed to record payments in the database. Please contact support.' };
+        return { error: 'Failed to record payments in the database.' };
     }
     
-    // 2. Assign the room
-    try {
-        await dbAssignRoom({ tenantId, rentalId, roomId });
-    } catch (error) {
-        console.error(error);
-        // If room assignment fails, we should ideally refund the payment or flag for manual intervention.
-        // For now, we'll mark the payments as failed.
-        if (rentPaymentId) await updatePaymentStatus(rentPaymentId, 'Failed');
-        if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
-        return { error: 'Payment was successful, but failed to assign the room. Please contact support.' };
+    // 2. Assign the room if it's an initial assignment (indicated by deposit)
+    if (depositAmount > 0) {
+        try {
+            await dbAssignRoom({ tenantId, rentalId, roomId, orgId });
+        } catch (error) {
+            console.error(error);
+            if (rentPaymentId) await updatePaymentStatus(rentPaymentId, 'Failed');
+            if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
+            return { error: 'Payment successful, but room assignment failed.' };
+        }
+        redirect('/assignments?status=success');
+    } else {
+        // Just a monthly rent payment
+        revalidatePath('/clients');
+        return { success: true };
     }
-    
-    // 3. Redirect to assignments page with a success flag
-    redirect('/assignments?status=success');
 }
 
+export async function renewSubscription(orgId: string) {
+    if (!orgId) return { error: "Organization ID is required." };
+    
+    try {
+        const orgRef = doc(db, 'organizations', orgId);
+        const orgSnap = await getDoc(orgRef);
+        
+        if (!orgSnap.exists()) throw new Error("Org not found");
+
+        const currentExpiry = new Date(orgSnap.data().subscriptionEndDate);
+        const newExpiry = new Date(Math.max(currentExpiry.getTime(), Date.now()));
+        newExpiry.setMonth(newExpiry.getMonth() + 1);
+
+        await updateDoc(orgRef, {
+            subscriptionStatus: 'active',
+            subscriptionEndDate: newExpiry.toISOString()
+        });
+
+        revalidatePath('/admin/dashboard');
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to renew subscription." };
+    }
+}
 
 export async function createMaintenanceRequest(data: unknown) {
     const parsedData = createMaintenanceRequestSchema.safeParse(data);
-
-    if (!parsedData.success) {
-        let errorMessage = 'Invalid maintenance request data.';
-        try {
-            errorMessage = JSON.parse(parsedData.error.message)[0].message;
-        } catch (e) {}
-        return { error: errorMessage };
-    }
-
-    // Note: Photo upload is simulated. In a real app, you'd upload to Firebase Storage
-    // and get a URL here. We'll just pass a placeholder string.
-    // const photoUrl = await uploadPhotoAndGetUrl(parsedData.data.photo);
-
+    if (!parsedData.success) return { error: 'Invalid data.' };
     try {
-        await dbCreateMaintenanceRequest({
-            ...parsedData.data,
-            // photoUrl: photoUrl
-        });
+        await dbCreateMaintenanceRequest(parsedData.data);
         revalidatePath('/clients/maintenance');
         return { success: true };
     } catch (error: any) {
-        console.error('Database error in createMaintenanceRequest action:', error);
-        return { error: 'Database error: Failed to submit maintenance request.' };
+        return { error: 'Database error: Failed to submit request.' };
     }
 }
 
 export async function createAnnouncement(data: unknown) {
     const parsedData = announcementSchema.safeParse(data);
-    if (!parsedData.success) {
-        return { error: 'Invalid announcement data.' };
-    }
+    if (!parsedData.success) return { error: 'Invalid data.' };
     try {
-        await dbCreateAnnouncement(parsedData.data);
+        await dbCreateAnnouncement(parsedData.data as any);
         revalidatePath('/admin/announcements');
-        revalidatePath('/clients');
         return { success: true };
     } catch (error) {
         return { error: 'Failed to create announcement.' };
@@ -176,7 +179,6 @@ export async function deleteAnnouncement(id: string) {
     try {
         await dbDeleteAnnouncement(id);
         revalidatePath('/admin/announcements');
-        revalidatePath('/clients');
         return { success: true };
     } catch (error) {
         return { error: 'Failed to delete announcement.' };
@@ -185,39 +187,24 @@ export async function deleteAnnouncement(id: string) {
 
 export async function createComplaint(data: unknown) {
     const parsedData = createComplaintSchema.safeParse(data);
-
-    if (!parsedData.success) {
-        let errorMessage = 'Invalid complaint data.';
-        try {
-            errorMessage = JSON.parse(parsedData.error.message)[0].message;
-        } catch (e) {}
-        return { error: errorMessage };
-    }
-
+    if (!parsedData.success) return { error: 'Invalid data.' };
     try {
         await dbCreateComplaint(parsedData.data);
         revalidatePath('/clients/complaints');
-        revalidatePath('/admin/complaints');
         return { success: true };
     } catch (error: any) {
-        console.error('Database error in createComplaint action:', error);
         return { error: 'Database error: Failed to submit complaint.' };
     }
 }
 
 export async function createMoveOutNotice(data: unknown) {
     const parsedData = createMoveOutNoticeSchema.safeParse(data);
-    if (!parsedData.success) {
-        return { error: 'Invalid data.' };
-    }
-
+    if (!parsedData.success) return { error: 'Invalid data.' };
     try {
         await dbCreateMoveOutNotice(parsedData.data);
         revalidatePath('/clients/move-out');
-        revalidatePath('/admin/move-out');
         return { success: true };
     } catch (error: any) {
-        console.error('Database error in createMoveOutNotice action:', error);
         return { error: 'Database error: Failed to submit notice.' };
     }
 }

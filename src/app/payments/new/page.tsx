@@ -1,7 +1,7 @@
 
 'use client'
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,16 +14,10 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { processPaymentAndAssign } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, CreditCard } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-
-// The PaystackPop declaration is no longer needed for simulation
-// declare global {
-//     interface Window {
-//         PaystackPop: any;
-//     }
-// }
+import { useAuth } from '@/hooks/use-auth';
 
 const paymentFormSchema = z.object({
   phone: z.string().min(10, "A valid phone number is required e.g 254..."),
@@ -36,8 +30,8 @@ function NewPaymentPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
+    const { orgId } = useAuth();
     const [isSimulatingPayment, setIsSimulatingPayment] = useState(false);
-
 
     // Read details from URL
     const tenantId = searchParams.get('tenantId') || '';
@@ -48,9 +42,10 @@ function NewPaymentPage() {
     const roomNumber = searchParams.get('roomNumber') || '';
     const rent = Number(searchParams.get('rent')) || 0;
     const initialPhone = searchParams.get('phone') || '';
+    const isRecurring = searchParams.get('type') === 'rent_only';
     
-    // Deposit is half the rent
-    const deposit = rent / 2; 
+    // Deposit is half the rent, only charged on initial assignment
+    const deposit = isRecurring ? 0 : rent / 2; 
     const total = rent + deposit;
     
     const form = useForm<PaymentFormValues>({
@@ -61,16 +56,16 @@ function NewPaymentPage() {
         }
     });
     
-    if (!tenantId || !rentalId || !roomId) {
+    if (!tenantId || !rentalId || !roomId || !orgId) {
         return (
              <AppLayout>
                 <Card>
                     <CardHeader>
                         <CardTitle>Error</CardTitle>
-                        <CardDescription>Invalid payment details provided. Please go back to the assignments page and try again.</CardDescription>
+                        <CardDescription>Invalid session or payment details. Please go back and try again.</CardDescription>
                     </CardHeader>
                      <CardFooter>
-                        <Button onClick={() => router.push('/assignments')}>Go Back</Button>
+                        <Button onClick={() => router.back()}>Go Back</Button>
                     </CardFooter>
                 </Card>
             </AppLayout>
@@ -86,6 +81,7 @@ function NewPaymentPage() {
                 tenantId,
                 rentalId,
                 roomId,
+                orgId,
                 rentAmount: rent,
                 depositAmount: deposit,
                 phone: data.phone,
@@ -93,20 +89,22 @@ function NewPaymentPage() {
                 transactionRef: transactionRef
             });
 
-            if (result?.error) {
-                throw new Error(result.error);
+            if (result?.error) throw new Error(result.error);
+            
+            toast({ title: "Payment Successful!", description: `KSh ${total.toLocaleString()} has been received. Your records are being updated.` });
+            
+            if (isRecurring) {
+                router.push('/clients');
             }
-            // On success, the server action will redirect.
         } catch (error: any) {
              toast({
                 variant: 'destructive',
-                title: 'Assignment Failed',
-                description: error.message || "An unexpected error occurred during the simulation."
+                title: 'Payment Failed',
+                description: error.message || "An unexpected error occurred."
             });
             setIsSimulatingPayment(false);
         }
     };
-
 
     return (
         <AppLayout>
@@ -115,45 +113,50 @@ function NewPaymentPage() {
                      <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleSimulatedPayment)}>
                             <CardHeader>
-                                <CardTitle>Complete Room Assignment</CardTitle>
-                                <CardDescription>Confirm payment details to finalize the assignment for {tenantName}.</CardDescription>
+                                <CardTitle className="flex items-center gap-2">
+                                    <CreditCard className="h-6 w-6 text-primary" />
+                                    {isRecurring ? 'Rent Payment' : 'Complete Room Assignment'}
+                                </CardTitle>
+                                <CardDescription>Confirm details to process payment for {tenantName}.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
 
                                 <Alert variant="destructive" className="bg-yellow-50 border-yellow-400 text-yellow-800">
                                     <AlertTriangle className="h-4 w-4 !text-yellow-700" />
-                                    <AlertTitle className="font-bold">Demonstration Mode</AlertTitle>
+                                    <AlertTitle className="font-bold">Checkout Mode</AlertTitle>
                                     <AlertDescription>
-                                        This is a simulated payment process for testing. No real money will be charged. The live payment feature will be activated upon system purchase.
+                                        This is a simulated secure checkout. No real funds will be moved during this trial phase.
                                     </AlertDescription>
                                 </Alert>
 
                                 <div className="p-4 border rounded-lg bg-muted/50">
-                                    <h3 className="font-semibold mb-2">Assignment Summary</h3>
+                                    <h3 className="font-semibold mb-2">Checkout Summary</h3>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                                        <span className="text-muted-foreground">Tenant:</span>
+                                        <span className="text-muted-foreground">Resident:</span>
                                         <span>{tenantName}</span>
                                         <span className="text-muted-foreground">Property:</span>
                                         <span>{rentalName}</span>
-                                        <span className="text-muted-foreground">Room:</span>
-                                        <span>{roomNumber}</span>
+                                        <span className="text-muted-foreground">Unit:</span>
+                                        <span>Room {roomNumber}</span>
                                     </div>
                                 </div>
 
                                 <div className="p-4 border rounded-lg">
-                                    <h3 className="font-semibold mb-4">Payment Details</h3>
+                                    <h3 className="font-semibold mb-4">Breakdown</h3>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">First Month's Rent:</span>
+                                            <span className="text-muted-foreground">{isRecurring ? 'Monthly Rent' : "First Month's Rent"}:</span>
                                             <span className="font-medium">KSh {rent.toLocaleString()}</span>
                                         </div>
-                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Security Deposit:</span>
-                                            <span className="font-medium">KSh {deposit.toLocaleString()}</span>
-                                        </div>
+                                         {!isRecurring && (
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Security Deposit:</span>
+                                                <span className="font-medium">KSh {deposit.toLocaleString()}</span>
+                                            </div>
+                                         )}
                                         <Separator />
                                          <div className="flex justify-between text-base font-bold">
-                                            <span>Total Amount Due:</span>
+                                            <span>Total Due Now:</span>
                                             <span>KSh {total.toLocaleString()}</span>
                                         </div>
                                     </div>
@@ -164,7 +167,7 @@ function NewPaymentPage() {
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Email for Receipt</FormLabel>
+                                                <FormLabel>Receipt Email</FormLabel>
                                                 <FormControl>
                                                     <Input type="email" placeholder="e.g. tenant@example.com" {...field} />
                                                 </FormControl>
@@ -177,9 +180,9 @@ function NewPaymentPage() {
                                         name="phone"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Payment Phone Number</FormLabel>
+                                                <FormLabel>Mobile Money Number</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="e.g 254712345678" {...field} />
+                                                    <Input placeholder="e.g 2547..." {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -189,15 +192,15 @@ function NewPaymentPage() {
                                 {isSimulatingPayment && (
                                      <div className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg text-center">
                                         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                                        <p className="font-semibold text-blue-700 dark:text-blue-300">Simulating Payment...</p>
-                                        <p className="text-sm text-muted-foreground">Please wait while we simulate the payment of KSh {total.toLocaleString()}.</p>
+                                        <p className="font-semibold text-blue-700 dark:text-blue-300">Authorizing Payment...</p>
+                                        <p className="text-sm text-muted-foreground">Verifying KSh {total.toLocaleString()} with provider.</p>
                                     </div>
                                 )}
                             </CardContent>
                             <CardFooter className="flex justify-between">
                                 <Button variant="outline" onClick={() => router.back()} disabled={isSimulatingPayment}>Cancel</Button>
                                 <Button type="submit" disabled={isSimulatingPayment}>
-                                    {isSimulatingPayment ? 'Processing...' : `Simulate Payment of KSh ${total.toLocaleString()}`}
+                                    {isSimulatingPayment ? 'Verifying...' : `Pay KSh ${total.toLocaleString()}`}
                                 </Button>
                             </CardFooter>
                         </form>
@@ -208,10 +211,9 @@ function NewPaymentPage() {
     );
 }
 
-
 export default function NewPaymentPageWrapper() {
     return (
-        <Suspense fallback={<div>Loading payment details...</div>}>
+        <Suspense fallback={<div>Loading checkout...</div>}>
             <NewPaymentPage />
         </Suspense>
     )

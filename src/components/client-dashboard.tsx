@@ -22,6 +22,7 @@ import { getAnnouncements } from '@/lib/api/announcements';
 // Demo Data
 const demoTenant: Tenant = {
     id: 'demotenant',
+    orgId: 'demo_org',
     firstName: 'Demo',
     secondName: 'Tenant',
     email: 'tenant@demo.com',
@@ -42,12 +43,12 @@ const demoTenant: Tenant = {
 };
 
 const demoAnnouncements: Announcement[] = [
-    { id: '1', title: 'Water Maintenance Schedule', content: 'Please note that the water will be shut off for maintenance on Friday from 10 AM to 2 PM.', createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: '1', orgId: 'demo_org', title: 'Water Maintenance Schedule', content: 'Please note that the water will be shut off for maintenance on Friday from 10 AM to 2 PM.', createdAt: new Date(Date.now() - 86400000).toISOString() },
 ];
 
 
 export function ClientDashboard() {
-    const { user, isDemoUser } = useAuth();
+    const { user, isDemoUser, orgId } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,7 +56,7 @@ export function ClientDashboard() {
     const { toast } = useToast();
 
     async function fetchDashboardData() {
-        if (!user) return;
+        if (!user || !orgId) return;
         setLoading(true);
 
         if (isDemoUser) {
@@ -70,7 +71,7 @@ export function ClientDashboard() {
         try {
             const [tenantData, announcementsData] = await Promise.all([
                 getTenantById(user.uid),
-                getAnnouncements()
+                getAnnouncements(orgId)
             ]);
             setTenant(tenantData);
             setAnnouncements(announcementsData);
@@ -83,7 +84,7 @@ export function ClientDashboard() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [user, isDemoUser]);
+    }, [user, isDemoUser, orgId]);
 
     const handleUpdateTenant = async (data: z.infer<typeof updateTenantSchema>) => {
         if (!user) return;
@@ -102,7 +103,7 @@ export function ClientDashboard() {
                 description: 'Your personal information has been successfully updated.'
             });
             setIsEditDialogOpen(false);
-            await fetchDashboardData(); // Re-fetch data to show the update
+            await fetchDashboardData(); 
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -121,14 +122,13 @@ export function ClientDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>Error</CardTitle>
-                    <CardDescription>Could not load tenant details. It's possible your registration is incomplete. Please contact support.</CardDescription>
+                    <CardDescription>Could not load tenant details. Please contact support.</CardDescription>
                 </CardHeader>
             </Card>
         )
     }
 
     const isPaymentDue = tenant.nextPaymentDue && new Date(tenant.nextPaymentDue) < new Date();
-    const deposit = tenant.rent ? tenant.rent / 2 : 0;
     
     return (
         <div className="space-y-6">
@@ -198,20 +198,25 @@ export function ClientDashboard() {
                         </CardHeader>
                         <CardContent>
                             {tenant.nextPaymentDue ? (
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-muted/50">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-muted/50 border border-primary/20">
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Next Payment Due:</p>
+                                        <p className="text-sm text-muted-foreground font-medium">Next Payment Due:</p>
                                         <div className="text-2xl font-bold flex items-center gap-2">
                                             {format(new Date(tenant.nextPaymentDue), 'PPP')}
                                             {isPaymentDue && <Badge variant="destructive">Overdue</Badge>}
                                         </div>
                                     </div>
-                                     <Button asChild size="lg">
-                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}`}>
+                                     <Button asChild size="lg" className="shadow-lg hover:scale-105 transition-transform">
+                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}&type=rent_only`}>
                                             Pay KSh {tenant.rent?.toLocaleString()} Now
                                         </Link>
                                     </Button>
                                 </div>
+                            ) : tenant.rentalId ? (
+                                 <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                                     <p className="text-muted-foreground">No payment due at this time.</p>
+                                     <Badge variant="outline">Account Clear</Badge>
+                                 </div>
                             ) : (
                                  <p className="text-center text-muted-foreground py-4">No payment information available. This will update once you are assigned a room.</p>
                             )}
@@ -250,7 +255,7 @@ export function ClientDashboard() {
                              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" className="w-full">
-                                        <Pencil className="mr-2" />
+                                        <Pencil className="mr-2 h-4 w-4" />
                                         Edit Details
                                     </Button>
                                 </DialogTrigger>
@@ -297,15 +302,21 @@ export function ClientDashboard() {
             </div>
              <Card>
                 <CardHeader>
-                    <CardTitle>Submit a Complaint or Request</CardTitle>
-                    <CardDescription>Having an issue? Let us know here.</CardDescription>
+                    <CardTitle>Need Support?</CardTitle>
+                    <CardDescription>Having a problem with your unit or have a concern?</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center text-center p-6">
-                    <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">For any maintenance issues, repairs, or service requests, please use our dedicated maintenance page.</p>
-                     <Button asChild>
-                        <Link href="/clients/maintenance">Go to Maintenance Page</Link>
-                    </Button>
+                <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4 p-6">
+                    <div className="text-center sm:text-left flex-1">
+                        <p className="text-sm text-muted-foreground mb-4">Submit maintenance requests or complaints directly to the property manager through our portal.</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                         <Button asChild variant="outline">
+                            <Link href="/clients/maintenance">Maintenance Page</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/clients/complaints">Submit Complaint</Link>
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -346,5 +357,3 @@ function DashboardSkeleton() {
         </div>
     )
 }
-
-    

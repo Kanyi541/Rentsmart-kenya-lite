@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import withAuth from '@/components/auth/with-auth';
@@ -20,6 +20,8 @@ import { format, differenceInDays } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { renewSubscription } from '@/app/actions';
 
 interface DashboardStats {
     totalRentals: number;
@@ -47,6 +49,8 @@ function Home() {
   const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRenewing, setIsRenewing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -95,6 +99,20 @@ function Home() {
       fetchRentalDetails();
   }, [selectedRentalId]);
 
+  const handleRenew = async () => {
+    if (!orgId) return;
+    setIsRenewing(true);
+    try {
+        const res = await renewSubscription(orgId);
+        if (res.error) throw new Error(res.error);
+        toast({ title: "Subscription Renewed!", description: "Your organization's plan has been extended by 1 month." });
+    } catch (error) {
+        toast({ variant: 'destructive', title: "Renewal Failed", description: "Could not process renewal payment simulation." });
+    } finally {
+        setIsRenewing(false);
+    }
+  };
+
   const filteredOccupancyDetails = useMemo(() => {
     if (!searchQuery) return occupancyDetails;
     return occupancyDetails.filter(room => 
@@ -107,9 +125,6 @@ function Home() {
     const startIndex = (currentPage - 1) * ROOMS_PER_PAGE;
     return filteredOccupancyDetails.slice(startIndex, startIndex + ROOMS_PER_PAGE);
   }, [filteredOccupancyDetails, currentPage]);
-
-  const totalPages = Math.ceil(filteredOccupancyDetails.length / ROOMS_PER_PAGE);
-  const selectedRental = rentals.find(r => r.id === selectedRentalId);
 
   const daysToExpiry = organization?.subscriptionEndDate 
     ? differenceInDays(new Date(organization.subscriptionEndDate), new Date())
@@ -143,8 +158,8 @@ function Home() {
                             : `Your ${organization?.plan} plan expires in ${daysToExpiry} days. Renew now to avoid service interruption.`
                         }
                     </span>
-                    <Button size="sm" variant={daysToExpiry <= 0 ? "default" : "outline"} className="w-fit">
-                        Renew Plan <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button size="sm" variant={daysToExpiry <= 0 ? "default" : "outline"} className="w-fit" onClick={handleRenew} disabled={isRenewing}>
+                        {isRenewing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Renew Plan Now"} <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </AlertDescription>
             </Alert>
@@ -182,11 +197,13 @@ function Home() {
             </Card>
             <Card>
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Next Payment</CardTitle>
+                    <CardTitle className="text-sm font-medium">Next Renewal</CardTitle>
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">---</div>
+                    <div className="text-2xl font-bold">
+                        {organization?.subscriptionEndDate ? format(new Date(organization.subscriptionEndDate), 'MMM d, yyyy') : '---'}
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -215,7 +232,7 @@ function Home() {
             {selectedRentalId && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
+                        <CardTitle>{rentals.find(r => r.id === selectedRentalId)?.name || "Occupancy Details"}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4">
