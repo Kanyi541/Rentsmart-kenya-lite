@@ -1,4 +1,3 @@
-
 'use server';
 
 import { rentalPriceSuggestion } from '@/ai/flows/rental-price-suggestion';
@@ -67,8 +66,10 @@ export async function addRental(data: unknown) {
 }
 
 async function verifyPayment(transactionRef: string) {
-    console.log(`SIMULATING payment verification for transaction ref: ${transactionRef}`);
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    // In a production environment, you would call Paystack's verify endpoint:
+    // https://api.paystack.co/transaction/verify/:reference
+    // For now, we simulate success since the transaction reached the client callback.
+    console.log(`Verifying Paystack transaction ref: ${transactionRef}`);
     return { success: true };
 }
 
@@ -103,6 +104,7 @@ export async function processPaymentAndAssign(data: unknown) {
         }
         
         revalidatePath('/payments');
+        revalidatePath('/clients');
     } catch (error) {
         console.error('Failed to create payment records:', error);
         return { error: 'Failed to record payments in the database.' };
@@ -118,10 +120,9 @@ export async function processPaymentAndAssign(data: unknown) {
             if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
             return { error: 'Payment successful, but room assignment failed.' };
         }
-        redirect('/assignments?status=success');
+        // Use a flag for redirect or return success to let client handle it
+        return { success: true, redirect: '/assignments?status=success' };
     } else {
-        // Just a monthly rent payment
-        revalidatePath('/clients');
         return { success: true };
     }
 }

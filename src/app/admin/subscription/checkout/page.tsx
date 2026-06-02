@@ -1,20 +1,21 @@
-
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/app-layout';
-import { CreditCard, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { activateSubscription } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
 import withAuth from '@/components/auth/with-auth';
 
+declare const PaystackPop: any;
+
 function SubscriptionCheckoutPage() {
-    const { organization, orgId, logout } = useAuth();
+    const { organization, user, orgId, logout } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -28,31 +29,58 @@ function SubscriptionCheckoutPage() {
     const currentPlan = organization?.plan || 'Starter';
     const price = planPrices[currentPlan as keyof typeof planPrices];
 
-    const handlePayment = async () => {
-        if (!orgId) return;
-        setIsProcessing(true);
+    const handlePaystackPayment = () => {
+        if (!user?.email || !orgId) return;
         
-        // Simulate external payment gateway processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        setIsProcessing(true);
 
-        try {
-            const res = await activateSubscription(orgId);
-            if (res.error) throw new Error(res.error);
+        const handler = PaystackPop.setup({
+            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_your_public_key_here',
+            email: user.email,
+            amount: price * 100, // Paystack amount is in kobo/cents
+            currency: 'KES',
+            metadata: {
+                orgId: orgId,
+                plan: currentPlan,
+                custom_fields: [
+                    {
+                        display_name: "Organization Name",
+                        variable_name: "org_name",
+                        value: organization?.name
+                    }
+                ]
+            },
+            callback: async (response: any) => {
+                // response.reference contains the transaction ID
+                try {
+                    const res = await activateSubscription(orgId);
+                    if (res.error) throw new Error(res.error);
 
-            toast({
-                title: "Payment Successful!",
-                description: `Welcome to RentSmart! Your ${currentPlan} plan is now active.`,
-            });
-            router.push('/admin/dashboard');
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: "Payment Failed",
-                description: "We couldn't process your subscription payment. Please try again."
-            });
-        } finally {
-            setIsProcessing(false);
-        }
+                    toast({
+                        title: "Payment Successful!",
+                        description: `Welcome to RentSmart! Your ${currentPlan} plan is now active. Ref: ${response.reference}`,
+                    });
+                    router.push('/admin/dashboard');
+                } catch (error) {
+                    toast({
+                        variant: 'destructive',
+                        title: "Activation Failed",
+                        description: "Payment was successful but we couldn't activate your account. Please contact support."
+                    });
+                } finally {
+                    setIsProcessing(false);
+                }
+            },
+            onClose: () => {
+                setIsProcessing(false);
+                toast({
+                    title: "Payment Cancelled",
+                    description: "You closed the payment window."
+                });
+            }
+        });
+
+        handler.openIframe();
     };
 
     if (!organization) return null;
@@ -62,61 +90,57 @@ function SubscriptionCheckoutPage() {
             <div className="flex justify-center items-center py-12">
                 <Card className="w-full max-w-lg shadow-xl border-t-4 border-primary">
                     <CardHeader className="text-center">
-                        <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                            <CreditCard className="h-8 w-8 text-primary" />
+                        <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-primary">
+                            <Zap className="h-8 w-8 fill-current" />
                         </div>
-                        <CardTitle className="text-2xl">Complete Your Subscription</CardTitle>
+                        <CardTitle className="text-2xl">Activate Your Plan</CardTitle>
                         <CardDescription>
-                            Confirm your organization details and pay to activate your management tools.
+                            Complete payment to start managing your properties with {organization.name}.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground font-medium">Organization:</span>
-                                <span className="font-bold">{organization.name}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground font-medium">Selected Plan:</span>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground font-medium">Selected Tier:</span>
                                 <Badge variant="default" className="font-bold">{organization.plan}</Badge>
                             </div>
                              <div className="flex justify-between items-center pt-2 border-t">
-                                <span className="text-lg font-bold">Amount Due:</span>
+                                <span className="text-lg font-bold">Total Amount:</span>
                                 <span className="text-2xl font-black text-primary">KSh {price.toLocaleString()}</span>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             <h4 className="text-sm font-semibold flex items-center gap-2">
                                 <ShieldCheck className="h-4 w-4 text-green-600" />
-                                What's included in {organization.plan}:
+                                Tier Benefits:
                             </h4>
-                            <ul className="text-xs text-muted-foreground space-y-1">
+                            <ul className="text-xs text-muted-foreground space-y-2">
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                                     {organization.plan === 'Starter' ? '1 Property limit' : organization.plan === 'Growth' ? 'Up to 5 properties' : 'Unlimited properties'}
                                 </li>
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                                    Tenant management & Billing
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                    Tenant management & Automatic Billing
                                 </li>
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                                    Secure cloud storage
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                    Secure cloud storage & M-Pesa integration
                                 </li>
                             </ul>
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-3">
-                        <Button className="w-full h-12 text-lg font-bold shadow-lg" onClick={handlePayment} disabled={isProcessing}>
+                        <Button className="w-full h-12 text-lg font-bold shadow-lg" onClick={handlePaystackPayment} disabled={isProcessing}>
                             {isProcessing ? (
-                                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Authorizing...</>
+                                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparing Checkout...</>
                             ) : (
-                                `Pay KSh ${price.toLocaleString()} & Activate`
+                                `Pay KSh ${price.toLocaleString()} via Paystack`
                             )}
                         </Button>
                         <Button variant="ghost" className="text-muted-foreground text-xs" onClick={logout} disabled={isProcessing}>
-                            Cancel & Sign Out
+                            Cancel Registration
                         </Button>
                     </CardFooter>
                 </Card>

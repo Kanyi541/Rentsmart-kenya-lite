@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -30,7 +29,8 @@ export default function RootLayout({
           </LoadingProvider>
         </AuthProvider>
         <Toaster />
-        <Script src="https://js.paystack.co/v1/inline.js" />
+        {/* Paystack Inline JS */}
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
       </body>
     </html>
   );
