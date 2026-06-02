@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { tenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
+import type { Organization, PricingPlan } from '@/lib/types';
 
 const auth = getAuth(app);
 
@@ -26,6 +27,7 @@ interface AuthContextType {
     registerLandlord: (data: any) => Promise<void>;
     userRole: UserRole;
     orgId: string | null;
+    organization: Organization | null;
     isDemoUser: boolean;
     forgotPassword: (email: string) => Promise<void>;
 }
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<UserRole>(null);
     const [orgId, setOrgId] = useState<string | null>(null);
+    const [organization, setOrganization] = useState<Organization | null>(null);
     const [isDemoUser, setIsDemoUser] = useState(false);
     const router = useRouter();
 
@@ -48,28 +51,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  if (user.email === DEMO_ADMIN_EMAIL || user.email === DEMO_TENANT_EMAIL) {
                     setIsDemoUser(true);
                     setOrgId('demo_org');
+                    setOrganization({
+                        id: 'demo_org',
+                        name: 'Demo Organization',
+                        ownerId: 'demo_admin_uid',
+                        plan: 'Scale',
+                        subscriptionStatus: 'active',
+                        subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString(),
+                        createdAt: serverTimestamp()
+                    });
                     setUserRole(user.email === DEMO_ADMIN_EMAIL ? 'admin' : 'client');
                 } else {
                     setIsDemoUser(false);
-                    // Check if user is in 'tenants' collection or 'admins'
                     const tenantDoc = await getDoc(doc(db, 'tenants', user.uid));
                     if (tenantDoc.exists()) {
                         setUserRole('client');
-                        setOrgId(tenantDoc.data().orgId);
+                        const oId = tenantDoc.data().orgId;
+                        setOrgId(oId);
+                        if (oId) {
+                            const orgDoc = await getDoc(doc(db, 'organizations', oId));
+                            if (orgDoc.exists()) {
+                                setOrganization({ id: orgDoc.id, ...orgDoc.data() } as Organization);
+                            }
+                        }
                     } else {
                         const adminDoc = await getDoc(doc(db, 'admins', user.uid));
                         if (adminDoc.exists()) {
                             setUserRole('admin');
-                            setOrgId(adminDoc.data().orgId);
+                            const oId = adminDoc.data().orgId;
+                            setOrgId(oId);
+                            if (oId) {
+                                const orgDoc = await getDoc(doc(db, 'organizations', oId));
+                                if (orgDoc.exists()) {
+                                    setOrganization({ id: orgDoc.id, ...orgDoc.data() } as Organization);
+                                }
+                            }
                         } else {
                             setUserRole(null);
                             setOrgId(null);
+                            setOrganization(null);
                         }
                     }
                 }
             } else {
                  setUserRole(null);
                  setOrgId(null);
+                 setOrganization(null);
                  setIsDemoUser(false);
             }
             setLoading(false);
@@ -96,19 +123,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const registerLandlord = async (data: any) => {
-        const { email, password, organizationName, ...adminData } = data;
+        const { email, password, organizationName, plan = 'Starter', ...adminData } = data;
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Create Organization
-        const orgRef = doc(db, "organizations", user.uid); // Using user UID as orgId for owner
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 1); // 1 month initial sub
+
+        const orgRef = doc(db, "organizations", user.uid);
         await setDoc(orgRef, {
             name: organizationName,
             ownerId: user.uid,
+            plan: plan as PricingPlan,
+            subscriptionStatus: 'active',
+            subscriptionEndDate: endDate.toISOString(),
             createdAt: serverTimestamp()
         });
 
-        // Save Admin details
         await setDoc(doc(db, "admins", user.uid), {
             ...adminData,
             orgId: user.uid,
@@ -125,11 +156,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth);
         setUserRole(null);
         setOrgId(null);
+        setOrganization(null);
         router.push('/');
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register, registerLandlord, userRole, orgId, isDemoUser, forgotPassword }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, register, registerLandlord, userRole, orgId, organization, isDemoUser, forgotPassword }}>
             {children}
         </AuthContext.Provider>
     );

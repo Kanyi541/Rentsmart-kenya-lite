@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search } from 'lucide-react';
+import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import withAuth from '@/components/auth/with-auth';
@@ -16,9 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getOccupancyDetailsForRental, type OccupancyDetails } from '@/lib/api/occupancy';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface DashboardStats {
     totalRentals: number;
@@ -36,7 +37,7 @@ interface RentalStats {
 const ROOMS_PER_PAGE = 5;
 
 function Home() {
-  const { orgId, isDemoUser } = useAuth();
+  const { orgId, organization, isDemoUser } = useAuth();
   const [globalStats, setGlobalStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
@@ -110,13 +111,44 @@ function Home() {
   const totalPages = Math.ceil(filteredOccupancyDetails.length / ROOMS_PER_PAGE);
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
 
+  const daysToExpiry = organization?.subscriptionEndDate 
+    ? differenceInDays(new Date(organization.subscriptionEndDate), new Date())
+    : 0;
+
   return (
     <AppLayout>
-      <div className="space-y-8">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">SaaS Dashboard</h1>
-            <p className="text-muted-foreground">Managing rentals for your organization.</p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">SaaS Dashboard</h1>
+                <p className="text-muted-foreground">Managing rentals for {organization?.name || 'your organization'}.</p>
+            </div>
+            {organization?.plan && (
+                <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground py-1 px-4 text-sm font-bold">
+                    {organization.plan} Plan
+                </Badge>
+            )}
         </div>
+
+        {daysToExpiry <= 7 && (
+            <Alert variant={daysToExpiry <= 0 ? "destructive" : "default"} className={daysToExpiry > 0 ? "bg-yellow-50 border-yellow-200" : ""}>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="font-bold">
+                    {daysToExpiry <= 0 ? "Subscription Expired!" : "Subscription Renewal Required"}
+                </AlertTitle>
+                <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                    <span>
+                        {daysToExpiry <= 0 
+                            ? "Your access to premium features has been restricted. Please renew your plan to continue." 
+                            : `Your ${organization?.plan} plan expires in ${daysToExpiry} days. Renew now to avoid service interruption.`
+                        }
+                    </span>
+                    <Button size="sm" variant={daysToExpiry <= 0 ? "default" : "outline"} className="w-fit">
+                        Renew Plan <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </AlertDescription>
+            </Alert>
+        )}
 
         <div className="grid gap-4 md:grid-cols-4">
             <Card>
@@ -126,7 +158,7 @@ function Home() {
                 </CardHeader>
                 <CardContent>
                     {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalRentals}</div>}
-                    <p className="text-xs text-muted-foreground">isolated to your org</p>
+                    <p className="text-xs text-muted-foreground">Plan limit: {organization?.plan === 'Starter' ? '1' : organization?.plan === 'Growth' ? '5' : 'Unlimited'}</p>
                 </CardContent>
             </Card>
             <Card>

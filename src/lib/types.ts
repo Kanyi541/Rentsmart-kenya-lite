@@ -38,10 +38,15 @@ export interface GroupedPayment {
     orgId: string;
 }
 
+export type PricingPlan = 'Starter' | 'Growth' | 'Scale';
+
 export interface Organization {
     id: string;
     name: string;
     ownerId: string;
+    plan: PricingPlan;
+    subscriptionStatus: 'active' | 'expired' | 'past_due';
+    subscriptionEndDate: string; // ISO string
     createdAt: any;
 }
 

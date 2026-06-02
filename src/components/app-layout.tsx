@@ -1,36 +1,36 @@
 
-
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User, Wrench, Megaphone, ShieldAlert, ClipboardList } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User, Wrench, Megaphone, ShieldAlert, ClipboardList, Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
 import { useLoading } from "@/hooks/use-loading";
 import { useEffect } from "react";
+import { Badge } from "./ui/badge";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { userRole, logout } = useAuth();
+    const { userRole, logout, organization } = useAuth();
     const { startLoading, stopLoading } = useLoading();
 
     useEffect(() => {
-        // When a new page is loaded (pathname changes), stop the loading indicator.
         stopLoading();
     }, [pathname, stopLoading]);
 
+    const plan = organization?.plan || 'Starter';
 
     const adminMenuItems = [
-        { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
-        { href: '/rentals', label: 'Rentals', icon: Building },
-        { href: '/tenants', label: 'Tenants', icon: Users },
-        { href: '/assignments', label: 'Assignments', icon: BedDouble },
-        { href: '/payments', label: 'Payments', icon: CreditCard },
-        { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
-        { href: '/admin/complaints', label: 'Complaints', icon: ShieldAlert },
-        { href: '/admin/move-out', label: 'Move-out Notices', icon: LogOut },
+        { href: '/admin/dashboard', label: 'Dashboard', icon: Home, minPlan: 'Starter' },
+        { href: '/rentals', label: 'Rentals', icon: Building, minPlan: 'Starter' },
+        { href: '/tenants', label: 'Tenants', icon: Users, minPlan: 'Starter' },
+        { href: '/assignments', label: 'Assignments', icon: BedDouble, minPlan: 'Starter' },
+        { href: '/payments', label: 'Payments', icon: CreditCard, minPlan: 'Starter' },
+        { href: '/admin/announcements', label: 'Announcements', icon: Megaphone, minPlan: 'Growth' },
+        { href: '/admin/complaints', label: 'Complaints', icon: ShieldAlert, minPlan: 'Growth' },
+        { href: '/admin/move-out', label: 'Move-out Notices', icon: LogOut, minPlan: 'Growth' },
     ];
 
     const clientMenuItems = [
@@ -41,10 +41,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
     ];
 
+    const isPlanSufficient = (minPlan: string) => {
+        if (plan === 'Scale') return true;
+        if (plan === 'Growth' && minPlan !== 'Scale') return true;
+        if (plan === 'Starter' && minPlan === 'Starter') return true;
+        return false;
+    };
+
     const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;
     const homeRoute = userRole === 'admin' ? '/admin/dashboard' : '/clients';
 
-    const handleNavigation = (e: React.MouseEvent, href: string) => {
+    const handleNavigation = (e: React.MouseEvent, href: string, disabled: boolean) => {
+        if (disabled) {
+            e.preventDefault();
+            return;
+        }
         if (pathname !== href) {
             startLoading();
         }
@@ -58,24 +69,43 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
                             <Home className="h-6 w-6" />
                         </div>
-                        <h1 className="text-xl font-bold">RentSmart</h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold leading-none">RentSmart</h1>
+                            {userRole === 'admin' && (
+                                <Badge variant="outline" className="mt-1 w-fit text-[10px] h-4 bg-muted/50">
+                                    {plan} Plan
+                                </Badge>
+                            )}
+                        </div>
                     </Link>
                 </SidebarHeader>
                 <SidebarContent>
                     <SidebarMenu>
-                        {menuItems.map(item => (
-                            <SidebarMenuItem key={item.label}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.startsWith(item.href)}
-                                    >
-                                    <Link href={item.href} onClick={(e) => handleNavigation(e, item.href)}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
+                        {menuItems.map(item => {
+                            const disabled = 'minPlan' in item && !isPlanSufficient(item.minPlan);
+                            return (
+                                <SidebarMenuItem key={item.label}>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={pathname.startsWith(item.href)}
+                                        className={disabled ? "opacity-50 grayscale cursor-not-allowed" : ""}
+                                        tooltip={disabled ? `Requires ${item.minPlan} Plan` : undefined}
+                                        >
+                                        <Link 
+                                            href={disabled ? "#" : item.href} 
+                                            onClick={(e) => handleNavigation(e, item.href, disabled)}
+                                            className="flex items-center justify-between w-full"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <item.icon />
+                                                <span>{item.label}</span>
+                                            </div>
+                                            {disabled && <Lock className="h-3 w-3" />}
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            );
+                        })}
                     </SidebarMenu>
                 </SidebarContent>
                  <div className="p-2 mt-auto">
