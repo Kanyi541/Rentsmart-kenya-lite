@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Suspense, useState } from 'react';
@@ -12,9 +13,10 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { processPaymentAndAssign } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, CreditCard } from 'lucide-react';
+import { Loader2, ShieldCheck, CreditCard, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 declare const PaystackPop: any;
 
@@ -43,7 +45,6 @@ function NewPaymentPage() {
     const initialPhone = searchParams.get('phone') || '';
     const isRecurring = searchParams.get('type') === 'rent_only';
     
-    // Deposit is half the rent, only charged on initial assignment
     const deposit = isRecurring ? 0 : rent / 2; 
     const total = rent + deposit;
     
@@ -54,7 +55,84 @@ function NewPaymentPage() {
             email: ''
         }
     });
+
+    const handleProcessSuccess = async (reference: string, data: PaymentFormValues) => {
+        try {
+            const result = await processPaymentAndAssign({
+                tenantId,
+                rentalId,
+                roomId,
+                orgId: orgId!,
+                rentAmount: rent,
+                depositAmount: deposit,
+                phone: data.phone,
+                email: data.email,
+                transactionRef: reference
+            });
+
+            if (result?.error) throw new Error(result.error);
+            
+            toast({ title: "Payment Verified!", description: `Transaction ${reference} processed successfully.` });
+            
+            if (isRecurring) {
+                router.push('/clients');
+            } else if (result.redirect) {
+                router.push(result.redirect);
+            }
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: 'Sync Error',
+                description: "Payment was successful but we failed to update your record. Reference: " + reference
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
     
+    const handlePayment = (data: PaymentFormValues) => {
+        setIsProcessing(true);
+        const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+        if (!publicKey || publicKey.includes('your_public_key')) {
+            toast({
+                variant: 'destructive',
+                title: "Configuration Error",
+                description: "Paystack is not configured. Use the 'Simulate' option for now."
+            });
+            setIsProcessing(false);
+            return;
+        }
+
+        const handler = PaystackPop.setup({
+            key: publicKey,
+            email: data.email,
+            amount: total * 100, 
+            currency: 'KES',
+            phone: data.phone,
+            metadata: {
+                tenantId, rentalId, roomId, orgId,
+                type: isRecurring ? 'Rent' : 'Assignment'
+            },
+            callback: (response: any) => handleProcessSuccess(response.reference, data),
+            onClose: () => setIsProcessing(false)
+        });
+
+        handler.openIframe();
+    };
+
+    const handleSimulatedPayment = () => {
+        const data = form.getValues();
+        if (!data.email || data.phone.length < 10) {
+            form.trigger();
+            return;
+        }
+        setIsProcessing(true);
+        setTimeout(() => {
+            handleProcessSuccess(`SIM_RENT_${Math.random().toString(36).substring(7).toUpperCase()}`, data);
+        }, 1500);
+    };
+
     if (!tenantId || !rentalId || !roomId || !orgId) {
         return (
              <AppLayout>
@@ -70,58 +148,6 @@ function NewPaymentPage() {
             </AppLayout>
         )
     }
-    
-    const handlePayment = (data: PaymentFormValues) => {
-        setIsProcessing(true);
-
-        const handler = PaystackPop.setup({
-            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_your_public_key_here',
-            email: data.email,
-            amount: total * 100, 
-            currency: 'KES',
-            phone: data.phone,
-            metadata: {
-                tenantId, rentalId, roomId, orgId,
-                type: isRecurring ? 'Rent' : 'Assignment'
-            },
-            callback: async (response: any) => {
-                try {
-                    const result = await processPaymentAndAssign({
-                        tenantId,
-                        rentalId,
-                        roomId,
-                        orgId,
-                        rentAmount: rent,
-                        depositAmount: deposit,
-                        phone: data.phone,
-                        email: data.email,
-                        transactionRef: response.reference
-                    });
-
-                    if (result?.error) throw new Error(result.error);
-                    
-                    toast({ title: "Payment Verified!", description: `Transaction ${response.reference} processed successfully.` });
-                    
-                    if (isRecurring) {
-                        router.push('/clients');
-                    }
-                } catch (error: any) {
-                     toast({
-                        variant: 'destructive',
-                        title: 'Sync Error',
-                        description: "Payment was successful but we failed to update your record. Please contact the landlord with your reference: " + response.reference
-                    });
-                } finally {
-                    setIsProcessing(false);
-                }
-            },
-            onClose: () => {
-                setIsProcessing(false);
-            }
-        });
-
-        handler.openIframe();
-    };
 
     return (
         <AppLayout>
@@ -198,19 +224,29 @@ function NewPaymentPage() {
                                     />
                                 </div>
 
+                                {(!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.includes('your_public_key')) && (
+                                    <Alert className="bg-amber-50 border-amber-200">
+                                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                                        <AlertDescription className="text-amber-800 text-xs">
+                                            Paystack keys missing. Use <strong>Simulate</strong> below to test.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 p-2 rounded border border-green-100">
                                     <ShieldCheck className="h-4 w-4 text-green-600" />
                                     <span>Encrypted with 256-bit SSL security via Paystack.</span>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between bg-muted/10 border-t pt-6">
-                                <Button variant="outline" onClick={() => router.back()} disabled={isProcessing}>Cancel</Button>
-                                <Button type="submit" size="lg" className="px-8 font-bold" disabled={isProcessing}>
-                                    {isProcessing ? (
-                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Initializing...</>
-                                    ) : (
-                                        `Authorize Payment`
-                                    )}
+                            <CardFooter className="flex flex-col gap-3 bg-muted/10 border-t pt-6">
+                                <div className="flex justify-between w-full">
+                                    <Button variant="outline" type="button" onClick={() => router.back()} disabled={isProcessing}>Cancel</Button>
+                                    <Button type="submit" size="lg" className="px-8 font-bold" disabled={isProcessing}>
+                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Authorize Payment'}
+                                    </Button>
+                                </div>
+                                <Button variant="link" type="button" className="text-xs text-muted-foreground" onClick={handleSimulatedPayment} disabled={isProcessing}>
+                                    Simulate Success (Dev)
                                 </Button>
                             </CardFooter>
                         </form>
