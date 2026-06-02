@@ -151,6 +151,22 @@ export async function renewSubscription(orgId: string) {
     }
 }
 
+export async function activateSubscription(orgId: string) {
+    if (!orgId) return { error: "Organization ID is required." };
+    try {
+        const orgRef = doc(db, 'organizations', orgId);
+        await updateDoc(orgRef, {
+            subscriptionStatus: 'active',
+            // Refresh expiry to 1 month from now
+            subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString()
+        });
+        revalidatePath('/admin/dashboard');
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to activate subscription." };
+    }
+}
+
 export async function createMaintenanceRequest(data: unknown) {
     const parsedData = createMaintenanceRequestSchema.safeParse(data);
     if (!parsedData.success) return { error: 'Invalid data.' };

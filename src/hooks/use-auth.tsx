@@ -135,7 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: organizationName,
             ownerId: user.uid,
             plan: plan as PricingPlan,
-            subscriptionStatus: 'active',
+            // Changed from 'active' to 'pending_payment' to enforce pay-before-use
+            subscriptionStatus: 'pending_payment',
             subscriptionEndDate: endDate.toISOString(),
             createdAt: serverTimestamp()
         });
@@ -157,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserRole(null);
         setOrgId(null);
         setOrganization(null);
+        setIsDemoUser(false);
         router.push('/');
     };
 

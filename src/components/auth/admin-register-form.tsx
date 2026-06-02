@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useForm } from 'react-hook-form';
@@ -59,10 +60,11 @@ export function AdminRegisterForm() {
         try {
             await registerLandlord(data);
             toast({
-                title: 'Welcome to RentSmart!',
-                description: 'Your organization has been created. Redirecting to your dashboard.',
+                title: 'Organization Created!',
+                description: 'Please complete your subscription payment to access your dashboard.',
             });
-            router.push('/admin/dashboard');
+            // Redirect to subscription checkout instead of dashboard
+            router.push('/admin/subscription/checkout');
         } catch (error: any) {
             console.error(error);
             let description = 'Registration failed. Please try again.';
@@ -169,14 +171,14 @@ export function AdminRegisterForm() {
                     <div className="bg-muted/50 p-3 rounded-lg flex items-start gap-3 border">
                         <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
                         <p className="text-xs text-muted-foreground">
-                            By clicking register, you agree to our Terms of Service and set up a new {form.watch('plan')} subscription for your organization.
+                            By clicking register, you agree to our Terms of Service. You will be asked to process a payment for your {form.watch('plan')} subscription in the next step.
                         </p>
                     </div>
                 </CardContent>
                 <CardFooter>
                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Create Account & Start Trial
+                        Create Account & Proceed to Payment
                     </Button>
                 </CardFooter>
             </form>

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useAuth } from '@/hooks/use-auth';
@@ -13,7 +14,7 @@ const publicPaths = ['/', '/demo', '/admin/login', '/admin/register', '/clients/
 
 export default function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
   const WithAuthComponent = (props: P) => {
-    const { user, loading, userRole } = useAuth();
+    const { user, loading, userRole, organization } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -44,6 +45,12 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
       const publicButNotRoot = (pathname.startsWith('/admin/login') || pathname.startsWith('/admin/register') || pathname.startsWith('/clients/login') || pathname.startsWith('/clients/register') || pathname.startsWith('/clients/forgot-password') || pathname.startsWith('/demo'));
 
       if (userRole === 'admin') {
+        // Enforce pay-before-use for landlords
+        if (organization?.subscriptionStatus === 'pending_payment' && pathname !== '/admin/subscription/checkout') {
+          router.replace('/admin/subscription/checkout');
+          return;
+        }
+
         // If an admin lands on a client path or a public auth path (but not the root landing page), redirect to admin home.
         const isClientPath = clientPaths.some(p => pathname.startsWith(p));
         if (isClientPath || publicButNotRoot) {
@@ -57,7 +64,7 @@ export default function withAuth<P extends object>(WrappedComponent: ComponentTy
         }
       }
 
-    }, [user, loading, router, pathname, userRole]);
+    }, [user, loading, router, pathname, userRole, organization]);
 
     const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/terms') || pathname.startsWith('/privacy');
 
