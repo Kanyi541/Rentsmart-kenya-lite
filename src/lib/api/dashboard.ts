@@ -1,28 +1,32 @@
 
 'use server'
 
-import { collection, getDocs, collectionGroup, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export async function getDashboardStats() {
-    const rentalsCol = collection(db, 'rentals');
-    const tenantsCol = collection(db, 'tenants');
-    const roomsQuery = query(collectionGroup(db, 'rooms'));
+export async function getDashboardStats(orgId: string) {
+    if (!orgId) return { totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 };
+    
+    const rentalsQuery = query(collection(db, 'rentals'), where('orgId', '==', orgId));
+    const tenantsQuery = query(collection(db, 'tenants'), where('orgId', '==', orgId));
+    
+    // Room stats require manual counting per rental or a collectionGroup if indexed
+    const rentalSnapshot = await getDocs(rentalsQuery);
+    const tenantSnapshot = await getDocs(tenantsQuery);
 
-    const [rentalSnapshot, tenantSnapshot, roomsSnapshot] = await Promise.all([
-        getDocs(rentalsCol),
-        getDocs(tenantsCol),
-        getDocs(roomsQuery),
-    ]);
+    let totalRooms = 0;
+    let occupiedRooms = 0;
 
-    const totalRentals = rentalSnapshot.size;
-    const totalTenants = tenantSnapshot.size;
-    const totalRooms = roomsSnapshot.size;
-    const occupiedRooms = roomsSnapshot.docs.filter(doc => doc.data().isOccupied).length;
+    for (const rentalDoc of rentalSnapshot.docs) {
+        const roomsCol = collection(db, `rentals/${rentalDoc.id}/rooms`);
+        const roomsSnap = await getDocs(roomsCol);
+        totalRooms += roomsSnap.size;
+        occupiedRooms += roomsSnap.docs.filter(d => d.data().isOccupied).length;
+    }
 
     return {
-        totalRentals,
-        totalTenants,
+        totalRentals: rentalSnapshot.size,
+        totalTenants: tenantSnapshot.size,
         totalRooms,
         occupiedRooms,
     };
@@ -31,28 +35,18 @@ export async function getDashboardStats() {
 
 export async function getStatsForRental(rentalId: string) {
     if (!rentalId) {
-        return {
-            tenantCount: 0,
-            occupiedRooms: 0,
-            totalRooms: 0
-        };
+        return { tenantCount: 0, occupiedRooms: 0, totalRooms: 0 };
     }
     
-    // Get tenant count for the specific rental
     const assignmentsCol = collection(db, 'assignments');
     const q = query(assignmentsCol, where("rentalId", "==", rentalId));
     const assignmentsSnapshot = await getDocs(q);
     const tenantCount = assignmentsSnapshot.size;
 
-    // Get room stats for the specific rental
     const roomsCol = collection(db, `rentals/${rentalId}/rooms`);
     const roomsSnapshot = await getDocs(roomsCol);
     const totalRooms = roomsSnapshot.size;
     const occupiedRooms = roomsSnapshot.docs.filter(doc => doc.data().isOccupied).length;
 
-    return {
-        tenantCount,
-        occupiedRooms,
-        totalRooms
-    };
+    return { tenantCount, occupiedRooms, totalRooms };
 }

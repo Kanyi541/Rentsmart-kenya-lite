@@ -18,30 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-
-// Demo Data
-const demoGlobalStats = { totalRentals: 3, totalTenants: 45, totalRooms: 60, occupiedRooms: 45 };
-const demoRentals = [
-    { id: 'demo1', name: 'Demo Heights', location: 'Demo City', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [] },
-    { id: 'demo2', name: 'Sample Towers', location: 'Demo Suburb', ownerName: 'Demo Owner', ownerNumber: '0712345678', rooms: [] },
-];
-const demoRentalStats = {
-    'demo1': { tenantCount: 20, occupiedRooms: 20, totalRooms: 25 },
-    'demo2': { tenantCount: 25, occupiedRooms: 25, totalRooms: 35 },
-};
-const demoOccupancyDetails = {
-    'demo1': [
-        { id: 'r1', roomNumber: 'A101', roomType: '1 Bedroom', isOccupied: true, tenantName: 'John Doe', nextPaymentDue: '2024-08-01' },
-        { id: 'r2', roomNumber: 'A102', roomType: '1 Bedroom', isOccupied: true, tenantName: 'Jane Smith', nextPaymentDue: '2024-08-01' },
-        { id: 'r3', roomNumber: 'B201', roomType: 'Bedsitter', isOccupied: false, tenantName: null, nextPaymentDue: null },
-    ],
-    'demo2': [
-        { id: 'r4', roomNumber: 'G01', roomType: '2 Bedroom', isOccupied: true, tenantName: 'Peter Jones', nextPaymentDue: '2024-08-05' },
-    ]
-};
-
 
 interface DashboardStats {
     totalRentals: number;
@@ -59,7 +36,7 @@ interface RentalStats {
 const ROOMS_PER_PAGE = 5;
 
 function Home() {
-  const { isDemoUser } = useAuth();
+  const { orgId, isDemoUser } = useAuth();
   const [globalStats, setGlobalStats] = useState<DashboardStats>({ totalRentals: 0, totalTenants: 0, totalRooms: 0, occupiedRooms: 0 });
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
@@ -69,22 +46,15 @@ function Home() {
   const [rentalDetailsLoading, setRentalDetailsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
-
 
   useEffect(() => {
     async function fetchInitialData() {
+        if (!orgId) return;
         setLoading(true);
-        if (isDemoUser) {
-            setGlobalStats(demoGlobalStats);
-            setRentals(demoRentals as Rental[]);
-            setLoading(false);
-            return;
-        }
         try {
             const [dashboardStats, fetchedRentals] = await Promise.all([
-                getDashboardStats(),
-                getRentals()
+                getDashboardStats(orgId),
+                getRentals(orgId)
             ]);
             setGlobalStats(dashboardStats);
             setRentals(fetchedRentals);
@@ -95,7 +65,7 @@ function Home() {
         }
     }
     fetchInitialData();
-  }, [isDemoUser]);
+  }, [orgId]);
 
   useEffect(() => {
       async function fetchRentalDetails() {
@@ -105,13 +75,7 @@ function Home() {
             return;
           };
           setRentalDetailsLoading(true);
-          setCurrentPage(1); // Reset to first page on new selection
-          if (isDemoUser) {
-              setRentalStats(demoRentalStats[selectedRentalId as keyof typeof demoRentalStats]);
-              setOccupancyDetails(demoOccupancyDetails[selectedRentalId as keyof typeof demoOccupancyDetails] as OccupancyDetails[]);
-              setRentalDetailsLoading(false);
-              return;
-          }
+          setCurrentPage(1);
           try {
               const [stats, details] = await Promise.all([
                 getStatsForRental(selectedRentalId),
@@ -128,12 +92,10 @@ function Home() {
           }
       }
       fetchRentalDetails();
-  }, [selectedRentalId, isDemoUser]);
+  }, [selectedRentalId]);
 
   const filteredOccupancyDetails = useMemo(() => {
-    if (!searchQuery) {
-        return occupancyDetails;
-    }
+    if (!searchQuery) return occupancyDetails;
     return occupancyDetails.filter(room => 
         room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
         room.tenantName?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -146,82 +108,53 @@ function Home() {
   }, [filteredOccupancyDetails, currentPage]);
 
   const totalPages = Math.ceil(filteredOccupancyDetails.length / ROOMS_PER_PAGE);
-
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
-
-  const getStatusVariant = (isOccupied: boolean) => {
-    return isOccupied ? 'default' : 'secondary';
-  }
-
 
   return (
     <AppLayout>
       <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                <p className="text-muted-foreground">Welcome to your RentSmart dashboard.</p>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-                <Button asChild className="flex-1 sm:flex-initial">
-                    <Link href="/rentals">
-                        <PlusCircle className="mr-2" />
-                        Add Rental
-                    </Link>
-                </Button>
-                <Button asChild variant="outline" className="flex-1 sm:flex-initial">
-                     <Link href="/tenants">
-                        <PlusCircle className="mr-2" />
-                        Add Tenant
-                    </Link>
-                </Button>
-            </div>
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">SaaS Dashboard</h1>
+            <p className="text-muted-foreground">Managing rentals for your organization.</p>
         </div>
 
-        {/* Global Stats */}
         <div className="grid gap-4 md:grid-cols-4">
-            <Link href="/rentals">
-                <Card className="hover:bg-muted/50 transition-colors">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Rentals</CardTitle>
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalRentals}</div>}
-                        <p className="text-xs text-muted-foreground">properties being managed</p>
-                    </CardContent>
-                </Card>
-            </Link>
-            <Link href="/tenants">
-                <Card className="hover:bg-muted/50 transition-colors">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalTenants}</div>}
-                        <p className="text-xs text-muted-foreground">tenants registered across all rentals</p>
-                    </CardContent>
-                </Card>
-            </Link>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Overall Occupancy</CardTitle>
+                    <CardTitle className="text-sm font-medium">Total Rentals</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalRentals}</div>}
+                    <p className="text-xs text-muted-foreground">isolated to your org</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{globalStats.totalTenants}</div>}
+                    <p className="text-xs text-muted-foreground">registered in your org</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Occupancy</CardTitle>
                     <BedDouble className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                      {loading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{globalStats.occupiedRooms} / {globalStats.totalRooms}</div>}
-                     <p className="text-xs text-muted-foreground">rooms currently occupied</p>
                 </CardContent>
             </Card>
             <Card>
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Next Payment Due</CardTitle>
+                    <CardTitle className="text-sm font-medium">Next Payment</CardTitle>
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">---</div>
-                    <p className="text-xs text-muted-foreground">coming soon</p>
                 </CardContent>
             </Card>
         </div>
@@ -229,8 +162,7 @@ function Home() {
         <div className="border-t pt-8">
              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Property-Specific Details</h2>
-                    <p className="text-muted-foreground">Select a property to view its occupancy and payment details.</p>
+                    <h2 className="text-2xl font-bold tracking-tight">Org Properties</h2>
                 </div>
                  <div className="w-full sm:w-64">
                     {loading ? <Skeleton className="h-10 w-full" /> : (
@@ -252,9 +184,6 @@ function Home() {
                 <Card>
                     <CardHeader>
                         <CardTitle>{selectedRental?.name || "Occupancy Details"}</CardTitle>
-                        <CardDescription>
-                            {rentalDetailsLoading ? 'Loading details...' : `Showing ${paginatedRooms.length} of ${filteredOccupancyDetails.length} rooms. Tenants: ${rentalStats?.tenantCount ?? 0}, Occupied: ${rentalStats?.occupiedRooms ?? 0}/${rentalStats?.totalRooms ?? 0}`}
-                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4">
@@ -262,12 +191,12 @@ function Home() {
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="search"
-                                    placeholder="Search by room number or tenant name..."
+                                    placeholder="Search rooms..."
                                     className="w-full rounded-lg bg-background pl-8"
                                     value={searchQuery}
                                     onChange={(e) => {
                                         setSearchQuery(e.target.value);
-                                        setCurrentPage(1); // Reset page on new search
+                                        setCurrentPage(1);
                                     }}
                                 />
                             </div>
@@ -276,38 +205,33 @@ function Home() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Room No.</TableHead>
-                                    <TableHead>Room Type</TableHead>
-                                    <TableHead>Tenant Name</TableHead>
-                                    <TableHead>Next Payment Due</TableHead>
+                                    <TableHead>Tenant</TableHead>
+                                    <TableHead>Next Payment</TableHead>
                                     <TableHead className="text-center">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {rentalDetailsLoading ? (
-                                    Array.from({ length: ROOMS_PER_PAGE }).map((_, i) => (
+                                    Array.from({ length: 3 }).map((_, i) => (
                                         <TableRow key={i}>
                                             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                            <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : paginatedRooms.length === 0 ? (
-                                    <TableRow><TableCell colSpan={5} className="text-center h-24">{searchQuery ? 'No matching rooms found.' : 'No rooms found for this property.'}</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={4} className="text-center h-24">No rooms found.</TableCell></TableRow>
                                 ) : (
                                     paginatedRooms.map(room => (
                                         <TableRow key={room.id}>
                                             <TableCell className="font-medium">{room.roomNumber}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{room.roomType}</Badge>
-                                            </TableCell>
                                             <TableCell>{room.tenantName || '---'}</TableCell>
                                             <TableCell>
                                                 {room.nextPaymentDue ? format(new Date(room.nextPaymentDue), 'PPP') : '---'}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant={getStatusVariant(room.isOccupied)}>
+                                                <Badge variant={room.isOccupied ? 'default' : 'secondary'}>
                                                     {room.isOccupied ? 'Occupied' : 'Vacant'}
                                                 </Badge>
                                             </TableCell>
@@ -317,37 +241,9 @@ function Home() {
                             </TableBody>
                         </Table>
                     </CardContent>
-                    {totalPages > 1 && (
-                        <CardFooter>
-                            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-                                <div>
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardFooter>
-                    )}
                 </Card>
             )}
         </div>
-
       </div>
     </AppLayout>
   );

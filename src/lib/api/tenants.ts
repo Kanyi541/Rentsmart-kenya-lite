@@ -12,10 +12,11 @@ type TenantData = z.infer<typeof tenantSchema>;
 type UpdateTenantData = z.infer<typeof updateTenantSchema>;
 
 
-export async function getTenants(): Promise<Tenant[]> {
+export async function getTenants(orgId: string): Promise<Tenant[]> {
+    if (!orgId) return [];
     const tenantsCol = collection(db, 'tenants');
-    const tenantsQuery = query(tenantsCol, orderBy('createdAt', 'desc'));
-    const tenantSnapshot = await getDocs(tenantsQuery);
+    const q = query(tenantsCol, where('orgId', '==', orgId), orderBy('createdAt', 'desc'));
+    const tenantSnapshot = await getDocs(q);
     const tenants = tenantSnapshot.docs.map(doc => {
         const data = doc.data();
         return { 
@@ -25,9 +26,9 @@ export async function getTenants(): Promise<Tenant[]> {
         } as Tenant;
     });
 
-    // Get all assignments
     const assignmentsCol = collection(db, 'assignments');
-    const assignmentsSnapshot = await getDocs(assignmentsCol);
+    const aq = query(assignmentsCol, where('orgId', '==', orgId));
+    const assignmentsSnapshot = await getDocs(aq);
     const assignments = assignmentsSnapshot.docs.map(doc => doc.data() as Omit<Assignment, 'id'>);
     
     const tenantAssignmentMap = new Map<string, Omit<Assignment, 'id'>>();
@@ -35,17 +36,14 @@ export async function getTenants(): Promise<Tenant[]> {
 
     const assignedTenantIds = Array.from(tenantAssignmentMap.keys());
 
-    // Fetch payments for assigned tenants
     let tenantIdToLastPaymentMap = new Map<string, Date>();
     if (assignedTenantIds.length > 0) {
         const paymentsCol = collection(db, 'payments');
-        // Simplified query
         const paymentsQuery = query(paymentsCol, where("tenantId", "in", assignedTenantIds));
         const paymentsSnapshot = await getDocs(paymentsQuery);
 
         paymentsSnapshot.docs.forEach(doc => {
             const payment = doc.data();
-            // Filter in code
             if (payment.type === 'Rent' && payment.status === 'Completed') {
                 const paymentDate = (payment.createdAt as Timestamp).toDate();
                 if (!tenantIdToLastPaymentMap.has(payment.tenantId) || paymentDate > tenantIdToLastPaymentMap.get(payment.tenantId)!) {
@@ -97,10 +95,7 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
     const tenantRef = doc(db, 'tenants', tenantId);
     const tenantSnap = await getDoc(tenantRef);
 
-    if (!tenantSnap.exists()) {
-        console.log(`No tenant found with ID: ${tenantId}`);
-        return null;
-    }
+    if (!tenantSnap.exists()) return null;
 
     const tenantData = tenantSnap.data();
     const tenant = { 
@@ -109,7 +104,6 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
         createdAt: (tenantData.createdAt as Timestamp)?.toDate().toISOString() || null
     } as Tenant;
 
-    // Check for assignment
     const assignmentsCol = collection(db, 'assignments');
     const assignmentQuery = query(assignmentsCol, where("tenantId", "==", tenantId));
     const assignmentSnapshot = await getDocs(assignmentQuery);
@@ -129,13 +123,12 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
         const rental = rentalSnap.exists() ? {id: rentalSnap.id, ...rentalSnap.data()} as Rental : null;
         const room = roomSnap.exists() ? {id: roomSnap.id, ...roomSnap.data()} as Room : null;
 
-        tenant.rentalId = rental?.id
+        tenant.rentalId = rental?.id;
         tenant.rentalName = rental?.name;
-        tenant.roomId = room?.id
+        tenant.roomId = room?.id;
         tenant.roomNumber = room?.roomNumber;
         tenant.rent = room?.rent;
 
-        // Check for next payment due
         const paymentsCol = collection(db, 'payments');
         const paymentsQuery = query(paymentsCol, where("tenantId", "==", tenantId));
         const paymentsSnapshot = await getDocs(paymentsQuery);
@@ -162,16 +155,9 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
 }
 
 export async function updateTenant(tenantId: string, data: UpdateTenantData) {
-    if (!tenantId) {
-        throw new Error("Tenant ID is required to update details.");
-    }
+    if (!tenantId) throw new Error("Tenant ID is required.");
     const tenantRef = doc(db, "tenants", tenantId);
-    
-    // Ensure that sensitive fields like email, ID number, etc., are not in the update object
-    // The `updateTenantSchema` already takes care of this by only including allowed fields.
     const validatedData = updateTenantSchema.parse(data);
-
     await updateDoc(tenantRef, validatedData);
-    
-    revalidatePath(`/clients`); // Revalidate the client dashboard to show new data
+    revalidatePath(`/clients`);
 }

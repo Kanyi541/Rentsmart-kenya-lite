@@ -11,6 +11,7 @@ export const roomSchema = z.object({
 
 export const rentalSchema = z.object({
   id: z.string().optional(),
+  orgId: z.string().optional(),
   name: z.string().min(3, 'Rental name is required.'),
   location: z.string().min(3, 'Location is required.'),
   ownerName: z.string().min(3, 'Owner name is required.'),
@@ -20,6 +21,7 @@ export const rentalSchema = z.object({
 
 export const tenantSchema = z.object({
     id: z.string().optional(),
+    orgId: z.string().optional(),
     firstName: z.string().min(2, "First name is required"),
     secondName: z.string().min(2, "Second name is required"),
     thirdName: z.string().optional(),
@@ -37,11 +39,13 @@ export const tenantSchema = z.object({
 export const assignmentSchema = z.object({
     tenantId: z.string().min(1, "Tenant is required"),
     rentalId: z.string().min(1, "Rental is required"),
-    roomId: z.string().min(1, "Room is required")
+    roomId: z.string().min(1, "Room is required"),
+    orgId: z.string().optional(),
 });
 
 export const paymentSchema = z.object({
   id: z.string().optional(),
+  orgId: z.string(),
   tenantId: z.string(),
   rentalId: z.string(),
   roomId: z.string(),
@@ -58,6 +62,7 @@ export const initiatePaymentSchema = z.object({
   tenantId: z.string(),
   rentalId: z.string(),
   roomId: z.string(),
+  orgId: z.string(),
   rentAmount: z.coerce.number(),
   depositAmount: z.coerce.number(),
   phone: z.string().min(10, "A valid phone number is required"),
@@ -86,12 +91,13 @@ export const createMaintenanceRequestSchema = maintenanceRequestSchema.extend({
     tenantId: z.string(),
     rentalId: z.string(),
     roomId: z.string(),
-    // photoUrl: z.string().optional(), // Will be handled in the action
+    orgId: z.string(),
 });
 
 export const announcementSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters long.'),
     content: z.string().min(10, 'Content must be at least 10 characters long.'),
+    orgId: z.string().optional(),
 });
 
 export const complaintSchema = z.object({
@@ -103,6 +109,7 @@ export const createComplaintSchema = complaintSchema.extend({
     tenantId: z.string(),
     rentalId: z.string(),
     roomId: z.string(),
+    orgId: z.string(),
 });
 
 export const moveOutNoticeSchema = z.object({
@@ -113,5 +120,6 @@ export const createMoveOutNoticeSchema = moveOutNoticeSchema.extend({
   tenantId: z.string(),
   rentalId: z.string(),
   roomId: z.string(),
+  orgId: z.string(),
   noticeType: z.enum(['Standard', 'Immediate']),
 });
