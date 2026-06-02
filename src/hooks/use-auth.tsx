@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { app, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { tenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import type { Organization, PricingPlan } from '@/lib/types';
@@ -43,67 +43,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isDemoUser, setIsDemoUser] = useState(false);
     const router = useRouter();
 
+    // Primary Auth Listener: Handles user session and role determination
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setLoading(true);
-            setUser(user);
-            if (user) {
-                 if (user.email === DEMO_ADMIN_EMAIL || user.email === DEMO_TENANT_EMAIL) {
-                    setIsDemoUser(true);
-                    setOrgId('demo_org');
-                    setOrganization({
-                        id: 'demo_org',
-                        name: 'Demo Organization',
-                        ownerId: 'demo_admin_uid',
-                        plan: 'Scale',
-                        subscriptionStatus: 'active',
-                        subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString(),
-                        createdAt: serverTimestamp()
-                    });
-                    setUserRole(user.email === DEMO_ADMIN_EMAIL ? 'admin' : 'client');
+        const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
+            setUser(authUser);
+            if (!authUser) {
+                setLoading(false);
+                setUserRole(null);
+                setOrgId(null);
+                setOrganization(null);
+                setIsDemoUser(false);
+                return;
+            }
+
+            if (authUser.email === DEMO_ADMIN_EMAIL || authUser.email === DEMO_TENANT_EMAIL) {
+                setIsDemoUser(true);
+                setOrgId('demo_org');
+                setOrganization({
+                    id: 'demo_org',
+                    name: 'Demo Organization',
+                    ownerId: 'demo_admin_uid',
+                    plan: 'Scale',
+                    subscriptionStatus: 'active',
+                    subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString(),
+                    createdAt: serverTimestamp()
+                });
+                setUserRole(authUser.email === DEMO_ADMIN_EMAIL ? 'admin' : 'client');
+                setLoading(false);
+            } else {
+                setIsDemoUser(false);
+                // Check if user is a tenant or an admin to determine role and org membership
+                const tenantDoc = await getDoc(doc(db, 'tenants', authUser.uid));
+                if (tenantDoc.exists()) {
+                    setUserRole('client');
+                    setOrgId(tenantDoc.data().orgId);
                 } else {
-                    setIsDemoUser(false);
-                    const tenantDoc = await getDoc(doc(db, 'tenants', user.uid));
-                    if (tenantDoc.exists()) {
-                        setUserRole('client');
-                        const oId = tenantDoc.data().orgId;
-                        setOrgId(oId);
-                        if (oId) {
-                            const orgDoc = await getDoc(doc(db, 'organizations', oId));
-                            if (orgDoc.exists()) {
-                                setOrganization({ id: orgDoc.id, ...orgDoc.data() } as Organization);
-                            }
-                        }
+                    const adminDoc = await getDoc(doc(db, 'admins', authUser.uid));
+                    if (adminDoc.exists()) {
+                        setUserRole('admin');
+                        setOrgId(adminDoc.data().orgId);
                     } else {
-                        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-                        if (adminDoc.exists()) {
-                            setUserRole('admin');
-                            const oId = adminDoc.data().orgId;
-                            setOrgId(oId);
-                            if (oId) {
-                                const orgDoc = await getDoc(doc(db, 'organizations', oId));
-                                if (orgDoc.exists()) {
-                                    setOrganization({ id: orgDoc.id, ...orgDoc.data() } as Organization);
-                                }
-                            }
-                        } else {
-                            setUserRole(null);
-                            setOrgId(null);
-                            setOrganization(null);
-                        }
+                        setUserRole(null);
+                        setOrgId(null);
                     }
                 }
-            } else {
-                 setUserRole(null);
-                 setOrgId(null);
-                 setOrganization(null);
-                 setIsDemoUser(false);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
+
+    // Reactive Organization Listener: Updates state immediately when subscription status changes in Firestore
+    useEffect(() => {
+        if (!orgId || isDemoUser) return;
+
+        const unsubscribeOrg = onSnapshot(doc(db, 'organizations', orgId), (snapshot) => {
+            if (snapshot.exists()) {
+                setOrganization({ id: snapshot.id, ...snapshot.data() } as Organization);
+            } else {
+                setOrganization(null);
+            }
+        });
+
+        return () => unsubscribeOrg();
+    }, [orgId, isDemoUser]);
 
     const login = async (email: string, password: string) => {
         await signInWithEmailAndPassword(auth, email, password);
@@ -128,14 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const user = userCredential.user;
 
         const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + 1); // 1 month initial sub
+        endDate.setMonth(endDate.getMonth() + 1);
 
         const orgRef = doc(db, "organizations", user.uid);
         await setDoc(orgRef, {
             name: organizationName,
             ownerId: user.uid,
             plan: plan as PricingPlan,
-            // Changed from 'active' to 'pending_payment' to enforce pay-before-use
             subscriptionStatus: 'pending_payment',
             subscriptionEndDate: endDate.toISOString(),
             createdAt: serverTimestamp()

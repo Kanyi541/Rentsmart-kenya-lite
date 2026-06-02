@@ -45,7 +45,7 @@ export interface Organization {
     name: string;
     ownerId: string;
     plan: PricingPlan;
-    subscriptionStatus: 'active' | 'expired' | 'past_due';
+    subscriptionStatus: 'active' | 'expired' | 'past_due' | 'pending_payment';
     subscriptionEndDate: string; // ISO string
     createdAt: any;
 }
