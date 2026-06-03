@@ -79,14 +79,9 @@ export default function LandingPage() {
                     </p>
                     </div>
                     <div className="flex flex-col items-center gap-4">
-                        <Button asChild size="lg">
-                             <Link href="/clients/register" prefetch={false}>
-                                Get Started As a Tenant
-                            </Link>
-                        </Button>
-                         <Button asChild size="lg" variant="secondary">
+                         <Button asChild size="lg" variant="secondary" className="px-12 py-6 text-lg font-bold">
                             <Link href="/demo" prefetch={false}>
-                                View Demo
+                                Explore Demo
                             </Link>
                         </Button>
                         <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
@@ -217,7 +212,10 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">&copy; 2024 RentSmart Kenya Lite. All rights reserved.</p>
+        <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">&copy; 2024 RentSmart Kenya Lite. All rights reserved.</p>
+            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono">v1.1.0-stable</span>
+        </div>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="/terms" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Terms of Service

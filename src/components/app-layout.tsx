@@ -1,4 +1,3 @@
-
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
@@ -46,6 +45,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
     ];
 
+    // Select top 4 items for mobile bottom navigation
+    const getMobileNavItems = () => {
+        if (userRole === 'super-admin') return superAdminMenuItems;
+        if (userRole === 'admin') {
+            return [
+                { href: '/admin/dashboard', label: 'Home', icon: LayoutDashboard },
+                { href: '/rentals', label: 'Rentals', icon: Building },
+                { href: '/tenants', label: 'Tenants', icon: Users },
+                { href: '/payments', label: 'Payments', icon: CreditCard },
+            ];
+        }
+        return [
+            { href: '/clients', label: 'Home', icon: Home },
+            { href: '/clients/maintenance', label: 'Repairs', icon: ClipboardList },
+            { href: '/clients/complaints', label: 'Complaints', icon: ShieldAlert },
+            { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
+        ];
+    };
+
     const isPlanSufficient = (minPlan: string) => {
         if (plan === 'Scale') return true;
         if (plan === 'Growth' && minPlan !== 'Scale') return true;
@@ -60,9 +78,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
     const menuItems = getMenuItems();
+    const mobileNavItems = getMobileNavItems();
     const homeRoute = userRole === 'super-admin' ? '/super-admin/dashboard' : (userRole === 'admin' ? '/admin/dashboard' : '/clients');
 
-    const handleNavigation = (e: React.MouseEvent, href: string, disabled: boolean) => {
+    const handleNavigation = (e: React.MouseEvent, href: string, disabled?: boolean) => {
         if (disabled) {
             e.preventDefault();
             return;
@@ -74,7 +93,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <Sidebar>
+            <Sidebar className="hidden md:flex">
                 <SidebarHeader>
                      <Link href={homeRoute} className="flex items-center gap-2">
                         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
@@ -124,8 +143,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         })}
                     </SidebarMenu>
                 </SidebarContent>
-                 <div className="p-2 mt-auto">
-                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive" onClick={logout}>
+                 <div className="p-4 mt-auto border-t space-y-2">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                        <span>Version</span>
+                        <span>v1.1.0-stable</span>
+                    </div>
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive p-0 h-8" onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                     </Button>
@@ -133,11 +156,40 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </Sidebar>
             <SidebarInset>
                 <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mb-4">
-                     <SidebarTrigger />
+                     <SidebarTrigger className="md:hidden" />
+                     <div className="md:hidden flex-1 flex justify-center">
+                         <span className="font-bold text-primary tracking-tight">RentSmart Kenya</span>
+                     </div>
                 </header>
-                <main className="p-4 sm:px-6 sm:py-0 space-y-4">
+                <main className="p-4 sm:px-6 sm:py-0 pb-24 md:pb-4 space-y-4">
                     {children}
                 </main>
+
+                {/* Bottom Navigation for Mobile */}
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border flex items-center justify-around h-20 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                    {mobileNavItems.map((item) => {
+                        const isActive = pathname.startsWith(item.href);
+                        return (
+                            <Link 
+                                key={item.label}
+                                href={item.href}
+                                onClick={(e) => handleNavigation(e, item.href)}
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
+                                    isActive ? "text-primary" : "text-muted-foreground"
+                                )}
+                            >
+                                <div className={cn(
+                                    "p-1.5 rounded-xl transition-all",
+                                    isActive ? "bg-primary/10" : "bg-transparent"
+                                )}>
+                                    <item.icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </div>
             </SidebarInset>
         </SidebarProvider>
     )
