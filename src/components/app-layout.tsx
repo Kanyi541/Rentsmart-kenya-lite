@@ -2,7 +2,7 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut, FileText, User, Wrench, Megaphone, ShieldAlert, ClipboardList, Lock } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, User, Megaphone, ShieldAlert, ClipboardList, Lock, Crown, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,8 +22,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     const plan = organization?.plan || 'Starter';
 
+    const superAdminMenuItems = [
+        { href: '/super-admin/dashboard', label: 'System Overview', icon: Crown },
+    ];
+
     const adminMenuItems = [
-        { href: '/admin/dashboard', label: 'Dashboard', icon: Home, minPlan: 'Starter' },
+        { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, minPlan: 'Starter' },
         { href: '/rentals', label: 'Rentals', icon: Building, minPlan: 'Starter' },
         { href: '/tenants', label: 'Tenants', icon: Users, minPlan: 'Starter' },
         { href: '/assignments', label: 'Assignments', icon: BedDouble, minPlan: 'Starter' },
@@ -35,7 +39,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     const clientMenuItems = [
         { href: '/clients', label: 'My Dashboard', icon: User },
-        { href: '/clients/maintenance', label: 'Maintenance', icon: Wrench },
+        { href: '/clients/maintenance', label: 'Maintenance', icon: ClipboardList },
         { href: '/clients/complaints', label: 'Complaints', icon: ShieldAlert },
         { href: '/clients/checklist', label: 'Checklist', icon: ClipboardList },
         { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
@@ -48,8 +52,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         return false;
     };
 
-    const menuItems = userRole === 'admin' ? adminMenuItems : clientMenuItems;
-    const homeRoute = userRole === 'admin' ? '/admin/dashboard' : '/clients';
+    const getMenuItems = () => {
+        if (userRole === 'super-admin') return superAdminMenuItems;
+        if (userRole === 'admin') return adminMenuItems;
+        return clientMenuItems;
+    };
+
+    const menuItems = getMenuItems();
+    const homeRoute = userRole === 'super-admin' ? '/super-admin/dashboard' : (userRole === 'admin' ? '/admin/dashboard' : '/clients');
 
     const handleNavigation = (e: React.MouseEvent, href: string, disabled: boolean) => {
         if (disabled) {
@@ -76,6 +86,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                     {plan} Plan
                                 </Badge>
                             )}
+                            {userRole === 'super-admin' && (
+                                <Badge variant="default" className="mt-1 w-fit text-[10px] h-4 bg-yellow-500 text-black border-none font-bold">
+                                    SYSTEM OWNER
+                                </Badge>
+                            )}
                         </div>
                     </Link>
                 </SidebarHeader>
@@ -97,7 +112,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                             className="flex items-center justify-between w-full"
                                         >
                                             <div className="flex items-center gap-2">
-                                                <item.icon />
+                                                <item.icon className="h-4 w-4" />
                                                 <span>{item.label}</span>
                                             </div>
                                             {disabled && <Lock className="h-3 w-3" />}
@@ -109,7 +124,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenu>
                 </SidebarContent>
                  <div className="p-2 mt-auto">
-                    <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive" onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                     </Button>

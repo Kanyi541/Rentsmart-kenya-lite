@@ -12,7 +12,10 @@ import type { Organization, PricingPlan } from '@/lib/types';
 
 const auth = getAuth(app);
 
-type UserRole = 'admin' | 'client' | null;
+// Update super admin email here
+const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com'; 
+
+type UserRole = 'admin' | 'client' | 'super-admin' | null;
 type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName' | 'createdAt'> & { password: string, orgId?: string };
 
 const DEMO_ADMIN_EMAIL = 'rentsmart@demo.com';
@@ -43,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isDemoUser, setIsDemoUser] = useState(false);
     const router = useRouter();
 
-    // Primary Auth Listener: Handles user session and role determination
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
             setUser(authUser);
@@ -53,6 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setOrgId(null);
                 setOrganization(null);
                 setIsDemoUser(false);
+                return;
+            }
+
+            if (authUser.email === SUPER_ADMIN_EMAIL) {
+                setUserRole('super-admin');
+                setOrgId('system_owner');
+                setLoading(false);
                 return;
             }
 
@@ -72,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else {
                 setIsDemoUser(false);
-                // Check if user is a tenant or an admin to determine role and org membership
                 const tenantDoc = await getDoc(doc(db, 'tenants', authUser.uid));
                 if (tenantDoc.exists()) {
                     setUserRole('client');
@@ -94,9 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribeAuth();
     }, []);
 
-    // Reactive Organization Listener: Updates state immediately when subscription status changes in Firestore
     useEffect(() => {
-        if (!orgId || isDemoUser) return;
+        if (!orgId || isDemoUser || userRole === 'super-admin') return;
 
         const unsubscribeOrg = onSnapshot(doc(db, 'organizations', orgId), (snapshot) => {
             if (snapshot.exists()) {
@@ -107,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         return () => unsubscribeOrg();
-    }, [orgId, isDemoUser]);
+    }, [orgId, isDemoUser, userRole]);
 
     const login = async (email: string, password: string) => {
         await signInWithEmailAndPassword(auth, email, password);
@@ -122,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         await setDoc(doc(db, "tenants", user.uid), {
             ...tenantData,
+            orgId: tenantData.orgId,
             createdAt: serverTimestamp()
         });
     };

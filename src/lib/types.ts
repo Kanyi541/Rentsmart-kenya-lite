@@ -50,6 +50,18 @@ export interface Organization {
     createdAt: any;
 }
 
+export interface GlobalStats {
+    totalOrgs: number;
+    totalActiveSubscriptions: number;
+    totalRevenue: number;
+    totalTenants: number;
+    planDistribution: {
+        Starter: number;
+        Growth: number;
+        Scale: number;
+    };
+}
+
 export type MaintenanceRequest = z.infer<typeof maintenanceRequestSchema> & {
     id: string;
     orgId: string;
