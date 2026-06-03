@@ -9,6 +9,7 @@ import { Button } from "./ui/button";
 import { useLoading } from "@/hooks/use-loading";
 import { useEffect } from "react";
 import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
