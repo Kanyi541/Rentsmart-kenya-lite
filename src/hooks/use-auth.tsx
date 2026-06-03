@@ -1,4 +1,3 @@
-
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -9,6 +8,8 @@ import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from "firebase/fires
 import { tenantSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import type { Organization, PricingPlan } from '@/lib/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const auth = getAuth(app);
 const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com'; 
@@ -79,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else {
                 setIsDemoUser(false);
-                // Check if user is a tenant or admin
                 const [tenantSnap, adminSnap] = await Promise.all([
                     getDoc(doc(db, 'tenants', authUser.uid)),
                     getDoc(doc(db, 'admins', authUser.uid))
@@ -105,13 +105,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!orgId || isDemoUser || userRole === 'super-admin') return;
 
-        const unsubscribeOrg = onSnapshot(doc(db, 'organizations', orgId), (snapshot) => {
+        const orgDocRef = doc(db, 'organizations', orgId);
+        const unsubscribeOrg = onSnapshot(
+          orgDocRef, 
+          (snapshot) => {
             if (snapshot.exists()) {
                 setOrganization({ id: snapshot.id, ...snapshot.data() } as Organization);
             } else {
                 setOrganization(null);
             }
-        });
+          },
+          async (error) => {
+            const permissionError = new FirestorePermissionError({
+              path: orgDocRef.path,
+              operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          }
+        );
 
         return () => unsubscribeOrg();
     }, [orgId, isDemoUser, userRole]);

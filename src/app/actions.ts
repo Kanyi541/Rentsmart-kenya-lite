@@ -1,4 +1,3 @@
-
 'use server';
 
 import { rentalPriceSuggestion } from '@/ai/flows/rental-price-suggestion';
@@ -58,6 +57,7 @@ export async function addRental(data: unknown) {
             return { error: result.error };
         }
         revalidatePath('/rentals');
+        revalidatePath('/admin/dashboard');
         return { success: true };
     } catch (error: any) {
         return { error: 'Database error: Failed to add rental.'}
@@ -65,6 +65,7 @@ export async function addRental(data: unknown) {
 }
 
 export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string, businessShortCode?: string }) {
+    // Simulating a real M-Pesa Daraja API call
     console.log(`[M-PESA] STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef}`);
     await new Promise(resolve => setTimeout(resolve, 2000));
     return { 
@@ -99,6 +100,8 @@ export async function processPaymentAndAssign(data: unknown) {
         }
         
         revalidatePath('/payments');
+        revalidatePath('/tenants');
+        revalidatePath('/admin/dashboard');
         revalidatePath('/clients');
     } catch (error) {
         return { error: 'Failed to record payments in Firestore.' };
@@ -107,6 +110,7 @@ export async function processPaymentAndAssign(data: unknown) {
     if (depositAmount > 0) {
         try {
             await dbAssignRoom({ tenantId, rentalId, roomId, orgId });
+            revalidatePath('/rentals');
         } catch (error) {
             if (rentPaymentId) await updatePaymentStatus(rentPaymentId, 'Failed');
             if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
@@ -137,6 +141,7 @@ export async function renewSubscription(orgId: string) {
         });
 
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/subscription/plans');
         return { success: true };
     } catch (error) {
         return { error: "Failed to renew subscription." };
@@ -158,6 +163,7 @@ export async function activateSubscription(orgId: string, plan?: string) {
 
         await updateDoc(orgRef, updateData);
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/subscription/checkout');
         return { success: true };
     } catch (error) {
         return { error: "Failed to activate subscription." };
@@ -182,6 +188,7 @@ export async function createMaintenanceRequest(data: unknown) {
     try {
         await dbCreateMaintenanceRequest(parsedData.data);
         revalidatePath('/clients/maintenance');
+        revalidatePath('/admin/dashboard');
         return { success: true };
     } catch (error: any) {
         return { error: 'Database error: Failed to submit request.' };
@@ -194,6 +201,7 @@ export async function createAnnouncement(data: unknown) {
     try {
         await dbCreateAnnouncement(parsedData.data as any);
         revalidatePath('/admin/announcements');
+        revalidatePath('/clients');
         return { success: true };
     } catch (error) {
         return { error: 'Failed to create announcement.' };
@@ -204,6 +212,7 @@ export async function deleteAnnouncement(id: string) {
     try {
         await dbDeleteAnnouncement(id);
         revalidatePath('/admin/announcements');
+        revalidatePath('/clients');
         return { success: true };
     } catch (error) {
         return { error: 'Failed to delete announcement.' };
@@ -216,6 +225,7 @@ export async function createComplaint(data: unknown) {
     try {
         await dbCreateComplaint(parsedData.data);
         revalidatePath('/clients/complaints');
+        revalidatePath('/admin/complaints');
         return { success: true };
     } catch (error: any) {
         return { error: 'Database error: Failed to submit complaint.' };
@@ -228,6 +238,7 @@ export async function createMoveOutNotice(data: unknown) {
     try {
         await dbCreateMoveOutNotice(parsedData.data);
         revalidatePath('/clients/move-out');
+        revalidatePath('/admin/move-out');
         return { success: true };
     } catch (error: any) {
         return { error: 'Database error: Failed to submit notice.' };

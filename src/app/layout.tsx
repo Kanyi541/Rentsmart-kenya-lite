@@ -6,6 +6,7 @@ import Script from 'next/script';
 import { AuthProvider } from '@/hooks/use-auth';
 import { LoadingProvider } from '@/hooks/use-loading';
 import { GlobalLoadingIndicator } from '@/components/global-loading-indicator';
+import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -24,12 +25,12 @@ export default function RootLayout({
       <body className={`${inter.variable} font-body antialiased`}>
         <AuthProvider>
           <LoadingProvider>
+            <FirebaseErrorListener />
             <GlobalLoadingIndicator />
             {children}
           </LoadingProvider>
         </AuthProvider>
         <Toaster />
-        {/* Paystack Inline JS */}
         <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
       </body>
     </html>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
 import { Home, Check, Menu } from 'lucide-react'
-import Image from 'next/image'
+import NextImage from 'next/image'
 import Link from 'next/link'
 import { heroImages } from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ export default function LandingPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 120000); // 2 minutes in milliseconds
+    }, 120000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -52,14 +52,15 @@ export default function LandingPage() {
         </Sheet>
       </header>
       <main className="flex-1 flex flex-col">
-        <section className="relative w-full flex-1 flex items-center justify-center text-center text-white">
+        <section className="relative w-full flex-1 flex items-center justify-center text-center text-white min-h-[600px]">
             {heroImages.map((image, index) => (
-                <Image
+                <NextImage
                     key={image.seed}
                     src={`https://picsum.photos/seed/${image.seed}/1920/1080`}
                     alt="Background"
                     fill
                     priority={index === 0}
+                    sizes="100vw"
                     className={cn(
                         'object-cover transition-opacity duration-1000 ease-in-out',
                         index === currentImageIndex ? 'opacity-100' : 'opacity-0'
@@ -79,7 +80,7 @@ export default function LandingPage() {
                     </p>
                     </div>
                     <div className="flex flex-col items-center gap-4">
-                         <Button asChild size="lg" variant="secondary" className="px-12 py-6 text-lg font-bold">
+                         <Button asChild size="lg" variant="secondary" className="px-12 py-6 text-lg font-bold shadow-lg hover:scale-105 transition-transform">
                             <Link href="/demo" prefetch={false}>
                                 Explore Demo
                             </Link>
@@ -112,7 +113,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mx-auto grid max-w-sm items-start gap-8 pt-12 sm:max-w-4xl sm:grid-cols-2 md:gap-12 lg:max-w-5xl lg:grid-cols-3">
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Starter</CardTitle>
                   <div className="flex items-baseline gap-2">
@@ -144,7 +145,8 @@ export default function LandingPage() {
                 </CardFooter>
               </Card>
 
-              <Card className="border-primary shadow-lg scale-105">
+              <Card className="border-primary shadow-lg scale-105 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
                  <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Growth</CardTitle>
                    <div className="flex items-baseline gap-2">
@@ -170,13 +172,13 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button asChild className="w-full">
+                    <Button asChild className="w-full shadow-md">
                         <Link href="/admin/register?plan=Growth">Choose Plan</Link>
                     </Button>
                 </CardFooter>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Scale</CardTitle>
                    <div className="flex items-baseline gap-2">
@@ -211,10 +213,10 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-muted/30">
         <div className="flex items-center gap-2">
             <p className="text-xs text-muted-foreground">&copy; 2024 RentSmart Kenya Lite. All rights reserved.</p>
-            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono">v1.1.0-stable</span>
+            <span className="text-[10px] bg-background border px-1.5 py-0.5 rounded text-muted-foreground font-mono">v1.1.0-stable</span>
         </div>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="/terms" className="text-xs hover:underline underline-offset-4" prefetch={false}>
