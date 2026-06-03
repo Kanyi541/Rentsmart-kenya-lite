@@ -7,7 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { heroImages } from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 export default function LandingPage() {
@@ -36,7 +36,11 @@ export default function LandingPage() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="right">
-                <nav className="grid gap-6 text-lg font-medium">
+                <SheetHeader>
+                    <SheetTitle>Navigation Menu</SheetTitle>
+                    <SheetDescription>Access your account or learn more about RentSmart.</SheetDescription>
+                </SheetHeader>
+                <nav className="grid gap-6 text-lg font-medium mt-6">
                     <Link href="#" className="flex items-center gap-2 text-lg font-semibold" prefetch={false}>
                         <Home className="h-6 w-6 text-primary" />
                         <span>RentSmart</span>
