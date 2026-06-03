@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -28,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { addRental, getRentals, updateRental } from '@/lib/api/rentals';
 import { useAuth } from '@/hooks/use-auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -119,7 +119,11 @@ export default function RentalsPage() {
                 <AlertTitle className="font-bold">Rental Limit Reached</AlertTitle>
                 <AlertDescription className="flex items-center justify-between mt-1">
                     <span>You've reached the {planLimit} property limit for the {organization?.plan} plan.</span>
-                    <Button variant="link" className="font-bold h-fit p-0">Upgrade your plan to add more properties</Button>
+                    <Button variant="link" className="font-bold h-fit p-0" asChild>
+                        <Link href="/admin/subscription/plans">
+                            Upgrade your plan to add more properties
+                        </Link>
+                    </Button>
                 </AlertDescription>
             </Alert>
         )}
