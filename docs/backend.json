@@ -1,0 +1,129 @@
+
+{
+  "entities": {
+    "Organization": {
+      "title": "Organization",
+      "description": "Represents a property management entity or landlord agency.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "plan": { "type": "string", "enum": ["Starter", "Growth", "Scale"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "expired", "past_due", "pending_payment"] },
+        "subscriptionEndDate": { "type": "string", "format": "date-time" },
+        "mpesaShortcode": { "type": "string" },
+        "mpesaType": { "type": "string", "enum": ["Paybill", "Till"] },
+        "mpesaAccountName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId", "plan", "subscriptionStatus"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "A property manager or staff member of an organization.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "orgId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Tenant": {
+      "title": "Tenant",
+      "description": "A renter associated with an organization and optionally a room.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "secondName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "orgId": { "type": "string" },
+        "rentalId": { "type": "string" },
+        "roomId": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "gender": { "type": "string" },
+        "maritalStatus": { "type": "string" },
+        "nextOfKinName": { "type": "string" },
+        "nextOfKinPhone": { "type": "string" },
+        "nextOfKinRelationship": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Rental": {
+      "title": "Rental",
+      "description": "A property or apartment building owned by an organization.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "ownerNumber": { "type": "string" },
+        "orgId": { "type": "string" }
+      }
+    },
+    "Room": {
+      "title": "Room",
+      "description": "An individual unit within a rental property.",
+      "type": "object",
+      "properties": {
+        "roomNumber": { "type": "string" },
+        "roomType": { "type": "string" },
+        "rent": { "type": "number" },
+        "isOccupied": { "type": "boolean" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/organizations/{orgId}": {
+      "schema": "#/backend/entities/Organization",
+      "description": "Organization details and subscription status."
+    },
+    "/admins/{adminId}": {
+      "schema": "#/backend/entities/Admin",
+      "description": "Admin user profiles mapped to organizations."
+    },
+    "/tenants/{tenantId}": {
+      "schema": "#/backend/entities/Tenant",
+      "description": "Tenant profiles and occupancy mapping."
+    },
+    "/rentals/{rentalId}": {
+      "schema": "#/backend/entities/Rental",
+      "description": "Rental property main records."
+    },
+    "/rentals/{rentalId}/rooms/{roomId}": {
+      "schema": "#/backend/entities/Room",
+      "description": "Inventory of rooms within a rental."
+    },
+    "/payments/{paymentId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "orgId": { "type": "string" },
+          "tenantId": { "type": "string" },
+          "amount": { "type": "number" },
+          "type": { "type": "string" },
+          "status": { "type": "string" },
+          "transactionId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Payment transaction history."
+    },
+    "/announcements/{announcementId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "orgId": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Landlord announcements to tenants."
+    }
+  }
+}

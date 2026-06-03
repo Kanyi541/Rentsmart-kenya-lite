@@ -12,7 +12,6 @@ import { createMoveOutNotice as dbCreateMoveOutNotice } from '@/lib/api/move-out
 import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanceRequestSchema, announcementSchema, createComplaintSchema, createMoveOutNoticeSchema } from '@/lib/schemas';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
@@ -61,33 +60,18 @@ export async function addRental(data: unknown) {
         revalidatePath('/rentals');
         return { success: true };
     } catch (error: any) {
-        console.error('Database error in addRental action:', error);
         return { error: 'Database error: Failed to add rental.'}
     }
 }
 
-/**
- * M-Pesa Daraja STK Push Simulation
- * In production, this would call Safaricom's /mpesa/stkpush/v1/processrequest
- */
 export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string, businessShortCode?: string }) {
-    console.log(`[M-PESA] Initiating STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef} targeting ShortCode: ${data.businessShortCode || 'DEFAULT'}`);
-    
-    // Simulate network latency for Daraja API
+    console.log(`[M-PESA] STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef}`);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Return a simulated CheckoutRequestID
     return { 
         success: true, 
         checkoutRequestId: `ws_CO_${Math.random().toString(36).substring(7).toUpperCase()}`,
-        message: "STK Push initiated. Please enter your PIN on your phone."
+        message: "STK Push initiated."
     };
-}
-
-async function verifyPayment(transactionRef: string) {
-    // For M-Pesa, this would verify the ResultCode from the callback
-    console.log(`Verifying transaction ref: ${transactionRef}`);
-    return { success: true };
 }
 
 export async function processPaymentAndAssign(data: unknown) {
@@ -99,15 +83,9 @@ export async function processPaymentAndAssign(data: unknown) {
     
     const { tenantId, rentalId, roomId, orgId, rentAmount, depositAmount, phone, email, transactionRef } = parsedData.data;
 
-    const verification = await verifyPayment(transactionRef);
-    if (!verification.success) {
-        return { error: 'Payment verification failed. Please contact support.'}
-    }
-
     let rentPaymentId;
     let depositPaymentId;
     try {
-        // 1. Create payment records
         rentPaymentId = await createPayment({
             tenantId, rentalId, roomId, orgId, amount: rentAmount, type: 'Rent',
             status: 'Completed', transactionId: transactionRef, phone, email
@@ -123,19 +101,16 @@ export async function processPaymentAndAssign(data: unknown) {
         revalidatePath('/payments');
         revalidatePath('/clients');
     } catch (error) {
-        console.error('Failed to create payment records:', error);
-        return { error: 'Failed to record payments in the database.' };
+        return { error: 'Failed to record payments in Firestore.' };
     }
     
-    // 2. Assign the room if it's an initial assignment (indicated by deposit)
     if (depositAmount > 0) {
         try {
             await dbAssignRoom({ tenantId, rentalId, roomId, orgId });
         } catch (error) {
-            console.error(error);
             if (rentPaymentId) await updatePaymentStatus(rentPaymentId, 'Failed');
             if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
-            return { error: 'Payment successful, but room assignment failed.' };
+            return { error: 'Payment recorded, but room assignment failed.' };
         }
         return { success: true, redirect: '/assignments?status=success' };
     } else {

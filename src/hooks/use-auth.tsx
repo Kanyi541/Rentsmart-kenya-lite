@@ -11,8 +11,6 @@ import { z } from 'zod';
 import type { Organization, PricingPlan } from '@/lib/types';
 
 const auth = getAuth(app);
-
-// Update super admin email here
 const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com'; 
 
 type UserRole = 'admin' | 'client' | 'super-admin' | null;
@@ -81,19 +79,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else {
                 setIsDemoUser(false);
-                const tenantDoc = await getDoc(doc(db, 'tenants', authUser.uid));
-                if (tenantDoc.exists()) {
+                // Check if user is a tenant or admin
+                const [tenantSnap, adminSnap] = await Promise.all([
+                    getDoc(doc(db, 'tenants', authUser.uid)),
+                    getDoc(doc(db, 'admins', authUser.uid))
+                ]);
+
+                if (tenantSnap.exists()) {
                     setUserRole('client');
-                    setOrgId(tenantDoc.data().orgId);
+                    setOrgId(tenantSnap.data().orgId);
+                } else if (adminSnap.exists()) {
+                    setUserRole('admin');
+                    setOrgId(adminSnap.data().orgId);
                 } else {
-                    const adminDoc = await getDoc(doc(db, 'admins', authUser.uid));
-                    if (adminDoc.exists()) {
-                        setUserRole('admin');
-                        setOrgId(adminDoc.data().orgId);
-                    } else {
-                        setUserRole(null);
-                        setOrgId(null);
-                    }
+                    setUserRole(null);
+                    setOrgId(null);
                 }
                 setLoading(false);
             }
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         await setDoc(doc(db, "admins", user.uid), {
-            ...adminData,
+            fullName: adminData.fullName,
             orgId: user.uid,
             email,
             createdAt: serverTimestamp()
