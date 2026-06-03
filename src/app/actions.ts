@@ -66,9 +66,7 @@ export async function addRental(data: unknown) {
 }
 
 async function verifyPayment(transactionRef: string) {
-    // In a production environment, you would call Paystack's verify endpoint:
-    // https://api.paystack.co/transaction/verify/:reference
-    // For now, we simulate success since the transaction reached the client callback.
+    // In a production environment, you would call Paystack's verify endpoint
     console.log(`Verifying Paystack transaction ref: ${transactionRef}`);
     return { success: true };
 }
@@ -120,7 +118,6 @@ export async function processPaymentAndAssign(data: unknown) {
             if (depositPaymentId) await updatePaymentStatus(depositPaymentId, 'Failed');
             return { error: 'Payment successful, but room assignment failed.' };
         }
-        // Use a flag for redirect or return success to let client handle it
         return { success: true, redirect: '/assignments?status=success' };
     } else {
         return { success: true };
@@ -152,15 +149,20 @@ export async function renewSubscription(orgId: string) {
     }
 }
 
-export async function activateSubscription(orgId: string) {
+export async function activateSubscription(orgId: string, plan?: string) {
     if (!orgId) return { error: "Organization ID is required." };
     try {
         const orgRef = doc(db, 'organizations', orgId);
-        await updateDoc(orgRef, {
+        const updateData: any = {
             subscriptionStatus: 'active',
-            // Refresh expiry to 1 month from now
             subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString()
-        });
+        };
+        
+        if (plan) {
+            updateData.plan = plan;
+        }
+
+        await updateDoc(orgRef, updateData);
         revalidatePath('/admin/dashboard');
         return { success: true };
     } catch (error) {

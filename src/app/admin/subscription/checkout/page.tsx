@@ -1,13 +1,12 @@
-
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/app-layout';
-import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, AlertCircle } from 'lucide-react';
+import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { activateSubscription } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
@@ -16,11 +15,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 declare const PaystackPop: any;
 
-function SubscriptionCheckoutPage() {
+function CheckoutContent() {
     const { organization, user, orgId, logout } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const planPrices = {
         'Starter': 2999,
@@ -28,24 +28,26 @@ function SubscriptionCheckoutPage() {
         'Scale': 9999
     };
 
-    const currentPlan = organization?.plan || 'Starter';
-    const price = planPrices[currentPlan as keyof typeof planPrices];
+    const upgradePlan = searchParams.get('upgradePlan');
+    const targetPlan = upgradePlan || organization?.plan || 'Starter';
+    const isUpgrade = !!upgradePlan && upgradePlan !== organization?.plan;
+    const price = planPrices[targetPlan as keyof typeof planPrices];
 
     const handleActivationSuccess = async (reference: string) => {
         try {
-            const res = await activateSubscription(orgId!);
+            const res = await activateSubscription(orgId!, upgradePlan || undefined);
             if (res.error) throw new Error(res.error);
 
             toast({
-                title: "Plan Activated!",
-                description: `Welcome to RentSmart! Your ${currentPlan} plan is now active. Ref: ${reference}`,
+                title: isUpgrade ? "Plan Upgraded!" : "Plan Activated!",
+                description: `Your ${targetPlan} plan is now active. Ref: ${reference}`,
             });
             router.push('/admin/dashboard');
         } catch (error) {
             toast({
                 variant: 'destructive',
                 title: "Activation Failed",
-                description: "Payment was successful but we couldn't activate your account. Please contact support."
+                description: "Payment was successful but we couldn't update your account. Please contact support."
             });
         } finally {
             setIsProcessing(false);
@@ -76,7 +78,8 @@ function SubscriptionCheckoutPage() {
             currency: 'KES',
             metadata: {
                 orgId: orgId,
-                plan: currentPlan,
+                plan: targetPlan,
+                isUpgrade
             },
             callback: (response: any) => handleActivationSuccess(response.reference),
             onClose: () => {
@@ -93,7 +96,6 @@ function SubscriptionCheckoutPage() {
 
     const handleSimulatedPayment = () => {
         setIsProcessing(true);
-        // Simulate a delay
         setTimeout(() => {
             handleActivationSuccess(`SIM_${Math.random().toString(36).substring(7).toUpperCase()}`);
         }, 1500);
@@ -107,18 +109,21 @@ function SubscriptionCheckoutPage() {
                 <Card className="w-full max-w-lg shadow-xl border-t-4 border-primary">
                     <CardHeader className="text-center">
                         <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-primary">
-                            <Zap className="h-8 w-8 fill-current" />
+                            {isUpgrade ? <ArrowUpCircle className="h-8 w-8" /> : <Zap className="h-8 w-8 fill-current" />}
                         </div>
-                        <CardTitle className="text-2xl">Activate Your Plan</CardTitle>
+                        <CardTitle className="text-2xl">{isUpgrade ? 'Upgrade Subscription' : 'Activate Your Plan'}</CardTitle>
                         <CardDescription>
-                            Complete payment to start managing your properties with {organization.name}.
+                            {isUpgrade 
+                                ? `Confirm your upgrade to the ${targetPlan} plan for ${organization.name}.`
+                                : `Complete payment to start managing your properties with ${organization.name}.`
+                            }
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground font-medium">Selected Tier:</span>
-                                <Badge variant="default" className="font-bold">{organization.plan}</Badge>
+                                <Badge variant="default" className="font-bold">{targetPlan}</Badge>
                             </div>
                              <div className="flex justify-between items-center pt-2 border-t">
                                 <span className="text-lg font-bold">Total Amount:</span>
@@ -129,12 +134,12 @@ function SubscriptionCheckoutPage() {
                         <div className="space-y-3">
                             <h4 className="text-sm font-semibold flex items-center gap-2">
                                 <ShieldCheck className="h-4 w-4 text-green-600" />
-                                Tier Benefits:
+                                {targetPlan} Benefits:
                             </h4>
                             <ul className="text-xs text-muted-foreground space-y-2">
                                 <li className="flex items-center gap-2">
                                     <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                    {organization.plan === 'Starter' ? '1 Property limit' : organization.plan === 'Growth' ? 'Up to 5 properties' : 'Unlimited properties'}
+                                    {targetPlan === 'Starter' ? '1 Property limit' : targetPlan === 'Growth' ? 'Up to 5 properties' : 'Unlimited properties'}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
@@ -142,7 +147,7 @@ function SubscriptionCheckoutPage() {
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                    Secure cloud storage & M-Pesa integration
+                                    {targetPlan !== 'Starter' ? 'Announcements & Complaints enabled' : 'Core management tools'}
                                 </li>
                             </ul>
                         </div>
@@ -167,14 +172,29 @@ function SubscriptionCheckoutPage() {
                         <Button variant="outline" className="w-full" onClick={handleSimulatedPayment} disabled={isProcessing}>
                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Simulate Payment (Development)"}
                         </Button>
-                        <Button variant="ghost" className="text-muted-foreground text-xs" onClick={logout} disabled={isProcessing}>
-                            Cancel Registration
-                        </Button>
+                        {!isUpgrade && (
+                            <Button variant="ghost" className="text-muted-foreground text-xs" onClick={logout} disabled={isProcessing}>
+                                Cancel Registration
+                            </Button>
+                        )}
+                        {isUpgrade && (
+                            <Button variant="ghost" className="text-muted-foreground text-xs" onClick={() => router.back()} disabled={isProcessing}>
+                                Go Back
+                            </Button>
+                        )}
                     </CardFooter>
                 </Card>
             </div>
         </AppLayout>
     );
+}
+
+function SubscriptionCheckoutPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading Checkout...</div>}>
+            <CheckoutContent />
+        </Suspense>
+    )
 }
 
 export default withAuth(SubscriptionCheckoutPage);

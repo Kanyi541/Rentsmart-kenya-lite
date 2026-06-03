@@ -1,9 +1,8 @@
-
 'use client'
 
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { Building, Users, BedDouble, PlusCircle, CalendarClock, Search, AlertTriangle, ArrowRight, Loader2, ArrowUpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import withAuth from '@/components/auth/with-auth';
@@ -139,9 +138,17 @@ function Home() {
                 <p className="text-muted-foreground">Managing rentals for {organization?.name || 'your organization'}.</p>
             </div>
             {organization?.plan && (
-                <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground py-1 px-4 text-sm font-bold">
-                    {organization.plan} Plan
-                </Badge>
+                <div className="flex items-center gap-2">
+                    <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground py-1 px-4 text-sm font-bold">
+                        {organization.plan} Plan
+                    </Badge>
+                    <Button asChild variant="outline" size="sm" className="h-8">
+                        <Link href="/admin/subscription/plans">
+                            <ArrowUpCircle className="mr-2 h-4 w-4" />
+                            Manage
+                        </Link>
+                    </Button>
+                </div>
             )}
         </div>
 
@@ -266,7 +273,7 @@ function Home() {
                                             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
+                                            <TableCell className="text-center"><Skeleton className="h-5 w-24 mx-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : paginatedRooms.length === 0 ? (
