@@ -1,6 +1,7 @@
+
 'use client'
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -17,6 +18,9 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Organization } from '@/lib/types';
 
 declare const PaystackPop: any;
 
@@ -31,8 +35,9 @@ function NewPaymentPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { orgId } = useAuth();
+    const { orgId: userOrgId } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [landlordOrg, setLandlordOrg] = useState<Organization | null>(null);
 
     // Read details from URL
     const tenantId = searchParams.get('tenantId') || '';
@@ -43,10 +48,26 @@ function NewPaymentPage() {
     const roomNumber = searchParams.get('roomNumber') || '';
     const rent = Number(searchParams.get('rent')) || 0;
     const initialPhone = searchParams.get('phone') || '';
+    const targetOrgId = searchParams.get('orgId') || userOrgId; // Tenants use search param, Admins use userOrgId
     const isRecurring = searchParams.get('type') === 'rent_only';
     
     const deposit = isRecurring ? 0 : rent / 2; 
     const total = rent + deposit;
+
+    useEffect(() => {
+        async function fetchLandlordSettings() {
+            if (!targetOrgId) return;
+            try {
+                const orgDoc = await getDoc(doc(db, 'organizations', targetOrgId));
+                if (orgDoc.exists()) {
+                    setLandlordOrg(orgDoc.data() as Organization);
+                }
+            } catch (error) {
+                console.error("Failed to load landlord settings", error);
+            }
+        }
+        fetchLandlordSettings();
+    }, [targetOrgId]);
     
     const form = useForm<PaymentFormValues>({
         resolver: zodResolver(paymentFormSchema),
@@ -62,7 +83,7 @@ function NewPaymentPage() {
                 tenantId,
                 rentalId,
                 roomId,
-                orgId: orgId!,
+                orgId: targetOrgId!,
                 rentAmount: rent,
                 depositAmount: deposit,
                 phone: data.phone,
@@ -96,13 +117,14 @@ function NewPaymentPage() {
             const res = await initiateMpesaStkPush({
                 phone: data.phone,
                 amount: total,
-                accountRef: `Room ${roomNumber} - ${tenantName}`
+                accountRef: `Room ${roomNumber} - ${tenantName}`,
+                businessShortCode: landlordOrg?.mpesaShortcode
             });
 
             if (res.success) {
                 toast({
                     title: 'M-Pesa Push Sent',
-                    description: 'Enter your PIN on your phone to complete the rent payment.',
+                    description: `Enter PIN for ${landlordOrg?.mpesaAccountName || rentalName} to complete the payment.`,
                 });
 
                 // Simulate waiting for Daraja Callback
@@ -137,7 +159,7 @@ function NewPaymentPage() {
             currency: 'KES',
             phone: data.phone,
             metadata: {
-                tenantId, rentalId, roomId, orgId,
+                tenantId, rentalId, roomId, orgId: targetOrgId,
                 type: isRecurring ? 'Rent' : 'Assignment'
             },
             callback: (response: any) => handleProcessSuccess(response.reference, data),
@@ -159,7 +181,7 @@ function NewPaymentPage() {
         }, 1500);
     };
 
-    if (!tenantId || !rentalId || !roomId || !orgId) {
+    if (!tenantId || !rentalId || !roomId || !targetOrgId) {
         return (
              <AppLayout>
                 <Card>
@@ -188,7 +210,10 @@ function NewPaymentPage() {
                                     </div>
                                     {isRecurring ? 'Pay Monthly Rent' : 'Secure Room Assignment'}
                                 </CardTitle>
-                                <CardDescription>Secure Checkout for {tenantName}. Funds are settled to landlord bank account.</CardDescription>
+                                <CardDescription>
+                                    Secure Checkout for {tenantName}. 
+                                    Settling to: <span className="font-bold text-foreground">{landlordOrg?.mpesaAccountName || landlordOrg?.name || rentalName}</span>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="p-4 border rounded-lg bg-muted/20">
@@ -198,6 +223,12 @@ function NewPaymentPage() {
                                         <span className="font-medium">{rentalName}</span>
                                         <span className="text-muted-foreground">Unit:</span>
                                         <span className="font-medium">Room {roomNumber}</span>
+                                        {landlordOrg?.mpesaShortcode && (
+                                            <>
+                                                <span className="text-muted-foreground">M-Pesa {landlordOrg.mpesaType}:</span>
+                                                <span className="font-bold">{landlordOrg.mpesaShortcode}</span>
+                                            </>
+                                        )}
                                     </div>
                                     <div className="flex justify-between text-lg font-black text-primary pt-4 mt-2 border-t">
                                         <span>Total to Pay:</span>
@@ -269,7 +300,7 @@ function NewPaymentPage() {
 
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 p-2 rounded border border-green-100">
                                     <ShieldCheck className="h-4 w-4 text-green-600" />
-                                    <span>Encrypted with 256-bit SSL security. M-Pesa funds are deposited directly to our bank account.</span>
+                                    <span>Encrypted with 256-bit SSL security. Funds are deposited directly to {landlordOrg?.mpesaAccountName || 'the landlord'}'s bank account.</span>
                                 </div>
                             </CardContent>
                             <CardFooter className="flex flex-col gap-3 bg-muted/10 border-t pt-6">

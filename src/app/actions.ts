@@ -1,3 +1,4 @@
+
 'use server';
 
 import { rentalPriceSuggestion } from '@/ai/flows/rental-price-suggestion';
@@ -69,8 +70,8 @@ export async function addRental(data: unknown) {
  * M-Pesa Daraja STK Push Simulation
  * In production, this would call Safaricom's /mpesa/stkpush/v1/processrequest
  */
-export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string }) {
-    console.log(`[M-PESA] Initiating STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef}`);
+export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string, businessShortCode?: string }) {
+    console.log(`[M-PESA] Initiating STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef} targeting ShortCode: ${data.businessShortCode || 'DEFAULT'}`);
     
     // Simulate network latency for Daraja API
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -185,6 +186,18 @@ export async function activateSubscription(orgId: string, plan?: string) {
         return { success: true };
     } catch (error) {
         return { error: "Failed to activate subscription." };
+    }
+}
+
+export async function updateOrganizationPayments(orgId: string, data: { mpesaShortcode: string, mpesaType: 'Paybill' | 'Till', mpesaAccountName: string }) {
+    if (!orgId) return { error: "Organization ID is required." };
+    try {
+        const orgRef = doc(db, 'organizations', orgId);
+        await updateDoc(orgRef, data);
+        revalidatePath('/admin/settings/payments');
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to update payment settings." };
     }
 }
 

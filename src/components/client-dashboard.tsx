@@ -207,7 +207,7 @@ export function ClientDashboard() {
                                         </div>
                                     </div>
                                      <Button asChild size="lg" className="shadow-lg hover:scale-105 transition-transform">
-                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}&type=rent_only`}>
+                                        <Link href={`/payments/new?tenantId=${tenant.id}&tenantName=${tenant.firstName} ${tenant.secondName}&rentalId=${tenant.rentalId}&rentalName=${tenant.rentalName}&roomId=${tenant.roomId}&roomNumber=${tenant.roomNumber}&rent=${tenant.rent}&phone=${tenant.phone}&orgId=${tenant.orgId}&type=rent_only`}>
                                             Pay KSh {tenant.rent?.toLocaleString()} Now
                                         </Link>
                                     </Button>

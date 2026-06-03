@@ -35,7 +35,6 @@ export interface GroupedPayment {
     depositPaid: number;
     totalPaid: number;
     status: 'Completed' | 'Failed';
-    orgId: string;
 }
 
 export type PricingPlan = 'Starter' | 'Growth' | 'Scale';
@@ -48,6 +47,10 @@ export interface Organization {
     subscriptionStatus: 'active' | 'expired' | 'past_due' | 'pending_payment';
     subscriptionEndDate: string; // ISO string
     createdAt: any;
+    // Payment Collection Details
+    mpesaShortcode?: string;
+    mpesaType?: 'Paybill' | 'Till';
+    mpesaAccountName?: string;
 }
 
 export interface GlobalStats {
