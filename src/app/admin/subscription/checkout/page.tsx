@@ -6,18 +6,22 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/app-layout';
-import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, AlertCircle, ArrowUpCircle } from 'lucide-react';
+import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, AlertCircle, ArrowUpCircle, Phone, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { activateSubscription } from '@/app/actions';
+import { activateSubscription, initiateMpesaStkPush } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
 import withAuth from '@/components/auth/with-auth';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 declare const PaystackPop: any;
 
 function CheckoutContent() {
     const { organization, user, orgId, logout } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [mpesaPhone, setMpesaPhone] = useState('');
+    const [paymentMethod, setMpesaPaymentMethod] = useState<'mpesa' | 'card' | null>(null);
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -54,6 +58,37 @@ function CheckoutContent() {
         }
     };
 
+    const handleMpesaPayment = async () => {
+        if (!mpesaPhone || mpesaPhone.length < 10) {
+            toast({ variant: 'destructive', title: 'Invalid Phone', description: 'Please enter a valid M-Pesa phone number.' });
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const res = await initiateMpesaStkPush({
+                phone: mpesaPhone,
+                amount: price,
+                accountRef: organization?.name || 'RentSmart Subscription'
+            });
+
+            if (res.success) {
+                toast({
+                    title: 'STK Push Sent!',
+                    description: 'Check your phone to enter your M-Pesa PIN.',
+                });
+                
+                // Simulate waiting for M-Pesa Callback
+                setTimeout(() => {
+                    handleActivationSuccess(res.checkoutRequestId);
+                }, 5000);
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'M-Pesa Error', description: 'Failed to initiate M-Pesa payment.' });
+            setIsProcessing(false);
+        }
+    };
+
     const handlePaystackPayment = () => {
         if (!user?.email || !orgId) return;
         
@@ -65,7 +100,7 @@ function CheckoutContent() {
             toast({
                 variant: 'destructive',
                 title: "Paystack Not Configured",
-                description: "Please add your Paystack Public Key to .env. For now, use the 'Simulate Payment' option below.",
+                description: "Please add your Paystack Public Key to .env. For now, use the 'Simulate' button.",
             });
             setIsProcessing(false);
             return;
@@ -131,6 +166,47 @@ function CheckoutContent() {
                             </div>
                         </div>
 
+                        {!paymentMethod ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button variant="outline" className="h-24 flex flex-col gap-2 border-2 hover:border-primary" onClick={() => setMpesaPaymentMethod('mpesa')}>
+                                    <Smartphone className="h-8 w-8 text-green-600" />
+                                    <span>M-Pesa Express</span>
+                                </Button>
+                                <Button variant="outline" className="h-24 flex flex-col gap-2 border-2 hover:border-primary" onClick={() => setMpesaPaymentMethod('card')}>
+                                    <CreditCard className="h-8 w-8 text-blue-600" />
+                                    <span>Card / Bank</span>
+                                </Button>
+                            </div>
+                        ) : paymentMethod === 'mpesa' ? (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="mpesa-phone">M-Pesa Phone Number</Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            id="mpesa-phone" 
+                                            placeholder="0712345678" 
+                                            className="pl-10" 
+                                            value={mpesaPhone}
+                                            onChange={(e) => setMpesaPhone(e.target.value)}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">Funds will be deposited into our secure bank account via M-Pesa APIs.</p>
+                                </div>
+                                <Button className="w-full bg-green-600 hover:bg-green-700 h-12 font-bold" onClick={handleMpesaPayment} disabled={isProcessing}>
+                                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : `Pay KSh ${price.toLocaleString()} via M-Pesa`}
+                                </Button>
+                                <Button variant="ghost" className="w-full text-xs" onClick={() => setMpesaPaymentMethod(null)}>Change Payment Method</Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                <Button className="w-full h-12 font-bold" onClick={handlePaystackPayment} disabled={isProcessing}>
+                                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : `Pay KSh ${price.toLocaleString()} with Card`}
+                                </Button>
+                                <Button variant="ghost" className="w-full text-xs" onClick={() => setMpesaPaymentMethod(null)}>Change Payment Method</Button>
+                            </div>
+                        )}
+
                         <div className="space-y-3">
                             <h4 className="text-sm font-semibold flex items-center gap-2">
                                 <ShieldCheck className="h-4 w-4 text-green-600" />
@@ -145,41 +221,16 @@ function CheckoutContent() {
                                     <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                                     Tenant management & Automatic Billing
                                 </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                    {targetPlan !== 'Starter' ? 'Announcements & Complaints enabled' : 'Core management tools'}
-                                </li>
                             </ul>
                         </div>
-
-                        {(!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.includes('your_public_key')) && (
-                            <Alert className="bg-amber-50 border-amber-200">
-                                <AlertCircle className="h-4 w-4 text-amber-600" />
-                                <AlertDescription className="text-amber-800 text-xs">
-                                    Paystack keys not found. Use the <strong>Simulate Payment</strong> button below to bypass this for now.
-                                </AlertDescription>
-                            </Alert>
-                        )}
                     </CardContent>
                     <CardFooter className="flex flex-col gap-3">
-                        <Button className="w-full h-12 text-lg font-bold shadow-lg" onClick={handlePaystackPayment} disabled={isProcessing}>
-                            {isProcessing ? (
-                                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
-                            ) : (
-                                `Pay KSh ${price.toLocaleString()} via Paystack`
-                            )}
-                        </Button>
                         <Button variant="outline" className="w-full" onClick={handleSimulatedPayment} disabled={isProcessing}>
-                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Simulate Payment (Development)"}
+                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Simulate Payment (Dev Mode)"}
                         </Button>
                         {!isUpgrade && (
                             <Button variant="ghost" className="text-muted-foreground text-xs" onClick={logout} disabled={isProcessing}>
                                 Cancel Registration
-                            </Button>
-                        )}
-                        {isUpgrade && (
-                            <Button variant="ghost" className="text-muted-foreground text-xs" onClick={() => router.back()} disabled={isProcessing}>
-                                Go Back
                             </Button>
                         )}
                     </CardFooter>

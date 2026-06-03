@@ -65,9 +65,27 @@ export async function addRental(data: unknown) {
     }
 }
 
+/**
+ * M-Pesa Daraja STK Push Simulation
+ * In production, this would call Safaricom's /mpesa/stkpush/v1/processrequest
+ */
+export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string }) {
+    console.log(`[M-PESA] Initiating STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef}`);
+    
+    // Simulate network latency for Daraja API
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Return a simulated CheckoutRequestID
+    return { 
+        success: true, 
+        checkoutRequestId: `ws_CO_${Math.random().toString(36).substring(7).toUpperCase()}`,
+        message: "STK Push initiated. Please enter your PIN on your phone."
+    };
+}
+
 async function verifyPayment(transactionRef: string) {
-    // In a production environment, you would call Paystack's verify endpoint
-    console.log(`Verifying Paystack transaction ref: ${transactionRef}`);
+    // For M-Pesa, this would verify the ResultCode from the callback
+    console.log(`Verifying transaction ref: ${transactionRef}`);
     return { success: true };
 }
 

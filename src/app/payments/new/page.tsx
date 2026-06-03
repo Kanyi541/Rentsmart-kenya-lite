@@ -1,4 +1,3 @@
-
 'use client'
 
 import { Suspense, useState } from 'react';
@@ -11,12 +10,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { processPaymentAndAssign } from '@/app/actions';
+import { processPaymentAndAssign, initiateMpesaStkPush } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, CreditCard, AlertCircle } from 'lucide-react';
+import { Loader2, ShieldCheck, CreditCard, AlertCircle, Smartphone } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 declare const PaystackPop: any;
 
@@ -89,8 +89,34 @@ function NewPaymentPage() {
             setIsProcessing(false);
         }
     };
+
+    const handleMpesaPayment = async (data: PaymentFormValues) => {
+        setIsProcessing(true);
+        try {
+            const res = await initiateMpesaStkPush({
+                phone: data.phone,
+                amount: total,
+                accountRef: `Room ${roomNumber} - ${tenantName}`
+            });
+
+            if (res.success) {
+                toast({
+                    title: 'M-Pesa Push Sent',
+                    description: 'Enter your PIN on your phone to complete the rent payment.',
+                });
+
+                // Simulate waiting for Daraja Callback
+                setTimeout(() => {
+                    handleProcessSuccess(res.checkoutRequestId, data);
+                }, 6000);
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'M-Pesa Failed', description: 'Could not reach Safaricom. Try again later.' });
+            setIsProcessing(false);
+        }
+    };
     
-    const handlePayment = (data: PaymentFormValues) => {
+    const handleCardPayment = (data: PaymentFormValues) => {
         setIsProcessing(true);
         const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
@@ -98,7 +124,7 @@ function NewPaymentPage() {
             toast({
                 variant: 'destructive',
                 title: "Configuration Error",
-                description: "Paystack is not configured. Use the 'Simulate' option for now."
+                description: "Paystack is not configured. Use the 'Simulate' option or M-Pesa."
             });
             setIsProcessing(false);
             return;
@@ -129,7 +155,7 @@ function NewPaymentPage() {
         }
         setIsProcessing(true);
         setTimeout(() => {
-            handleProcessSuccess(`SIM_RENT_${Math.random().toString(36).substring(7).toUpperCase()}`, data);
+            handleProcessSuccess(`SIM_PAY_${Math.random().toString(36).substring(7).toUpperCase()}`, data);
         }, 1500);
     };
 
@@ -154,7 +180,7 @@ function NewPaymentPage() {
             <div className="flex justify-center items-start py-8">
                 <Card className="w-full max-w-2xl shadow-lg border-primary/20">
                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handlePayment)}>
+                        <form>
                             <CardHeader className="bg-primary/5 border-b mb-6">
                                 <CardTitle className="flex items-center gap-3">
                                     <div className="p-2 bg-primary rounded-full">
@@ -162,7 +188,7 @@ function NewPaymentPage() {
                                     </div>
                                     {isRecurring ? 'Pay Monthly Rent' : 'Secure Room Assignment'}
                                 </CardTitle>
-                                <CardDescription>Paystack Secure Gateway for {tenantName}.</CardDescription>
+                                <CardDescription>Secure Checkout for {tenantName}. Funds are settled to landlord bank account.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="p-4 border rounded-lg bg-muted/20">
@@ -170,28 +196,12 @@ function NewPaymentPage() {
                                     <div className="grid grid-cols-2 gap-y-2 text-sm">
                                         <span className="text-muted-foreground">Property:</span>
                                         <span className="font-medium">{rentalName}</span>
-                                        <span className="text-muted-foreground">Unit Number:</span>
+                                        <span className="text-muted-foreground">Unit:</span>
                                         <span className="font-medium">Room {roomNumber}</span>
                                     </div>
-                                </div>
-
-                                <div className="p-4 border rounded-lg bg-card">
-                                    <div className="space-y-3 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">{isRecurring ? 'Current Month Rent' : "Initial Rent Payment"}:</span>
-                                            <span className="font-medium">KSh {rent.toLocaleString()}</span>
-                                        </div>
-                                         {!isRecurring && (
-                                            <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Refundable Deposit:</span>
-                                                <span className="font-medium">KSh {deposit.toLocaleString()}</span>
-                                            </div>
-                                         )}
-                                        <Separator />
-                                         <div className="flex justify-between text-lg font-black text-primary pt-2">
-                                            <span>Pay Now:</span>
-                                            <span>KSh {total.toLocaleString()}</span>
-                                        </div>
+                                    <div className="flex justify-between text-lg font-black text-primary pt-4 mt-2 border-t">
+                                        <span>Total to Pay:</span>
+                                        <span>KSh {total.toLocaleString()}</span>
                                     </div>
                                 </div>
 
@@ -224,30 +234,51 @@ function NewPaymentPage() {
                                     />
                                 </div>
 
-                                {(!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.includes('your_public_key')) && (
-                                    <Alert className="bg-amber-50 border-amber-200">
-                                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                                        <AlertDescription className="text-amber-800 text-xs">
-                                            Paystack keys missing. Use <strong>Simulate</strong> below to test.
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
+                                <Separator />
+
+                                <Tabs defaultValue="mpesa" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                                            <Smartphone className="h-4 w-4" /> M-Pesa Express
+                                        </TabsTrigger>
+                                        <TabsTrigger value="card" className="flex items-center gap-2">
+                                            <CreditCard className="h-4 w-4" /> Card / Bank
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="mpesa" className="pt-4">
+                                        <Button 
+                                            type="button" 
+                                            className="w-full bg-green-600 hover:bg-green-700 h-12 font-bold" 
+                                            onClick={form.handleSubmit(handleMpesaPayment)}
+                                            disabled={isProcessing}
+                                        >
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pay KSh ${total.toLocaleString()} via M-Pesa`}
+                                        </Button>
+                                    </TabsContent>
+                                    <TabsContent value="card" className="pt-4">
+                                        <Button 
+                                            type="button" 
+                                            className="w-full h-12 font-bold" 
+                                            onClick={form.handleSubmit(handleCardPayment)}
+                                            disabled={isProcessing}
+                                        >
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pay KSh ${total.toLocaleString()} with Card`}
+                                        </Button>
+                                    </TabsContent>
+                                </Tabs>
 
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 p-2 rounded border border-green-100">
                                     <ShieldCheck className="h-4 w-4 text-green-600" />
-                                    <span>Encrypted with 256-bit SSL security via Paystack.</span>
+                                    <span>Encrypted with 256-bit SSL security. M-Pesa funds are deposited directly to our bank account.</span>
                                 </div>
                             </CardContent>
                             <CardFooter className="flex flex-col gap-3 bg-muted/10 border-t pt-6">
                                 <div className="flex justify-between w-full">
                                     <Button variant="outline" type="button" onClick={() => router.back()} disabled={isProcessing}>Cancel</Button>
-                                    <Button type="submit" size="lg" className="px-8 font-bold" disabled={isProcessing}>
-                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Authorize Payment'}
+                                    <Button variant="link" type="button" className="text-xs text-muted-foreground" onClick={handleSimulatedPayment} disabled={isProcessing}>
+                                        Simulate Success (Developer Only)
                                     </Button>
                                 </div>
-                                <Button variant="link" type="button" className="text-xs text-muted-foreground" onClick={handleSimulatedPayment} disabled={isProcessing}>
-                                    Simulate Success (Dev)
-                                </Button>
                             </CardFooter>
                         </form>
                     </Form>
