@@ -1,24 +1,25 @@
+
 'use client'
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/app-layout';
-import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, AlertCircle, ArrowUpCircle, Phone, Smartphone } from 'lucide-react';
+import { CreditCard, Loader2, ShieldCheck, CheckCircle2, Zap, ArrowUpCircle, Phone, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { activateSubscription, initiateMpesaStkPush } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
 import withAuth from '@/components/auth/with-auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingAnimation } from '@/components/loading';
 
 declare const PaystackPop: any;
 
 function CheckoutContent() {
-    const { organization, user, orgId, logout } = useAuth();
+    const { organization, user, orgId, logout, loading } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [mpesaPhone, setMpesaPhone] = useState('');
     const [paymentMethod, setMpesaPaymentMethod] = useState<'mpesa' | 'card' | null>(null);
@@ -35,7 +36,7 @@ function CheckoutContent() {
     const upgradePlan = searchParams.get('upgradePlan');
     const targetPlan = upgradePlan || organization?.plan || 'Starter';
     const isUpgrade = !!upgradePlan && upgradePlan !== organization?.plan;
-    const price = planPrices[targetPlan as keyof typeof planPrices];
+    const price = planPrices[targetPlan as keyof typeof planPrices] || 2999;
 
     const handleActivationSuccess = async (reference: string) => {
         try {
@@ -136,7 +137,31 @@ function CheckoutContent() {
         }, 1500);
     };
 
-    if (!organization) return null;
+    if (loading || (!organization && orgId)) {
+        return (
+            <AppLayout>
+                <div className="flex min-h-[60vh] items-center justify-center">
+                    <LoadingAnimation />
+                </div>
+            </AppLayout>
+        );
+    }
+
+    if (!organization && !loading) {
+        return (
+             <AppLayout>
+                <Card className="max-w-md mx-auto mt-12">
+                    <CardHeader>
+                        <CardTitle>Session Expired</CardTitle>
+                        <CardDescription>We couldn't retrieve your organization details. Please log in again.</CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                        <Button onClick={logout} className="w-full">Back to Login</Button>
+                    </CardFooter>
+                </Card>
+            </AppLayout>
+        )
+    }
 
     return (
         <AppLayout>
@@ -149,8 +174,8 @@ function CheckoutContent() {
                         <CardTitle className="text-2xl">{isUpgrade ? 'Upgrade Subscription' : 'Activate Your Plan'}</CardTitle>
                         <CardDescription>
                             {isUpgrade 
-                                ? `Confirm your upgrade to the ${targetPlan} plan for ${organization.name}.`
-                                : `Complete payment to start managing your properties with ${organization.name}.`
+                                ? `Confirm your upgrade to the ${targetPlan} plan for ${organization?.name}.`
+                                : `Complete payment to start managing your properties with ${organization?.name}.`
                             }
                         </CardDescription>
                     </CardHeader>
@@ -240,12 +265,16 @@ function CheckoutContent() {
     );
 }
 
-function SubscriptionCheckoutPage() {
+export default function SubscriptionCheckoutPage() {
     return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading Checkout...</div>}>
+        <Suspense fallback={
+            <AppLayout>
+                <div className="flex min-h-[60vh] items-center justify-center">
+                    <LoadingAnimation />
+                </div>
+            </AppLayout>
+        }>
             <CheckoutContent />
         </Suspense>
     )
 }
-
-export default withAuth(SubscriptionCheckoutPage);

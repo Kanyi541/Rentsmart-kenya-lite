@@ -13,14 +13,14 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { processPaymentAndAssign, initiateMpesaStkPush } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, CreditCard, AlertCircle, Smartphone } from 'lucide-react';
+import { Loader2, ShieldCheck, CreditCard, Smartphone } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Organization } from '@/lib/types';
+import { LoadingAnimation } from '@/components/loading';
 
 declare const PaystackPop: any;
 
@@ -35,9 +35,10 @@ function NewPaymentPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { orgId: userOrgId } = useAuth();
+    const { orgId: userOrgId, loading: authLoading } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [landlordOrg, setLandlordOrg] = useState<Organization | null>(null);
+    const [pageLoading, setPageLoading] = useState(true);
 
     // Read details from URL
     const tenantId = searchParams.get('tenantId') || '';
@@ -48,7 +49,7 @@ function NewPaymentPage() {
     const roomNumber = searchParams.get('roomNumber') || '';
     const rent = Number(searchParams.get('rent')) || 0;
     const initialPhone = searchParams.get('phone') || '';
-    const targetOrgId = searchParams.get('orgId') || userOrgId; // Tenants use search param, Admins use userOrgId
+    const targetOrgId = searchParams.get('orgId') || userOrgId;
     const isRecurring = searchParams.get('type') === 'rent_only';
     
     const deposit = isRecurring ? 0 : rent / 2; 
@@ -56,18 +57,23 @@ function NewPaymentPage() {
 
     useEffect(() => {
         async function fetchLandlordSettings() {
-            if (!targetOrgId) return;
+            if (!targetOrgId) {
+                if (!authLoading) setPageLoading(false);
+                return;
+            }
             try {
                 const orgDoc = await getDoc(doc(db, 'organizations', targetOrgId));
                 if (orgDoc.exists()) {
-                    setLandlordOrg(orgDoc.data() as Organization);
+                    setLandlordOrg({ id: orgDoc.id, ...orgDoc.data() } as Organization);
                 }
             } catch (error) {
                 console.error("Failed to load landlord settings", error);
+            } finally {
+                setPageLoading(false);
             }
         }
         fetchLandlordSettings();
-    }, [targetOrgId]);
+    }, [targetOrgId, authLoading]);
     
     const form = useForm<PaymentFormValues>({
         resolver: zodResolver(paymentFormSchema),
@@ -181,16 +187,26 @@ function NewPaymentPage() {
         }, 1500);
     };
 
+    if (pageLoading || authLoading) {
+        return (
+            <AppLayout>
+                 <div className="flex min-h-[60vh] items-center justify-center">
+                    <LoadingAnimation />
+                </div>
+            </AppLayout>
+        )
+    }
+
     if (!tenantId || !rentalId || !roomId || !targetOrgId) {
         return (
              <AppLayout>
-                <Card>
+                <Card className="max-w-md mx-auto mt-12">
                     <CardHeader>
-                        <CardTitle>Error</CardTitle>
-                        <CardDescription>Invalid session or payment details. Please go back and try again.</CardDescription>
+                        <CardTitle>Invalid Payment Session</CardTitle>
+                        <CardDescription>The checkout details are missing or incomplete. Please return to your dashboard and try again.</CardDescription>
                     </CardHeader>
                      <CardFooter>
-                        <Button onClick={() => router.back()}>Go Back</Button>
+                        <Button onClick={() => router.back()} className="w-full">Go Back</Button>
                     </CardFooter>
                 </Card>
             </AppLayout>
@@ -312,7 +328,7 @@ function NewPaymentPage() {
                                 </div>
                             </CardFooter>
                         </form>
-                    </Form>
+                     </Form>
                 </Card>
             </div>
         </AppLayout>
@@ -321,7 +337,13 @@ function NewPaymentPage() {
 
 export default function NewPaymentPageWrapper() {
     return (
-        <Suspense fallback={<div>Loading Checkout Gateway...</div>}>
+        <Suspense fallback={
+            <AppLayout>
+                 <div className="flex min-h-[60vh] items-center justify-center">
+                    <LoadingAnimation />
+                </div>
+            </AppLayout>
+        }>
             <NewPaymentPage />
         </Suspense>
     )
