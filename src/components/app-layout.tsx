@@ -46,7 +46,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
     ];
 
-    // Select top 4 items for mobile bottom navigation
     const getMobileNavItems = () => {
         if (userRole === 'super-admin') return superAdminMenuItems;
         if (userRole === 'admin') {
@@ -155,19 +154,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </Button>
                 </div>
             </Sidebar>
-            <SidebarInset>
-                <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mb-4">
+            <SidebarInset className="flex flex-col h-screen overflow-hidden">
+                <header className="flex-shrink-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
                      <SidebarTrigger className="md:hidden" />
                      <div className="md:hidden flex-1 flex justify-center">
                          <span className="font-bold text-primary tracking-tight">RentSmart Kenya</span>
                      </div>
                 </header>
-                <main className="p-4 sm:px-6 sm:py-0 pb-24 md:pb-4 space-y-4">
-                    {children}
+                <main className="flex-1 overflow-y-auto p-4 sm:px-6 pb-24 md:pb-4">
+                    <div className="max-w-7xl mx-auto space-y-4">
+                        {children}
+                    </div>
                 </main>
 
                 {/* Bottom Navigation for Mobile */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border flex items-center justify-around h-20 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                <div className="md:hidden flex-shrink-0 fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border flex items-center justify-around h-20 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                     {mobileNavItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (

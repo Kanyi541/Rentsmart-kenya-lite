@@ -78,7 +78,23 @@
   * {
     @apply border-border;
   }
+  html, body {
+    @apply overflow-x-hidden max-w-full;
+    height: 100dvh;
+    width: 100vw;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-primary/10;
+  }
+}
+
+/* Custom Utilities to fix scrolling */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
