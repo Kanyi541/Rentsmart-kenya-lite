@@ -63,7 +63,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-body antialiased`}>
+      <Head>
+  <meta name="google-site-verification" content="RUA3HkQ7Gj3aAWCUfeXYUBhlgRBmudfh5bXZbKfWtd8" />
+</Head>
+<body className={`${inter.variable} font-body antialiased`}>
         <AuthProvider>
           <LoadingProvider>
             <FirebaseErrorListener />
