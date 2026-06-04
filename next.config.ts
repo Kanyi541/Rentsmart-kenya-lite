@@ -28,9 +28,16 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['pg'],
-  }
+  serverExternalPackages: ['pg'],
+  async redirects() {
+    return [
+      {
+        source: '/sitemap',
+        destination: '/sitemap.xml',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
