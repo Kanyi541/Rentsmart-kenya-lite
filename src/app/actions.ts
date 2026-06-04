@@ -12,6 +12,7 @@ import { rentalSchema, assignmentSchema, initiatePaymentSchema, createMaintenanc
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
+import { logEvent } from '@/lib/audit';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
 const suggestionInputSchema = z.object({
@@ -65,7 +66,7 @@ export async function addRental(data: unknown) {
 }
 
 export async function initiateMpesaStkPush(data: { phone: string, amount: number, accountRef: string, businessShortCode?: string }) {
-    // Simulating a real M-Pesa Daraja API call
+    // Placeholder for M-Pesa STK Push integration
     console.log(`[M-PESA] STK Push to ${data.phone} for KSh ${data.amount}. Ref: ${data.accountRef}`);
     await new Promise(resolve => setTimeout(resolve, 2000));
     return { 
@@ -148,30 +149,43 @@ export async function renewSubscription(orgId: string) {
     }
 }
 
-export async function activateSubscription(orgId: string, plan?: string) {
-    if (!orgId) return { error: "Organization ID is required." };
-    try {
-        const orgRef = doc(db, 'organizations', orgId);
-        const updateData: any = {
-            subscriptionStatus: 'active',
-            subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString()
-        };
-        
-        if (plan) {
-            updateData.plan = plan;
-        }
+// Fixed subscription management functions
 
-        await updateDoc(orgRef, updateData);
-        revalidatePath('/admin/dashboard');
-        revalidatePath('/admin/subscription/checkout');
-        return { success: true };
-    } catch (error) {
-        return { error: "Failed to activate subscription." };
+export async function cancelSubscription(formData: FormData) {
+  const orgId = formData.get('orgId') as string;
+  if (!orgId) return { error: "Organization ID is required." };
+  try {
+    const orgRef = doc(db, 'organizations', orgId);
+    await updateDoc(orgRef, { subscriptionStatus: 'canceled' });
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/subscription/plans');
+    return { success: true };
+  } catch (error) {
+    return { error: "Failed to cancel subscription." };
+  }
+}
+
+export async function activateSubscription(orgId: string, plan?: string) {
+  if (!orgId) return { error: "Organization ID is required." };
+  try {
+    const orgRef = doc(db, 'organizations', orgId);
+    const updateData: any = {
+      subscriptionStatus: 'active',
+      subscriptionEndDate: new Date(Date.now() + 86400000 * 30).toISOString()
+    };
+    if (plan) {
+      updateData.plan = plan;
     }
+    await updateDoc(orgRef, updateData);
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/subscription/checkout');
+    return { success: true };
+  } catch (error) {
+    return { error: "Failed to activate subscription." };
+  }
 }
 
 export async function updateOrganizationPayments(orgId: string, data: { mpesaShortcode: string, mpesaType: 'Paybill' | 'Till', mpesaAccountName: string }) {
-    if (!orgId) return { error: "Organization ID is required." };
     try {
         const orgRef = doc(db, 'organizations', orgId);
         await updateDoc(orgRef, data);
@@ -243,4 +257,78 @@ export async function createMoveOutNotice(data: unknown) {
     } catch (error: any) {
         return { error: 'Database error: Failed to submit notice.' };
     }
+}
+
+// =============================
+// Super‑admin organization management
+// =============================
+
+/** Request deletion of an organization (super‑admin) */
+export async function requestOrganizationDeletion(orgId: string) {
+  if (!orgId) return { error: 'Organization ID required' };
+  const orgRef = doc(db, 'organizations', orgId);
+  await updateDoc(orgRef, { pendingDeletion: true, pendingActionBy: 'super-admin' });
+  await logEvent({
+    type: 'orgDeletionRequested',
+    orgId,
+    initiatedBy: 'super-admin',
+    details: { reason: 'manual request' }
+  });
+  return { success: true };
+}
+
+/** Request deactivation of an organization (super‑admin) */
+export async function requestOrganizationDeactivation(orgId: string) {
+  if (!orgId) return { error: 'Organization ID required' };
+  const orgRef = doc(db, 'organizations', orgId);
+  await updateDoc(orgRef, { pendingDeactivation: true, pendingActionBy: 'super-admin' });
+  await logEvent({
+    type: 'orgDeactivationRequested',
+    orgId,
+    initiatedBy: 'super-admin',
+    details: {}
+  });
+  return { success: true };
+}
+
+/** Admin confirms deletion */
+export async function confirmOrganizationDeletion(orgId: string) {
+  const orgRef = doc(db, 'organizations', orgId);
+  await updateDoc(orgRef, { pendingDeletion: false, subscriptionStatus: 'deleted' });
+  await logEvent({
+    type: 'orgDeletionConfirmed',
+    orgId,
+    initiatedBy: 'admin',
+    details: {}
+  });
+  return { success: true };
+}
+
+/** Admin confirms deactivation */
+export async function confirmOrganizationDeactivation(orgId: string) {
+  const orgRef = doc(db, 'organizations', orgId);
+  await updateDoc(orgRef, { pendingDeactivation: false, subscriptionStatus: 'inactive' });
+  await logEvent({
+    type: 'orgDeactivationConfirmed',
+    orgId,
+    initiatedBy: 'admin',
+    details: {}
+  });
+  return { success: true };
+}
+
+/** Admin cancels pending action */
+export async function cancelOrganizationAction(orgId: string, action: 'deletion' | 'deactivation') {
+  const orgRef = doc(db, 'organizations', orgId);
+  const updates: any = {};
+  if (action === 'deletion') updates.pendingDeletion = false;
+  if (action === 'deactivation') updates.pendingDeactivation = false;
+  await updateDoc(orgRef, updates);
+  await logEvent({
+    type: `org${action.charAt(0).toUpperCase() + action.slice(1)}Canceled`,
+    orgId,
+    initiatedBy: 'admin',
+    details: {}
+  });
+  return { success: true };
 }

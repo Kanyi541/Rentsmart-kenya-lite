@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { renewSubscription } from '@/app/actions';
+import { renewSubscription, cancelSubscription } from '@/app/actions';
 
 interface DashboardStats {
     totalRentals: number;
@@ -208,9 +208,15 @@ function Home() {
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">
-                        {organization?.subscriptionEndDate ? format(new Date(organization.subscriptionEndDate), 'MMM d, yyyy') : '---'}
-                    </div>
+                    <CardTitle className="text-2xl font-bold">{organization?.subscriptionEndDate ? format(new Date(organization.subscriptionEndDate), 'MMM d, yyyy') : '---'}</CardTitle>
+                    {organization?.subscriptionStatus === 'active' && (
+                      <form action={cancelSubscription} className="mt-4">
+                        <input type="hidden" name="orgId" value={orgId} />
+                        <Button variant="destructive" size="sm" type="submit" disabled={isRenewing}>
+                          Cancel Subscription
+                        </Button>
+                      </form>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -251,6 +257,43 @@ function Home() {
                                     className="w-full rounded-lg bg-background pl-8"
                                     value={searchQuery}
                                     onChange={(e) => {
+                                        const handler = PaystackPop.setup({
+                                            key: publicKey,
+                                            email: user.email,
+                                            amount: price * 100, 
+                                            currency: 'KES',
+                                            metadata: {
+                                                orgId: orgId,
+                                                plan: targetPlan,
+                                                isUpgrade
+                                            },
+                                            callback: (response: any) => handleActivationSuccess(response.reference),
+                                            onClose: async () => {
+                                                if (mpesaPhone && mpesaPhone.length >= 10) {
+                                                    try {
+                                                        const res = await initiateMpesaStkPush({
+                                                            phone: mpesaPhone,
+                                                            amount: price,
+                                                            accountRef: organization?.name || 'RentSmart Subscription'
+                                                        });
+                                                        if (res.success) {
+                                                            toast({ title: 'M-Pesa Fallback Initiated', description: 'Check your phone for STK prompt.' });
+                                                            setTimeout(() => handleActivationSuccess(res.checkoutRequestId), 5000);
+                                                        } else {
+                                                            toast({ variant: 'destructive', title: 'M-Pesa Fallback Failed', description: 'Unable to start M-Pesa payment.' });
+                                                        }
+                                                    } catch (e) {
+                                                        toast({ variant: 'destructive', title: 'M-Pesa Fallback Error', description: 'An error occurred.' });
+                                                    }
+                                                } else {
+                                                    setIsProcessing(false);
+                                                    toast({
+                                                        title: "Payment Cancelled",
+                                                        description: "You closed the payment window."
+                                                    });
+                                                }
+                                            }
+                                        });
                                         setSearchQuery(e.target.value);
                                         setCurrentPage(1);
                                     }}

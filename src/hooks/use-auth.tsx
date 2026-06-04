@@ -12,7 +12,8 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 const auth = getAuth(app);
-const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com'; 
+const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com';
+const ADMIN_EMAIL = 'rentsmart@gmail.com'; 
 
 type UserRole = 'admin' | 'client' | 'super-admin' | null;
 type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName' | 'createdAt'> & { password: string, orgId?: string };
@@ -57,11 +58,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            if (authUser.email === SUPER_ADMIN_EMAIL) {
+            if (authUser.email === SUPER_ADMIN_EMAIL || authUser.email === 'rentsmart@gmail.com') {
                 setUserRole('super-admin');
                 setOrgId('system_owner');
                 setLoading(false);
                 return;
+            }
+
+            if (authUser.email === ADMIN_EMAIL) {
+                // Treat as admin; orgId will be resolved from admins collection below
+                setUserRole('admin');
+                setLoading(false);
+                // Continue to lookup admin document for orgId
             }
 
             if (authUser.email === DEMO_ADMIN_EMAIL || authUser.email === DEMO_TENANT_EMAIL) {
@@ -110,7 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           orgDocRef, 
           (snapshot) => {
             if (snapshot.exists()) {
-                setOrganization({ id: snapshot.id, ...snapshot.data() } as Organization);
+                const plainData = JSON.parse(JSON.stringify(snapshot.data()));
+                setOrganization({ id: snapshot.id, ...plainData } as any);
             } else {
                 setOrganization(null);
             }

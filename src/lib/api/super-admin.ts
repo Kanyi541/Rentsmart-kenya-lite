@@ -40,8 +40,20 @@ export async function getAllOrganizations(): Promise<Organization[]> {
     const q = query(orgsCol, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    } as Organization));
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert Firestore Timestamp fields to plain ISO strings
+        const plainCreatedAt = data.createdAt && typeof data.createdAt.toDate === 'function'
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt;
+        const plainEndDate = data.subscriptionEndDate && typeof data.subscriptionEndDate.toDate === 'function'
+            ? data.subscriptionEndDate.toDate().toISOString()
+            : data.subscriptionEndDate;
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: plainCreatedAt,
+            subscriptionEndDate: plainEndDate,
+        } as Organization;
+    });
 }
