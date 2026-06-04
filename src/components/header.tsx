@@ -1,5 +1,6 @@
-import { Home } from "lucide-react";
 import { SidebarTrigger } from "./ui/sidebar";
+import NextImage from "next/image";
+import RentSmartLogo from "../../public/RentSmart.png";
 
 export function Header() {
   return (
@@ -8,8 +9,8 @@ export function Header() {
         <div className="flex h-16 items-center">
           <SidebarTrigger className="md:hidden" />
           <div className="hidden md:flex items-center gap-3">
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                <Home className="h-6 w-6" />
+            <div className="flex-shrink-0">
+              <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain rounded" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">
               RentSmart Kenya Lite

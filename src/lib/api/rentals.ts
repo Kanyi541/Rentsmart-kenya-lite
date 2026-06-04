@@ -7,23 +7,26 @@ import type { Rental, Room } from "@/lib/types";
 import { rentalSchema } from "@/lib/schemas";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { getOrSet } from "@/lib/cache";
 
 type RentalData = z.infer<typeof rentalSchema>;
 
 export async function getRentals(orgId: string): Promise<Rental[]> {
+  // Use cache to avoid repeated Firestore reads.
+  const cacheKey = `rentals:${orgId}`;
+  return await getOrSet<Rental[]>(cacheKey, async () => {
     if (!orgId) return [];
     const rentalsCol = collection(db, 'rentals');
     const q = query(rentalsCol, where('orgId', '==', orgId));
     const rentalSnapshot = await getDocs(q);
     const rentalsList = rentalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Rental));
-    
     for (const rental of rentalsList) {
-        const roomsCol = collection(db, `rentals/${rental.id}/rooms`);
-        const roomsSnapshot = await getDocs(roomsCol);
-        rental.rooms = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
+      const roomsCol = collection(db, `rentals/${rental.id}/rooms`);
+      const roomsSnapshot = await getDocs(roomsCol);
+      rental.rooms = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
     }
-    
     return rentalsList;
+  }, 300); // 5‑minute TTL (best‑practice)
 }
 
 export async function addRental(rentalData: RentalData) {

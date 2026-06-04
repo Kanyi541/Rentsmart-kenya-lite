@@ -2,21 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'
-import { Home, Check, Menu } from 'lucide-react'
+import { Check, Menu } from 'lucide-react'
 import NextImage from 'next/image'
 import Link from 'next/link'
-import { heroImages } from '@/lib/placeholder-images.json';
+import Rent1 from '../../public/Rent1.jpg';
+import Rent2 from '../../public/Rent2.jpg';
+import Rent3 from '../../public/Rent3.jpg';
+import RentSmartLogo from '../../public/RentSmart.png';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+
+const localHeroImages = [
+  { src: Rent1, hint: 'apartment building' },
+  { src: Rent2, hint: 'modern kitchen' },
+  { src: Rent3, hint: 'happy tenant' }
+];
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 120000); 
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % localHeroImages.length);
+    }, 5000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -24,9 +33,9 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <header className="px-4 lg:px-6 h-14 flex items-center bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b">
-        <Link href="#" className="flex items-center justify-center" prefetch={false}>
-          <Home className="h-6 w-6 text-primary" />
-          <span className="sr-only">RentSmart Kenya Lite</span>
+        <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
+          <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain" priority />
+          <span className="font-bold text-lg text-primary">RentSmart</span>
         </Link>
         <Sheet>
             <SheetTrigger asChild>
@@ -42,7 +51,7 @@ export default function LandingPage() {
                 </SheetHeader>
                 <nav className="grid gap-6 text-lg font-medium mt-6">
                     <Link href="#" className="flex items-center gap-2 text-lg font-semibold" prefetch={false}>
-                        <Home className="h-6 w-6 text-primary" />
+                        <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain" />
                         <span>RentSmart</span>
                     </Link>
                     <Link href="/admin/login" className="text-muted-foreground hover:text-primary">Admin Login</Link>
@@ -53,18 +62,19 @@ export default function LandingPage() {
       </header>
       <main className="flex-1 flex flex-col">
         <section className="relative w-full flex-1 flex items-center justify-center text-center text-white min-h-[600px]">
-            {heroImages.map((image, index) => (
+            {localHeroImages.map((image, index) => (
                 <NextImage
-                    key={image.seed}
-                    src={`https://picsum.photos/seed/${image.seed}/1920/1080`}
+                    key={index}
+                    src={image.src}
                     alt="Background"
                     fill
-                    priority={index === 0}
+                    priority
                     sizes="100vw"
                     className={cn(
                         'object-cover transition-opacity duration-1000 ease-in-out',
                         index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                     )}
+                    placeholder="blur"
                     data-ai-hint={image.hint}
                 />
             ))}

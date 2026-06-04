@@ -3,6 +3,8 @@
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
 import { Home, Building, Users, BedDouble, CreditCard, LogOut, User, Megaphone, ShieldAlert, ClipboardList, Lock, Crown, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
+import RentSmartLogo from "../../public/RentSmart.png";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
@@ -96,8 +98,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Sidebar className="hidden md:flex">
                 <SidebarHeader>
                      <Link href={homeRoute} className="flex items-center gap-2">
-                        <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                            <Home className="h-6 w-6" />
+                        <div className="flex-shrink-0">
+                            <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain rounded" />
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-xl font-bold leading-none">RentSmart</h1>
