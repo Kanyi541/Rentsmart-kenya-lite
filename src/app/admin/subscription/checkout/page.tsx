@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { activateSubscription } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
 import withAuth from '@/components/auth/with-auth';
-import PaystackPop from '@paystack/inline-js';
+// PaystackPop is loaded lazily in the client handler to avoid SSR issues
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingAnimation } from '@/components/loading';
@@ -58,13 +58,10 @@ function CheckoutContent() {
         }
     };
 
-    const handlePaystackPayment = () => {
+    const handlePaystackPayment = async () => {
         if (!user?.email || !orgId) return;
-        
         setIsProcessing(true);
-
         const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-        
         if (!publicKey || publicKey.includes('your_public_key')) {
             toast({
                 variant: 'destructive',
@@ -74,23 +71,21 @@ function CheckoutContent() {
             setIsProcessing(false);
             return;
         }
-
+        // Lazy‑load PaystackPop only on the client to avoid SSR window errors
+        const { default: PaystackPop } = await import('@paystack/inline-js');
         const handler = PaystackPop.setup({
             key: publicKey,
             email: user.email,
-            amount: price * 100, 
+            amount: price * 100,
             currency: 'KES',
             metadata: {
-                orgId: orgId,
+                orgId,
                 plan: targetPlan,
-                isUpgrade
+                isUpgrade,
             },
             callback: (response: any) => handleActivationSuccess(response.reference),
-            onClose: () => {
-                setIsProcessing(false);
-            }
+            onClose: () => setIsProcessing(false),
         });
-
         handler.openIframe();
     };
 
