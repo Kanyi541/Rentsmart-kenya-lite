@@ -1,9 +1,9 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://rentsmart.co.ke';
+  const baseUrls = ['https://rentsmartkenya-lite.netlify.app', 'https://rentsmart-kenya-lite.vercel.app'];
   
-  return [
+  return baseUrls.flatMap(baseUrl => [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -22,5 +22,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.3,
     },
-  ];
+  ]);
 }
