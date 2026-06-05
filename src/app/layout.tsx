@@ -64,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="google-site-verification" content="RUA3HkQ7Gj3aAWCUfeXYUBhlgRBmudfh5bXZbKfWtd8" />
+        <meta name="google-site-verification" content="F-H7qWt8QRPtrifGFm-zYLhD0agIRF2lPqEO9yipZxs" />
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
         <AuthProvider>
