@@ -2,9 +2,7 @@ import { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Determine the host from the incoming request (e.g., rentsmartkenya-lite.netlify.app or rentsmart-kenya-lite.vercel.app)
-  const host = headers().get('host') ?? 'example.com';
-  const baseUrl = `https://${host}`;
+const baseUrl = 'https://rentsmart-kenya-lite.vercel.app';
 
   return [
     {
