@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://RentNode-kenya-lite.vercel.app';
+  const baseUrl = 'https://rentnode.vercel.app/';
 
   return [
     {
