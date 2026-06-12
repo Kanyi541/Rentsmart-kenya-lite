@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   description: 'Read the latest articles, guides, and case studies about RentNode, property management, and M-Pesa rent collection.',
   keywords: ['RentNode blog', 'rental management Kenya', 'property management guide', 'M-Pesa rent'],
 };
-export const revalidate = 86400;
 
 export default function BlogPage() {
   return (

@@ -6,7 +6,6 @@ export const metadata = {
   description: 'Brief overview of RentNode guides covering account setup, M‑Pesa integration, daily operations, and troubleshooting.',
   keywords: ['rent management guide','landlord tutorials','M-Pesa rent collection']
 };
-export const revalidate = 86400;
 
 export default function GuidesPage() {
   return (
