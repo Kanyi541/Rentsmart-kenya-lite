@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: 'Learn how RentNode helps landlords create accounts, add properties, collect rent via M‑Pesa, and track everything in one dashboard.',
   keywords: ['rent management workflow', 'how rent collection works', 'M‑Pesa rent SaaS', 'RentNode tutorial']
 };
+export const revalidate = 86400;
 
 export default function HowItWorksPage() {
   return (
