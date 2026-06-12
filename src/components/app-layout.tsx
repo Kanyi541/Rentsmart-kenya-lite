@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, S
 import { Home, Building, Users, BedDouble, CreditCard, LogOut, User, Megaphone, ShieldAlert, ClipboardList, Lock, Crown, LayoutDashboard, Settings, BookOpen, FileText, DollarSign, Info } from "lucide-react";
 import Link from "next/link";
 import NextImage from "next/image";
-import RentNodeogo from "../../public/RRentNodeng";
+// Removed incorrect import; using public path string
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
@@ -107,7 +107,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarHeader>
                     <Link href={homeRoute} className="flex items-center gap-2">
                         <div className="flex-shrink-0">
-                            <NextImage src={RentNodeogo} alt="RRentNodeogo" width={32} height={32} className="object-contain rounded" />
+                            <NextImage src="/RentNode.png" alt="RentNode Logo" width={32} height={32} className="object-contain rounded" />
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-xl font-bold leading-none">RentNode</h1>

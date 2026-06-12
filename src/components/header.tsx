@@ -1,6 +1,6 @@
 import { SidebarTrigger } from "./ui/sidebar";
 import NextImage from "next/image";
-import RentNodeogo from "../../public/RRentNodeng";
+// Removed incorrect import; using public path string
 
 export function Header() {
   return (
@@ -10,7 +10,7 @@ export function Header() {
           <SidebarTrigger className="md:hidden" />
           <div className="hidden md:flex items-center gap-3">
             <div className="flex-shrink-0">
-              <NextImage src={RentNodeLogo} alt="RentNode Logo" width={32} height={32} className="object-contain rounded" />
+              <NextImage src="/RentNode.png" alt="RentNode Logo" width={32} height={32} className="object-contain rounded" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">
               RentNode Kenya Lite
