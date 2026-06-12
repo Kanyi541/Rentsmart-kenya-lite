@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Check, Menu } from 'lucide-react'
 import NextImage from 'next/image'
 import Link from 'next/link'
-import Rent1 from '../../public/Rent1.jpg';
-import Rent2 from '../../public/Rent2.jpg';
-import Rent3 from '../../public/Rent3.jpg';
-import RentSmartLogo from '../../public/RentSmart.png';
+const Rent1 = "/Rent1.jpg";
+const Rent2 = "/Rent2.jpg";
+const Rent3 = "/Rent3.jpg";
+const RentNodeLogo = "/RentNode.png";
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -25,7 +25,7 @@ export default function LandingPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % localHeroImages.length);
-    }, 5000); 
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -34,82 +34,82 @@ export default function LandingPage() {
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <header className="px-4 lg:px-6 h-14 flex items-center bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b">
         <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
-          <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain" priority />
-          <span className="font-bold text-lg text-primary">RentSmart</span>
+          <NextImage src={RentNodeLogo} alt="RentNode Logo" width={32} height={32} className="object-contain" priority />
+          <span className="font-bold text-lg text-primary">RentNode</span>
         </Link>
         <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="ml-auto lg:hidden">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-                <SheetHeader>
-                    <SheetTitle>Navigation Menu</SheetTitle>
-                    <SheetDescription>Access your account or learn more about RentSmart.</SheetDescription>
-                </SheetHeader>
-                <nav className="grid gap-6 text-lg font-medium mt-6">
-                    <Link href="#" className="flex items-center gap-2 text-lg font-semibold" prefetch={false}>
-                        <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain" />
-                        <span>RentSmart</span>
-                    </Link>
-                    <Link href="/admin/login" className="text-muted-foreground hover:text-primary">Admin Login</Link>
-                    <Link href="/clients/login" className="text-muted-foreground hover:text-primary">Tenant Login</Link>
-                </nav>
-            </SheetContent>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="ml-auto lg:hidden">
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>Access your account or learn more about RentNode.</SheetDescription>
+            </SheetHeader>
+            <nav className="grid gap-6 text-lg font-medium mt-6">
+              <Link href="#" className="flex items-center gap-2 text-lg font-semibold" prefetch={false}>
+                <NextImage src={RentNodeLogo} alt="RentNode Logo" width={32} height={32} className="object-contain" />
+                <span>RentNode</span>
+              </Link>
+              <Link href="/admin/login" className="text-muted-foreground hover:text-primary">Admin Login</Link>
+              <Link href="/clients/login" className="text-muted-foreground hover:text-primary">Tenant Login</Link>
+            </nav>
+          </SheetContent>
         </Sheet>
       </header>
       <main className="flex-1 flex flex-col">
         <section className="relative w-full flex-1 flex items-center justify-center text-center text-white min-h-[600px]">
-            {localHeroImages.map((image, index) => (
-                <NextImage
-                    key={index}
-                    src={image.src}
-                    alt="Background"
-                    fill
-                    priority
-                    sizes="100vw"
-                    className={cn(
-                        'object-cover transition-opacity duration-1000 ease-in-out',
-                        index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                    )}
-                    placeholder="blur"
-                    data-ai-hint={image.hint}
-                />
-            ))}
-             <div className="absolute inset-0 bg-black/50" />
-            <div className="relative z-10 container px-4 md:px-6">
-                <div className="flex flex-col justify-center space-y-4 max-w-3xl mx-auto">
-                    <div className="space-y-2">
-                    <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
-                        Modern Rental Management, Simplified.
-                    </h1>
-                    <p className="max-w-[600px] text-lg text-neutral-200 md:text-xl mx-auto [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                        RentSmart Kenya Lite is an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
-                    </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-4">
-                         <Button asChild size="lg" variant="secondary" className="px-12 py-6 text-lg font-bold shadow-lg hover:scale-105 transition-transform">
-                            <Link href="/demo" prefetch={false}>
-                                Explore Demo
-                            </Link>
-                        </Button>
-                        <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
-                            <Button asChild size="lg" variant="secondary">
-                                <Link href="/clients/login" prefetch={false}>
-                                Tenant Login
-                                </Link>
-                            </Button>
-                            <Button asChild size="lg" variant="secondary">
-                                <Link href="/admin/login" prefetch={false}>
-                                Admin Login
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
+          {localHeroImages.map((image, index) => (
+            <NextImage
+              key={index}
+              src={image.src}
+              alt="Background"
+              fill
+              priority
+              sizes="100vw"
+              className={cn(
+                'object-cover transition-opacity duration-1000 ease-in-out',
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              )}
+
+              data-ai-hint={image.hint}
+            />
+          ))}
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-10 container px-4 md:px-6">
+            <div className="flex flex-col justify-center space-y-4 max-w-3xl mx-auto">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
+                  Modern Rental Management, Simplified.
+                </h1>
+                <p className="max-w-[600px] text-lg text-neutral-200 md:text-xl mx-auto [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+                  RentNodeis an all-in-one platform to streamline property management for landlords and provide a seamless experience for tenants.
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-4">
+                <Button asChild size="lg" variant="secondary" className="px-12 py-6 text-lg font-bold shadow-lg hover:scale-105 transition-transform">
+                  <Link href="/demo" prefetch={false}>
+                    Explore Demo
+                  </Link>
+                </Button>
+                <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/clients/login" prefetch={false}>
+                      Tenant Login
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/admin/login" prefetch={false}>
+                      Admin Login
+                    </Link>
+                  </Button>
                 </div>
+              </div>
             </div>
+          </div>
         </section>
 
         <section className="w-full py-12 md:py-24 lg:py-32 bg-background border-t">
@@ -149,17 +149,17 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button asChild className="w-full">
-                        <Link href="/admin/register?plan=Starter">Choose Plan</Link>
-                    </Button>
+                  <Button asChild className="w-full">
+                    <Link href="/admin/register?plan=Starter">Choose Plan</Link>
+                  </Button>
                 </CardFooter>
               </Card>
 
               <Card className="border-primary shadow-lg scale-105 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
-                 <CardHeader className="pb-4">
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Growth</CardTitle>
-                   <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold">Ksh 4,999</span>
                     <span className="text-sm text-muted-foreground">/month</span>
                   </div>
@@ -182,16 +182,16 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button asChild className="w-full shadow-md">
-                        <Link href="/admin/register?plan=Growth">Choose Plan</Link>
-                    </Button>
+                  <Button asChild className="w-full shadow-md">
+                    <Link href="/admin/register?plan=Growth">Choose Plan</Link>
+                  </Button>
                 </CardFooter>
               </Card>
 
               <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-2xl">Scale</CardTitle>
-                   <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold">Ksh 9,999</span>
                     <span className="text-sm text-muted-foreground">/month</span>
                   </div>
@@ -214,9 +214,9 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button asChild className="w-full">
-                        <Link href="/admin/register?plan=Scale">Choose Plan</Link>
-                    </Button>
+                  <Button asChild className="w-full">
+                    <Link href="/admin/register?plan=Scale">Choose Plan</Link>
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
@@ -225,8 +225,8 @@ export default function LandingPage() {
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-muted/30">
         <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground">&copy; 2024 RentSmart Kenya Lite. All rights reserved.</p>
-            <span className="text-[10px] bg-background border px-1.5 py-0.5 rounded text-muted-foreground font-mono">v1.1.0-stable</span>
+          <p className="text-xs text-muted-foreground">&copy; 2024 RentNode Kenya Lite. All rights reserved.</p>
+          <span className="text-[10px] bg-background border px-1.5 py-0.5 rounded text-muted-foreground font-mono">v1.1.1</span>
         </div>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="/terms" className="text-xs hover:underline underline-offset-4" prefetch={false}>
@@ -234,6 +234,15 @@ export default function LandingPage() {
           </Link>
           <Link href="/privacy" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Privacy
+          </Link>
+          <Link href="/blog" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Blog
+          </Link>
+          <Link href="/guides" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Guides
+          </Link>
+          <Link href="/how-it-works" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            How It Works
           </Link>
         </nav>
       </footer>

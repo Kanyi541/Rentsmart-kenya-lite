@@ -20,7 +20,7 @@ export default function DemoPage() {
 
     const handleLogin = async (role: 'admin' | 'tenant') => {
         setLoadingRole(role);
-        const email = role === 'admin' ? 'rentsmart@demo.com' : 'tenant@demo.com';
+        const email = role === 'admin' ? 'RentNode@demo.com' : 'tenant@demo.com';
         const password = role === 'admin' ? 'admin123!' : 'tenant123!';
 
         try {
@@ -49,12 +49,12 @@ export default function DemoPage() {
             setLoadingRole(null);
         }
     };
-    
+
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
             <div className="w-full max-w-4xl space-y-8">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight">RentSmart Demo</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">RentNode Demo</h1>
                     <p className="text-muted-foreground">Log in with our pre-configured demo accounts to explore the platform.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -66,7 +66,7 @@ export default function DemoPage() {
                         <CardContent className="space-y-4">
                             <div>
                                 <Label htmlFor="admin-email">Email</Label>
-                                <Input id="admin-email" value="rentsmart@demo.com" readOnly />
+                                <Input id="admin-email" value="RentNode@demo.com" readOnly />
                             </div>
                             <div>
                                 <Label htmlFor="admin-password">Password</Label>
@@ -104,7 +104,7 @@ export default function DemoPage() {
                         </CardFooter>
                     </Card>
                 </div>
-                 <div className="text-center">
+                <div className="text-center">
                     <Button asChild variant="link">
                         <Link href="/">
                             <ArrowLeft className="mr-2 h-4 w-4" />

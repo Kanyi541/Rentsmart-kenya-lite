@@ -11,19 +11,19 @@ export default function TermsPage() {
         <div className="min-h-screen bg-muted/40 py-8 px-4">
             <div className="max-w-4xl mx-auto">
                 <Button asChild variant="outline" className="mb-4">
-                     <Link href="/">
+                    <Link href="/">
                         <ArrowLeft className="mr-2" />
                         Back to Home
                     </Link>
                 </Button>
-                 <Card>
+                <Card>
                     <CardHeader>
                         <CardTitle className="text-3xl">Terms of Service</CardTitle>
                     </CardHeader>
                     <CardContent className="prose prose-sm max-w-none">
                         <p><strong>This Tenant Agreement (“Agreement”)</strong> is entered into by and between:</p>
                         <ul className="list-disc pl-5 mb-2 text-sm space-y-1">
-                            <li><strong>RentSmart Kenya Lite</strong> (“Landlord”), and</li>
+                            <li><strong>RentNode Kenya Lite</strong> (“Landlord”), and</li>
                             <li><strong>{tenantName}</strong> (“Tenant”),</li>
                         </ul>
                         <p>through the <strong>Techivo Technologies Rental Management System</strong> (“System”). By registering and using this system, the Tenant agrees to the following:</p>
@@ -32,7 +32,7 @@ export default function TermsPage() {
 
                         <h5 className="font-semibold mb-2">1. Purpose</h5>
                         <p className="mb-3">This Agreement sets out the rights and obligations of both the Tenant and the Landlord regarding the use of the System for rental management, payment tracking, and communication.</p>
-                        
+
                         <h5 className="font-semibold mb-2">2. Tenant Obligations</h5>
                         <ul className="list-disc pl-5 mb-3 space-y-1">
                             <li>Provide accurate personal and contact information.</li>
@@ -49,7 +49,7 @@ export default function TermsPage() {
                             <li>Notify tenants of rent increases, policy changes, or other updates.</li>
                         </ul>
 
-                         <h5 className="font-semibold mb-2">4. Payments</h5>
+                        <h5 className="font-semibold mb-2">4. Payments</h5>
                         <ul className="list-disc pl-5 mb-3 space-y-1">
                             <li>Tenants may be required to pay a deposit, followed by monthly rent payments.</li>
                             <li>Failure to make payments within the agreed period may result in penalties, late fees, or suspension of services (including restricted system access).</li>

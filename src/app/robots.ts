@@ -13,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         '/api/',
       ],
     },
-    sitemap: 'https://rentsmart.co.ke/sitemap.xml',
+    sitemap: 'https://rentnode.vercel.app/sitemap.xml',
   };
 }

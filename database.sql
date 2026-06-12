@@ -1,8 +1,8 @@
--- SQL statements to create the database and tables for the RentSmart application.
+-- SQL statements to create the database and tables for the RentNode application.
 
 -- Create the database
-CREATE DATABASE IF NOT EXISTS rentsmart_db;
-USE rentsmart_db;
+CREATE DATABASE IF NOT EXISTS RentNode_db;
+USE RentNode_db;
 
 -- Table for Rental Properties
 -- This table stores the main details of each rental property.

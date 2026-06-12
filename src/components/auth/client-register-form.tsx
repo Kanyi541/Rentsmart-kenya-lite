@@ -6,12 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
@@ -95,8 +95,8 @@ export function ClientRegisterForm() {
             router.push('/clients/login');
         } catch (error: any) {
             console.error(error);
-            const message = error.code === 'auth/email-already-in-use' 
-                ? 'This email is already registered.' 
+            const message = error.code === 'auth/email-already-in-use'
+                ? 'This email is already registered.'
                 : 'Registration failed. Please try again.';
             toast({
                 variant: 'destructive',
@@ -136,7 +136,7 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
-                     <FormField
+                    <FormField
                         control={form.control}
                         name="idNumber"
                         render={({ field }) => (
@@ -159,7 +159,7 @@ export function ClientRegisterForm() {
                                 </FormItem>
                             )}
                         />
-                         <FormField
+                        <FormField
                             control={form.control}
                             name="email"
                             render={({ field }) => (
@@ -171,7 +171,7 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
-                      <FormField
+                    <FormField
                         control={form.control}
                         name="password"
                         render={({ field }) => (
@@ -182,14 +182,14 @@ export function ClientRegisterForm() {
                             </FormItem>
                         )}
                     />
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="maritalStatus"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Marital Status</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                         </FormControl>
@@ -224,9 +224,9 @@ export function ClientRegisterForm() {
                             )}
                         />
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="space-y-4 rounded-lg border p-4">
                         <div className="flex items-start gap-3">
                             <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
@@ -244,7 +244,7 @@ export function ClientRegisterForm() {
                                 <strong>This Tenant Agreement (“Agreement”)</strong> is entered into by and between:
                             </p>
                             <ul className="list-disc pl-5 mb-2 text-sm space-y-1">
-                                <li><strong>RentSmart Kenya Lite</strong> (“Landlord”), and</li>
+                                <li><strong>RentNode Kenya Lite</strong> (“Landlord”), and</li>
                                 <li><strong>{tenantName}</strong> (“Tenant”),</li>
                             </ul>
                             <p className="mb-4 text-sm">
@@ -255,7 +255,7 @@ export function ClientRegisterForm() {
 
                             <h5 className="font-semibold mb-2">1. Purpose</h5>
                             <p className="mb-3">This Agreement sets out the rights and obligations of both the Tenant and the Landlord regarding the use of the System for rental management, payment tracking, and communication.</p>
-                            
+
                             <h5 className="font-semibold mb-2">2. Tenant Obligations</h5>
                             <ul className="list-disc pl-5 mb-3 space-y-1">
                                 <li>Provide accurate personal and contact information.</li>
@@ -272,7 +272,7 @@ export function ClientRegisterForm() {
                                 <li>Notify tenants of rent increases, policy changes, or other updates.</li>
                             </ul>
 
-                             <h5 className="font-semibold mb-2">4. Payments</h5>
+                            <h5 className="font-semibold mb-2">4. Payments</h5>
                             <ul className="list-disc pl-5 mb-3 space-y-1">
                                 <li>Tenants may be required to pay a deposit, followed by monthly rent payments.</li>
                                 <li>Failure to make payments within the agreed period may result in penalties, late fees, or suspension of services (including restricted system access).</li>
@@ -288,15 +288,15 @@ export function ClientRegisterForm() {
                                 <li>If unresolved, disputes shall be referred to <strong>mediation or arbitration</strong> in accordance with the laws of Kenya.</li>
                                 <li>Legal action shall be a last resort.</li>
                             </ul>
-                            
+
                             <hr className="my-4" />
 
                             <h4 className="font-bold mb-2 text-base">🔒 Data Privacy Policy</h4>
-                            <p className="mb-3"><strong>Effective Date:</strong> [Insert Date] <br/><strong>Company:</strong> Techivo Technologies</p>
+                            <p className="mb-3"><strong>Effective Date:</strong> [Insert Date] <br /><strong>Company:</strong> Techivo Technologies</p>
 
                             <h5 className="font-semibold mb-2">1. Information We Collect</h5>
                             <p className="mb-3">When you register as a Tenant, we may collect: Personal details, rental details, payment records, and uploaded documents.</p>
-                            
+
                             <h5 className="font-semibold mb-2">2. How We Use Your Information</h5>
                             <p className="mb-3">Your data is used to: Manage rental agreements, provide receipts, facilitate communication, handle maintenance requests, and improve our services.</p>
 
@@ -306,22 +306,22 @@ export function ClientRegisterForm() {
                                 <li>Information may only be shared with the Landlord, payment providers, or government authorities if required by law.</li>
                             </ul>
 
-                             <h5 className="font-semibold mb-2">4. Data Security</h5>
-                             <p className="mb-3">Data is stored securely in Firebase (Google Cloud) with authentication and encryption. Access is role-based.</p>
+                            <h5 className="font-semibold mb-2">4. Data Security</h5>
+                            <p className="mb-3">Data is stored securely in Firebase (Google Cloud) with authentication and encryption. Access is role-based.</p>
 
                             <h5 className="font-semibold mb-2">5. Your Rights</h5>
                             <p className="mb-3">Tenants have the right to access, review, correct, or request deletion of their data (subject to outstanding obligations).</p>
-                           
+
                             <h5 className="font-semibold mb-2">6. Retention</h5>
                             <p className="mb-3">Data is retained while you are an active tenant and archived upon termination for legal purposes.</p>
 
                             <h5 className="font-semibold mb-2">7. Contact Information</h5>
                             <p>For questions, please contact Techivo Technologies at elviskanyi8@gmail.com or +254111871428.</p>
                         </ScrollArea>
-                        
+
                         <div className="flex items-center space-x-2">
-                            <Checkbox 
-                                id="agree-terms" 
+                            <Checkbox
+                                id="agree-terms"
                                 checked={isAgreed}
                                 onCheckedChange={(checked) => setIsAgreed(checked as boolean)}
                                 disabled={timeLeft > 0}
@@ -334,11 +334,11 @@ export function ClientRegisterForm() {
 
                 </CardContent>
                 <CardFooter>
-                     <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
+                    <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
                         {isSubmitting ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : timeLeft > 0 ? (
-                             <span>Please wait {Math.floor(timeLeft / 60)}:{('0' + (timeLeft % 60)).slice(-2)} to agree</span>
+                            <span>Please wait {Math.floor(timeLeft / 60)}:{('0' + (timeLeft % 60)).slice(-2)} to agree</span>
                         ) : (
                             'Register'
                         )}

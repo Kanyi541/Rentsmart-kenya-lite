@@ -1,10 +1,10 @@
 'use client'
 
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarProvider } from "./ui/sidebar";
-import { Home, Building, Users, BedDouble, CreditCard, LogOut, User, Megaphone, ShieldAlert, ClipboardList, Lock, Crown, LayoutDashboard, Settings } from "lucide-react";
+import { Home, Building, Users, BedDouble, CreditCard, LogOut, User, Megaphone, ShieldAlert, ClipboardList, Lock, Crown, LayoutDashboard, Settings, BookOpen, FileText, DollarSign, Info } from "lucide-react";
 import Link from "next/link";
 import NextImage from "next/image";
-import RentSmartLogo from "../../public/RentSmart.png";
+import RentNodeogo from "../../public/RRentNodeng";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
@@ -38,6 +38,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/admin/complaints', label: 'Complaints', icon: ShieldAlert, minPlan: 'Growth' },
         { href: '/admin/move-out', label: 'Move-out Notices', icon: LogOut, minPlan: 'Growth' },
         { href: '/admin/settings/payments', label: 'Payment Settings', icon: Settings, minPlan: 'Starter' },
+        // New SEO pages
+        { href: '/blog', label: 'Blog', icon: BookOpen, minPlan: 'Starter' },
+        { href: '/guides', label: 'Guides', icon: FileText, minPlan: 'Starter' },
+        { href: '/how-it-works', label: 'How It Works', icon: Info, minPlan: 'Starter' },
     ];
 
     const clientMenuItems = [
@@ -46,6 +50,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: '/clients/complaints', label: 'Complaints', icon: ShieldAlert },
         { href: '/clients/checklist', label: 'Checklist', icon: ClipboardList },
         { href: '/clients/move-out', label: 'Move Out', icon: LogOut },
+        // SEO pages for clients as well
+        { href: '/blog', label: 'Blog', icon: BookOpen },
+        { href: '/guides', label: 'Guides', icon: FileText },
+        { href: '/how-it-works', label: 'How It Works', icon: Info },
     ];
 
     const getMobileNavItems = () => {
@@ -97,12 +105,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
             <Sidebar className="hidden md:flex">
                 <SidebarHeader>
-                     <Link href={homeRoute} className="flex items-center gap-2">
+                    <Link href={homeRoute} className="flex items-center gap-2">
                         <div className="flex-shrink-0">
-                            <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain rounded" />
+                            <NextImage src={RentNodeogo} alt="RRentNodeogo" width={32} height={32} className="object-contain rounded" />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold leading-none">RentSmart</h1>
+                            <h1 className="text-xl font-bold leading-none">RentNode</h1>
                             {userRole === 'admin' && (
                                 <Badge variant="outline" className="mt-1 w-fit text-[10px] h-4 bg-muted/50">
                                     {plan} Plan
@@ -127,9 +135,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                         isActive={pathname.startsWith(item.href)}
                                         className={disabled ? "opacity-50 grayscale cursor-not-allowed" : ""}
                                         tooltip={disabled ? `Requires ${item.minPlan} Plan` : undefined}
-                                        >
-                                        <Link 
-                                            href={disabled ? "#" : item.href} 
+                                    >
+                                        <Link
+                                            href={disabled ? "#" : item.href}
                                             onClick={(e) => handleNavigation(e, item.href, disabled)}
                                             className="flex items-center justify-between w-full"
                                         >
@@ -145,10 +153,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         })}
                     </SidebarMenu>
                 </SidebarContent>
-                 <div className="p-4 mt-auto border-t space-y-2">
+                <div className="p-4 mt-auto border-t space-y-2">
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
                         <span>Version</span>
-                        <span>v1.1.0-stable</span>
+                        <span>v1.1.1</span>
                     </div>
                     <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive p-0 h-8" onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
@@ -158,10 +166,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </Sidebar>
             <SidebarInset className="flex flex-col h-screen overflow-hidden">
                 <header className="flex-shrink-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
-                     <SidebarTrigger className="md:hidden" />
-                     <div className="md:hidden flex-1 flex justify-center">
-                         <span className="font-bold text-primary tracking-tight">RentSmart Kenya</span>
-                     </div>
+                    <SidebarTrigger className="md:hidden" />
+                    <div className="md:hidden flex-1 flex justify-center">
+                        <span className="font-bold text-primary tracking-tight">RentNodeKenya Lite</span>
+                    </div>
                 </header>
                 <main className="flex-1 overflow-y-auto p-4 sm:px-6 pb-24 md:pb-4">
                     <div className="max-w-7xl mx-auto space-y-4">
@@ -174,7 +182,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     {mobileNavItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
-                            <Link 
+                            <Link
                                 key={item.label}
                                 href={item.href}
                                 onClick={(e) => handleNavigation(e, item.href)}

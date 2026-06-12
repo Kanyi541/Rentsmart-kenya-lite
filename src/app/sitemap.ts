@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-const baseUrl = 'https://rentsmart-kenya-lite.vercel.app';
+  const baseUrl = 'https://RentNode-kenya-lite.vercel.app';
 
   return [
     {
@@ -22,6 +22,24 @@ const baseUrl = 'https://rentsmart-kenya-lite.vercel.app';
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/guides`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/how-it-works`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
     },
   ];
 }

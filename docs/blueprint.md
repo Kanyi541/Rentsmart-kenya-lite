@@ -1,4 +1,4 @@
-# **App Name**: RentSmart Kenya Lite
+# **App Name**: RentNode Kenya Lite
 
 ## Core Features:
 

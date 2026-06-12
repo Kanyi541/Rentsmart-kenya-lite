@@ -1,6 +1,6 @@
 import { SidebarTrigger } from "./ui/sidebar";
 import NextImage from "next/image";
-import RentSmartLogo from "../../public/RentSmart.png";
+import RentNodeogo from "../../public/RRentNodeng";
 
 export function Header() {
   return (
@@ -10,10 +10,10 @@ export function Header() {
           <SidebarTrigger className="md:hidden" />
           <div className="hidden md:flex items-center gap-3">
             <div className="flex-shrink-0">
-              <NextImage src={RentSmartLogo} alt="RentSmart Logo" width={32} height={32} className="object-contain rounded" />
+              <NextImage src={RentNodeLogo} alt="RentNode Logo" width={32} height={32} className="object-contain rounded" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-              RentSmart Kenya Lite
+              RentNode Kenya Lite
             </h1>
           </div>
         </div>

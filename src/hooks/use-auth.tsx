@@ -12,13 +12,13 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 const auth = getAuth(app);
-const SUPER_ADMIN_EMAIL = 'owner@rentsmart.com';
-const ADMIN_EMAIL = 'rentsmart@gmail.com'; 
+const SUPER_ADMIN_EMAIL = 'owner@RentNode.com';
+const ADMIN_EMAIL = 'RentNode@gmail.com';
 
 type UserRole = 'admin' | 'client' | 'super-admin' | null;
 type RegisterData = Omit<z.infer<typeof tenantSchema>, 'id' | 'thirdName' | 'createdAt'> & { password: string, orgId?: string };
 
-const DEMO_ADMIN_EMAIL = 'rentsmart@demo.com';
+const DEMO_ADMIN_EMAIL = 'RentNode@demo.com';
 const DEMO_TENANT_EMAIL = 'tenant@demo.com';
 
 interface AuthContextType {
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            if (authUser.email === SUPER_ADMIN_EMAIL || authUser.email === 'rentsmart@gmail.com') {
+            if (authUser.email === SUPER_ADMIN_EMAIL || authUser.email === 'RentNode@gmail.com') {
                 setUserRole('super-admin');
                 setOrgId('system_owner');
                 setLoading(false);
@@ -115,22 +115,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const orgDocRef = doc(db, 'organizations', orgId);
         const unsubscribeOrg = onSnapshot(
-          orgDocRef, 
-          (snapshot) => {
-            if (snapshot.exists()) {
-                const plainData = JSON.parse(JSON.stringify(snapshot.data()));
-                setOrganization({ id: snapshot.id, ...plainData } as any);
-            } else {
-                setOrganization(null);
+            orgDocRef,
+            (snapshot) => {
+                if (snapshot.exists()) {
+                    const plainData = JSON.parse(JSON.stringify(snapshot.data()));
+                    setOrganization({ id: snapshot.id, ...plainData } as any);
+                } else {
+                    setOrganization(null);
+                }
+            },
+            async (error) => {
+                const permissionError = new FirestorePermissionError({
+                    path: orgDocRef.path,
+                    operation: 'get',
+                });
+                errorEmitter.emit('permission-error', permissionError);
             }
-          },
-          async (error) => {
-            const permissionError = new FirestorePermissionError({
-              path: orgDocRef.path,
-              operation: 'get',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-          }
         );
 
         return () => unsubscribeOrg();
@@ -139,11 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async (email: string, password: string) => {
         await signInWithEmailAndPassword(auth, email, password);
     };
-    
+
     const register = async (data: RegisterData) => {
         const { email, password, ...tenantData } = data;
         if (!tenantData.orgId) throw new Error("Organization ID is required for tenants.");
-        
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
