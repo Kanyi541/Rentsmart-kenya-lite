@@ -1,0 +1,26 @@
+RentNode is a cloud-based SaaS platform for landlords and property managers in Kenya.
+It enables users to efficiently manage rental properties, tenants, and rent collection in one centralized system.
+RentNode solves common rental management challenges such as late payments, manual tracking, and lack of transparency between landlords and tenants.
+
+Key Features:
+- Tenant management and records tracking
+- Property and unit management system
+- Automated rent collection tracking
+- M-Pesa payment integration for seamless mobile money transactions in Kenya
+- Automated rent reminders and notifications for tenants
+- Payment history and reporting dashboard for landlords
+- Digital receipts and transaction records
+
+Who it is for:
+- Individual landlords
+- Property managers
+- Real estate agencies in Kenya and East Africa
+
+Core Value:
+RentNode helps landlords save time, reduce late payments, and gain full visibility over their rental income through automation and mobile money integration.
+
+Payment System:
+Supports M-Pesa as the primary payment method, with potential expansion to card and online payment gateways.
+
+Goal:
+To modernize rental management in Africa by making rent collection simple, transparent, and automated.
